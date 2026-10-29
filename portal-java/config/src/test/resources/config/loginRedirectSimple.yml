@@ -1,0 +1,9 @@
+authentication:
+  loginRedirect: /some/custom/handler
+
+### BEGIN mandatory configuration entries, regardless of the test
+mesh:
+  apiKey: not-important-for-the-test
+meshProject: mesh-project-not-important-for-the-test
+portalAPIKey: portal-key-not-important-for-the-test
+serverUrl: http://server-url-not-important-for-the-test

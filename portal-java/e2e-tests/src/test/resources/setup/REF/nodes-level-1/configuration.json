@@ -1,0 +1,29 @@
+{
+	"uuid": "70c287ef696c11e88438005056a9ea60",
+	"language": "en",
+	"parentNode": {
+		"uuid": "2f65201b696c11e88438005056a9ea60"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"creatoremail": "nowhere@gentics.com",
+		"editdate": "2019-01-29T14:07:54Z",
+		"publishtimestamp": "2019-01-29T14:17:19Z",
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"description": "",
+		"name": "Configuration",
+		"content": "<ul><li><a target='_self' href=\"{{mesh.link(b3efa88f641011e88438005056a9ea60, de, Reference)}}\">Zur Startseite</a></li></ul>",
+		"createdate": "2019-01-29T12:58:01Z",
+		"publisher": "Node Admin",
+		"filename": "Configuration.html",
+		"cms_id": 9,
+		"editoremail": "nowhere@gentics.com",
+		"publishermail": "nowhere@gentics.com",
+		"editor": "Node Admin",
+		"creator": "Node Admin",
+		"footerlinks": "<ul><li><a target='_self' href=\"{{mesh.link(b3efa88f641011e88438005056a9ea60, de, Reference)}}\">Zur Startseite</a></li></ul>"
+	}
+}

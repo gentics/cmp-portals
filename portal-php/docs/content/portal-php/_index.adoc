@@ -1,0 +1,8 @@
+---
+title: "Gentics Portal | php"
+layout: "single"
+cascade:
+  product: "Gentics CMP"
+---
+
+{{%GPPHP%}} is a commercial library for the popular Laravel framework that enables you to fetch and render content from the open-source {{%Mesh%}} Content Repository. It is typically used in combination with the commercial content management system {{%CMS%}}.

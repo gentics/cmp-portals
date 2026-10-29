@@ -1,0 +1,154 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.gentics.mesh.portal</groupId>
+		<artifactId>mesh-portal-framework</artifactId>
+		<version>9.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>mesh-portal-docs</artifactId>
+	<packaging>jar</packaging>
+
+	<properties>
+		<conf.target.dir>output/config</conf.target.dir>
+		<env.target.dir>output/environment</env.target.dir>
+		<example.target.dir>output/examples/config</example.target.dir>
+		<openapi.target.dir>output/examples/api</openapi.target.dir>
+		<env.java.home>${JAVA_HOME}/bin/java</env.java.home>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.gentics.mesh.portal</groupId>
+			<artifactId>mesh-portal-base</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jknack</groupId>
+			<artifactId>handlebars</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.9.11</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>5.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.5.0</version>
+				<executions>
+					<execution>
+						<?m2e execute ?>
+						<id>Generate Examples</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<executable>${env.java.home}</executable>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>com.gentics.mesh.portal.examples.ExampleGenerator</argument>
+								<argument>${example.target.dir}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<?m2e execute ?>
+						<id>Generate Environment Variables Help</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<executable>${env.java.home}</executable>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>com.gentics.mesh.portal.examples.EnvHelpGenerator</argument>
+								<argument>${env.target.dir}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<?m2e execute ?>
+						<id>Generate Configuration Help</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<executable>${env.java.home}</executable>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>com.gentics.mesh.portal.examples.ConfigHelpGenerator</argument>
+								<argument>${conf.target.dir}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+					<execution>
+						<?m2e execute ?>
+						<id>generate-openapi-spec</id>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<executable>${env.java.home}</executable>
+							<arguments>
+								<!--
+									Mockito's bundled Byte Buddy version predates official support for the JDK this
+									module is run with; this flag is Byte Buddy's own documented escape hatch.
+								-->
+								<argument>-Dnet.bytebuddy.experimental=true</argument>
+								<argument>-classpath</argument>
+								<classpath/>
+								<argument>com.gentics.mesh.portal.examples.OpenApiSpecGenerator</argument>
+								<argument>${openapi.target.dir}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>entries</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<attach>true</attach>
+							<appendAssemblyId>true</appendAssemblyId>
+							<descriptors>
+								<descriptor>${project.basedir}/assembly/guides.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

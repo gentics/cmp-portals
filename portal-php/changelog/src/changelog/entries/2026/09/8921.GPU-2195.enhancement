@@ -1,0 +1,3 @@
+The Gentics Portal | php Kubernetes Helm Chart has been improved:
+* PodDisruptionBudget can now be configured and is automatically set when more than one replica is configured
+* The Mesh-API Key Options have been improved to allow reading the API-Key from existing secrets in a custom format

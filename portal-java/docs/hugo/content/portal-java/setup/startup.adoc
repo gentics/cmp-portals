@@ -1,0 +1,50 @@
+---
+title: Portal startup
+layout: "single"
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+Since it depends on {{%Mesh%}} the portal startup is described here in short.
+
+== Startup sequence
+
+With the recommended link:new-project.html#_needed_java_classes[project setup]
+the startup sequence looks as follows:
+
+. Initialize logging
+. Load the main server configuration
+. Perform dependency injection
+. Wait for {{%Mesh%}} to be ready
+. Call the `start()` method of the BoostrapInitializer` implementation
+
+== Waiting for Mesh
+
+The {{%GPJava%}} waits for {{%Mesh%}} to be ready before actually starting
+itself.
+
+For {{%Mesh%}} to be ready it has to be
+
+* reachable for the portal, and
+* all the plugins must have been fully registered
+
+The portal will check the above conditions every few seconds until Mesh becomes
+ready, and will then continue with the startup.
+
+=== Mesh plugins
+
+When a portal implementation depends on certain {{%Mesh%}} plugins, those can
+be link:../development/configuration.html#_mesh[configured] with the
+`mesh.requiredPlugins` setting. This setting takes a list of plugin IDs which
+must be present and fully registered in the used instance of {{%Mesh%}}.
+
+This list _may_ be empty but it is strongly advised to list the needed plugins.
+
+When `mesh.requiredPlugins` is empty, all present plugins in the {{%Mesh%}}
+instance _still_ need to be fully registered before the portal will start, but
+there is a slim chance, that the portal queries the plugin status when
+{{%Mesh%}} has not yet begun loading the plugins and answers with an empty list.
+
+In this case the {{%GPJava%}} will wait for a few seconds and query the plugin
+status again to minimize the chance of a wrongly empty list of plugins.

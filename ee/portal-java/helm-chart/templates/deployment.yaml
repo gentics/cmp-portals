@@ -1,0 +1,18 @@
+{{- if eq (include "gentics-portal.controllerKind" .) "Deployment" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gentics-portal.fullname" . }}
+  labels:
+    {{- include "gentics-portal.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gentics-portal.selectorLabels" . | nindent 6 }}
+  {{- with .Values.controller.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- include "gentics-portal.podTemplate" . }}
+{{- end }}

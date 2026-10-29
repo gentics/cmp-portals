@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "branch": "cfa72397637344aba72397637344abda",
+      "uuid": "eb4bd7a9c03311e892b70242ac120004",
+      "language": "en",
+      "url": "\/Automobiles\/Tesla.html",
+      "raw": {
+        "project": {
+          "name": "Portal_PHP_Reference"
+        },
+        "language": "en",
+        "fields": {
+          "vehicle_description": "<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Velit nisi corrupti repellat veniam! A quisquam ipsa voluptatum magni labore consequuntur voluptates quaerat cum, repudiandae doloribus totam maxime nemo odit quia voluptatem accusantium animi inventore possimus aliquid, dolores hic. Voluptate facilis repellat eum aliquid reprehenderit id tenetur, nesciunt atque qui nemo vero maiores quia assumenda expedita totam incidunt, error tempore animi, cum molestiae amet. Architecto, quibusdam quos? Iusto quam voluptatem, quis sint maxime libero ex, iste iure hic porro dolore assumenda nesciunt in, qui expedita blanditiis? Porro cumque esse eum quae error, reprehenderit neque. Molestias saepe perspiciatis iusto explicabo dignissimos sunt!<\/p>",
+          "templateName": "vehicle",
+          "name": "Tesla"
+        },
+        "uuid": "eb4bd7a9c03311e892b70242ac120004"
+      },
+      "additional": {
+        "name": "Tesla",
+        "templateName": "vehicle",
+        "weight": "2250",
+        "price": "124200",
+        "stock": "0",
+        "image": "http:\/\/localhost:8080\/GenticsImageStore\/510\/auto\/prop\/Automobiles\/tesla.jpg",
+        "vehicle_description": "<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Velit nisi corrupti repellat veniam! A quisquam ipsa voluptatum magni labore consequuntur voluptates quaerat cum, repudiandae doloribus totam maxime nemo odit quia voluptatem accusantium animi inventore possimus aliquid, dolores hic. Voluptate facilis repellat eum aliquid reprehenderit id tenetur, nesciunt atque qui nemo vero maiores quia assumenda expedita totam incidunt, error tempore animi, cum molestiae amet. Architecto, quibusdam quos? Iusto quam voluptatem, quis sint maxime libero ex, iste iure hic porro dolore assumenda nesciunt in, qui expedita blanditiis? Porro cumque esse eum quae error, reprehenderit neque. Molestias saepe perspiciatis iusto explicabo dignissimos sunt!<\/p>"
+      }
+    }
+  ],
+  "totalHits": 1,
+  "searchtags": [
+
+  ],
+  "hasMore": false,
+  "didYouMean": null
+}

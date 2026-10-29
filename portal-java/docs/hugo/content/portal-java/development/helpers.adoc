@@ -1,0 +1,1020 @@
+---
+title: Handlebars helpers
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The portal comes with several Handlebars helpers already registered, to ease the creation of
+templates.
+
+For each described helper there is a simple example how to use it, and where applicable a
+description of the parameters and special variables and attributes.
+
+Unless stated otherwise by a specific helper, all parameters which are not marked as *Mandatory*
+can be placed in any order or can be ommited completely.
+
+== Common
+
+The `CommonHelper` class provides miscellaneous helpers, which do not really fit into any other
+category.
+
+=== Helper `getRenderMode`
+
+This helper just returns the current link:../features/delivering-content.html#_preview_modes[render mode],
+and is intended for testing purposes during development.
+
+The helper takes no parameters.
+
+.Examle for `getRenderMode`
+[source,handlebars]
+----
+<p>Current render mode: {{{ getRenderMode }}}</p>
+----
+
+=== Helper `renderMode`
+
+This block helper checks if the actual render mode is the same as the specified one, and renders
+the contents of the block or the `{{ else }}` block respectively.
+
+.Usage of `renderMode`
+----
+{{# renderMode modeName }}
+    <!-- Markup for render mode `modeName` -->
+{{ else }}
+    <!-- Markup for all other render modes -->
+{{/ renderMode }}
+----
+
+.Parameters for `renderMode`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `renderMode`
+| String
+| *Mandatory*
+| The render mode to check for. The check is done case-insensitive, but the value must be one
+  of the link:../features/delivering-content.html#_preview_modes[preview modes] recognized by the portal.
+|===
+
+.Example for `renderMode`
+[source,handlebars]
+----
+
+{{# renderMode 'edit' }}
+    <div class="some-special-editmode-wrapper">
+{{/ renderMode }}
+
+        <!-- Actual markup -->
+
+{{# renderMode 'edit' }}
+    </div>
+{{/ renderMode }}
+----
+
+=== Helper `equals`
+
+A block helper that checks if the two specified objects are equal.
+
+.Usage of `equals`
+----
+{{# equals object1 object2 }}
+    <!-- Markup -->
+{{ else }}
+    <!-- Markup -->
+{{/ equals }}
+----
+
+.Parameters for `equals`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `object1`
+| Object
+| *Mandatory*
+| The first object to compare.
+
+| `object2`
+| Object
+| *Mandatory*
+| The object to compare against.
+|===
+
+.Example for `equals`
+[source,handlebars]
+----
+{{# equals data.node.fields.tag 'someSpecialTag' }}
+    <!-- Markup to show only for pages with `someSpecialTag` -->
+{{/ equals }}
+----
+
+=== Helper `eachReversed`
+
+A block helper that iterates over the specified elements in reverse order.
+
+.Usage of `eachReversed`
+----
+{{# eachReversed collection }}
+    <!-- Markup -->
+{{/ equals }}
+----
+
+.Parameters for `eachReversed`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `collection`
+| Collection
+| *Mandatory*
+| The objects to iterate over.
+|===
+
+.Example for `eachReversed`
+[source,handlebars]
+----
+{{# eachReversed newsSortedByDate }}
+    <!-- Markup -->
+{{/ eachReversed }}
+----
+
+=== Helper `getCurrentProject`
+
+This helper just renders the configured link:configuration.html#_general[Mesh project].
+
+The helper has no parameters.
+
+.Example for `getCurrentProject`
+[source,handlebars]
+----
+<h2>{{ getCurrentProject }} contents</h2>
+----
+
+=== Helper `getCookieHintPage`
+
+This helper just renders the path to the configured link:configuration.html#_general[cookie hint page],
+and is usually used in conjunction with <<helper-showcookiehint, showCookieHint>>.
+
+The helper has no parameters.
+
+.Example for `getCookieHintPage`
+[source,handlebars]
+----
+<p>
+    This page uses <a href="{{ getCookieHintPage }}">cookies</a>.
+</p>
+----
+
+[[helper-showcookiehint]]
+=== Helper `showCookieHint`
+
+A block helper which checks if the cookie disclaimer was already accepted. When
+it was _not_ yet accepted it renders the contents of the block, and the
+`{{ else }}` block otherwise.
+
+.Example for `showCookieHint`
+[source,handlebars]
+----
+{{# showCookieHint }}
+<p>
+    This page uses <a href="{{ getCookieHintPage }}">cookies</a>.
+</p>
+{{/ showCookieHint }}
+----
+
+== Evaluate
+
+This helper creates a template from the given context and renders it
+immediatelly. The created template will use `<eval>` and `</eval>` as delimiters
+instead of `{{` and `}}` respectively.
+
+.Usage of `evaluate`
+----
+{{ evaluate template [cacheKey] [useCache] }}
+----
+
+.Parameters for `evaluate`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `template`
+| String
+| *Mandatory*
+| The string to be evaluated.
+
+| `cacheKey`
+| String
+| The template itself
+| An additional part for the cache key.
+
+| `useCache`
+| Boolean
+| `true`
+| Whether the compiled template may be cached.
+|===
+
+Using the `evaluate` helper is the only way to use Handlebars in content entered in the {{%CMS%}}, and all
+parts of a page relying on this, must be rendered with this helper.
+
+The compiled templates are cached for performance reasons using the
+link:configuration.html#_caching[caching configuration].Two optional parameters can be used to fine tune
+this behavior (for example when a template should __not__ be cached for some reason).
+
+The following example assumes that there is a tag rendering the following in a page part called `teaser`.
+
+.Example for a tag depending on `evaluate`
+[source,handlebars]
+----
+<p>
+    This part of $cms.page.name is rendered by the CMS.
+</p>
+
+<p>
+    This part is rendered by the portal, using a value selected in the tag.
+
+    <eval> > partials/specialTagMarkup specialTagValue="$cms.tag.parts.specialValue"</eval>
+</p>
+----
+
+Then the `teaser` part should be rendered using the `evaluate` helper to actually include the partial
+template:
+
+.Example for `evaluate`
+[source,handlebars]
+----
+<div class="teaser">
+    {{ evaluate data.node.fields.teaser 'teaser' true }}
+</div>
+----
+
+== Language
+
+The `LanguageHelper` class provides helpers to create links to specific language variants of pages, and
+to translate static text.
+
+[[lang-config]]
+=== Configuration
+
+To use the <<helper-i18n, i18n>> helper, the resource bundles with the translations must be configured
+by setting the link:configuration.html#_general[i18nPath] to the directory containing the
+language resource bundles.
+
+For each language supported by the portal, there should be a file called
+__[i18nPath]/portal_[LANGUAGE_CODE].yml__ containing the mappings for the
+language. The defined keys can then be used by the `i18n` helper.
+
+.Example for __portal_en.yml__
+[source,yml]
+----
+auth.login: Login
+misc.welcome: Welcome!
+----
+
+.Example for __portal_de.yml__
+[source,yml]
+----
+auth.login: Anmelden
+misc.welcome: Willkommen!
+----
+
+The first part of the filename is the name of the default bundle `portal`.Any number of bundles can
+be created, and specified for the `i18n` helper.
+
+[[helper-langfallback]]
+=== Helper `langFallback`
+
+This helper will try to find the specified property of an object in the best
+matching language. The helper assumes that the given object has a field called
+`fields` which contains the specified `fieldName` along with translations in
+fields named `fieldName_[CODE]`.
+
+.Example for object with language fallbacks
+[source,json]
+----
+{
+    "fields": {
+        "name": "About us",
+        "name_de": "Über uns",
+        "name_fr": "À propos de nous"
+    }
+}
+----
+
+The fields are checked in the following order, and the first non-blank value is
+returned. The `fieldName`, `param`, `portalLanguage` and `defaultLanguage`
+placeholders stand for the name of the field to be translated, the optional
+parameter naming the language, the current portal language, and the portals
+default language respectively.
+
+. `fields.[fieldName]_[param]`
+. `fields.[fieldName]_[portalLanguage]`
+. `fields.[fieldName]_[defaultLanguage]`
+. `fields.[fieldName]`
+
+.Usage of `langFallback`
+----
+{{{ langFallback object fieldName [lang] }}}
+----
+
+.Parameters for `langFallback`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `object`
+| JsonObject
+| *Mandatory*
+| The object for which to try language fallback.
+
+| `fieldName`
+| String
+| *Mandatory*
+| The the name of the attribute in `object.fields` that needs language fallback.
+
+| `lang`
+| String
+| Current portal language
+| The desired language.
+|===
+
+The following example will do language fallback for the custom `category` field, of the current
+pages folder, using the same language as the page itself.
+
+.Example for `langFallback`
+[source,handlebars]
+----
+<div class="cateogry">
+    {{ langFallback data.node.parent 'category' data.node.language }}
+</div>
+----
+
+=== Helper `pathLangFallback`
+
+This helper will determine the path to the best matching language variant of the given object.
+The priority for choosing the best matching language is
+
+. The language specified in the optional parameter
+. The current portal language
+. The default portal language
+. Any language
+
+This priority is only relevant when the object actually has a `languages` field,
+containing paths for different languages. Otherwise the `path` field of the
+object itself is used.
+
+When neither `languages` nor `path` is available, this helper will generate an empty string.
+
+.Usage of `pathLangFallback`
+----
+{{{ pathLangFallback object [lang] }}}
+----
+
+.Parameters for `pathLangFallback`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `object`
+| JsonObject
+| *Mandatory*
+| The object for which to try language fallback on its path
+
+| `lang`
+| String
+| Current portal language
+| The desired language.
+|===
+
+The following example creates a link to the english version of current folders startpage.
+
+.Example for `pathLangFallback`
+[source,handlebars]
+----
+<a href={{{ pathLangFallback data.node.parent.startpage 'en' }}}>Up</a>
+----
+
+[[helper-i18n]]
+=== Helper `i18n`
+
+This helper will translate the given i18n key to the specified langage, which it loads from
+the <<lang-config, configured>> language resource bundles.
+
+.Usage of `i18n`
+----
+{{{ i18n key [lang [bundle]] }}}
+----
+
+NOTE: Unlike most other helpers, the order of the two optional parameters is relevant, so the
+`bundle` parameter can only be supplied if the `lang` parameter is also present.footnote:[The
+helper cannot distinguish between two optional String parameters.]
+
+.Parameters for `i18n`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `key`
+| String
+| *Mandatory*
+| The i18n key for the desired phrase to translate.
+
+| `lang`
+| String
+| Current portal language
+| The desired language.
+
+| `bundle`
+| String
+| `"portal"`
+| The name of the language resource bundle to use.
+|===
+
+.Example for `i18n`
+[source,handlebars]
+----
+<dl>
+    <dt>Welcome in current portal language:</dt>
+    <dd>{{ i18n 'welcome' }}</dd>
+
+    <dt>Welcome in current page language:</dt>
+    <dd>{{ i18n 'welcome' data.node.language }}</dd>
+
+    <dt>Welcome in german:</dt>
+    <dd>{{ i18n 'welcome' 'de' }}</dd>
+
+    <dt>Message from bundle called "special":</dt>
+    <dd>{{ i18n 'message' data.node.language 'special' }}</dd>
+</dl>
+----
+
+== Navigation
+
+The `NavigationHelper` class provides helpers for rendering navigation and breadcrumb entries.
+
+[[nav-config]]
+=== Configuration
+
+Different ``NavigationHelperProfile``s can be registered with the
+`NavigationHelper` which facilitate creating navigation markup. Such a profile
+has the following attributes:
+
+* `prefix` and `postfix`: determine the wrapper for all navigation entries, and
+can be used to control the markup surounding the navigation. Default values are
+`<ul>` and `</ul>` respectively.
+
+* `activeClass`: the CSS class added to `this.class` for all entries that are on
+the path to the currently displayed page. This is used in conjunction with the
+`classFormat` attribute. The default value is `active`.
+
+* `classFormat`: a https://docs.oracle.com/javase/8/docs/api/java/util/Formatter.html[format string, window=_blank]
+to generate a CSS class for a navigation item. When evaluated, the first
+argument is the value of `activeClass` (see above) when the item in question is
+currently active, and an empty string otherwise. The second argument is the
+level of the navigation item (starting at 1 for toplevel elements).The default
+value is `nav %s level-%d`.
+
+* `autoLanguageFallback`: determines whether <<lang-fallback, language fallback>> should
+automatically be performed for the `this.name` and `this.url` fields of navigation items.
+
+The portal itself will always register the two profiles
+
+* `default` (all the default values mentioned above), and
+* `unwrapped` (the default values from above but with empty `prefix` and `postfix`)
+
+Further profiles can be registered in the projects
+link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer], via
+the `registerProfile(name, profile)` method. It is also possible to overwrite
+the mentioned profiles by registering another profile with the same name.
+
+[[lang-fallback]]
+=== Language fallback
+
+For breadcrumb and navigation elements the helpers can perform language fallback
+for the `name` and `url` attributes. For the `name` field this works as
+described at the <<helper-langfallback, langFallback helper>>, by searching the
+best matching `name` field.
+
+The language fallback will only work for folders, and assumes that the folders
+`startpage` field has itself a `languages` field containing all the available
+languages together with the respective path. When language fallback is enabled
+the helpers will choose the best matching language variant and use its path
+for the URL.
+
+=== Helper `eachBc`
+
+This helper iterates over all elements in the current pages breadcrumbs. Entries
+which have the link:configuration.html#_navigation[navhidden] field set,
+will not be included.Also the portal will remove breadcrumbs at the beginning
+until at most link:configuration.html#_navigation[breadcrumbsLevel]
+remain.
+
+When the last element of the breadcrumbs (i.e. the currently displayed page) is the startpage of
+the current folder, it will be ignored by this helper.
+
+.Usage of `eachBc`
+----
+{{# eachBc node [hideRoot] [maxEntries] [profileName] }}
+    this.trimmed | this.name | this.url | this.currentFolderStartpage
+{{/ eachBc }}
+----
+
+.Parameters for `eachBc`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `node`
+| JsonObject
+| *Mandatory*
+| The node which breadcrumbs should be iterated over. This will typically be `data.node`.
+
+| `hideRoot`
+| Boolean
+| `true`
+| When set to `true` the first element of the breadcrumbs will be skipped
+
+| `maxEntries`
+| Number
+| unlimited
+| The maximum number of breadcrumbs to show. When there are more entries, the right amount will
+  be removed from the beginning and replaced by an empty element with the `trimmed` attribute set
+  to `true`.
+
+| `profileName`
+| String
+| `"default"`
+| The navigation profile to use. Only the <<nav-config, autoLanguageFallback>> setting of the
+  profile is used by this helper.
+|===
+
+NOTE: Note that the `maxEntries` parameter is different from the aforementioned
+link:configuration.html#_navigation[breadcrumbsLevel] setting. The later
+will cause the portal to remove breadcrumb entries before they even get to the
+helper. Using the `maxEntries` parameter of the helper is in general more
+versatile.
+
+The following attributes are set for each breadcrumb element this helper iterates over.
+
+.Available attributes of breadcrumbs
+[%header]
+|===
+| Name | Type | Description
+
+| `trimmed`
+| Boolean
+| Can only be present on the first element. When the first element has this field set to `true`
+  at least one breadcrumb was skipped due to the `maxEntries` parameter (see above).
+
+| `name`
+| String
+| The value of the entries `name` field (possibly with language fallback).
+
+| `url`
+| String
+| The URL to the startpage of the folder (possibly with language fallback), or the URL to the
+  page itself for the last element.
+
+| `currentFolderStartpage`
+| Boolean
+| Can only be `true` for the last element, and only if it is a folder. This attribute is true
+  when the currently displayed page is a startpage of the current folder.
+|===
+
+The following example will show at most three breadcrumbs, not hiding the root folder, and use
+the default `NavigationHelperProfile`.
+
+.Example for `eachBc`
+[source]
+----
+<ul>
+{{# eachBc data.node false 3 }}
+    <li>
+    {{# if this.trimmed }}
+        <span>...</span>
+    {{ else }}
+        <a href="{{{ this.url }}}">{{{ this.name }}}</a>
+    {{/ if }}
+    </li>
+{{/ eachBc }}
+</ul>
+----
+
+=== Helper `eachBcRaw`
+
+This helper will iterate over all breadcrumb elements without any additional filtering or
+processing.
+
+There is only one mandatory parameter and that is the node itself (same as with `eachBc`),
+and only the already present `path` and `fields` attributes will be available in the block
+body.
+
+[[helper-eachnav]]
+=== Helper `eachNav`
+
+This helper iterates over all toplevel elements in the navigation. Elements
+which have the link:configuration.html#_navigation[navhidden] field set
+will not be included (but those should already be filtered by the
+link:../features/delivering-content.html#_navigation[NavigationTransformer]).
+
+It is intended to start rendering of navigation markup and use the
+<<helper-eachnavfromfolder, eachNavFromFolder>> helper to recursively process successors.
+
+When using this helper, the result will be wrapped with the `prefix` and `postfix` of the
+used <<nav-config, profile>>.
+
+*Note* that the context argument "." is necessary and _must_ be the first argument
+when at least one of the optional parameters `forceStartpage` or `profileName`
+is present.footnote:[The reason for this restriction is that
+handlebars-java will always pass the first argument as the helper context. Since
+`eachNav` does not use a context, the first argument would just be lost.]
+
+.Usage of `eachNav`
+----
+{{# eachNav [.] [forceStartpage] [profileName] }}
+    this.active | this.current | this.level | this.class |
+    this.name | this.url | this.path | this.fields | this.children
+{{/ eachNav }}
+----
+
+[[nav-optional-parameters]]
+.Parameters for `eachNav`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `forceStartpage`
+| Boolean
+| `false`
+| When this parameter is `true` only elements with a startpage URL will be considered by
+  this helper.
+
+| `profileName`
+| String
+| `"unwrapped"`
+| The navigation profile to use. Since toplevel navigation is normally not empty, and often
+  contains special elements, the default profile for this helper is `"unwrapped"`.
+|===
+
+The following attributes are set for each navigation element this helper iterates over.
+
+[[nav-element-attributes]]
+[%header]
+.Available attributes of navigation elements
+|===
+| Name | Type | Description
+
+| `active`
+| Boolean
+| Indicates whether the current element is contained in the path of the currently displayed page.
+
+| `current`
+| Boolean
+| Indicates whether the current element is the parent folder of the currently displayed page. (The
+  difference to `active` is that it must be the direct parent, not just any ancestor.)
+
+| `level`
+| Number
+| The level of the current element in the navigation tree, starting with 1 for toplevel elements.
+
+| `class`
+| String
+| The CSS class created by the <<nav-config, NavigationHelperProfile>> depending on the values
+  of `active` and `level`.
+
+| `name`
+| String
+| The name of the element (possibly with language fallback).
+
+| `url`
+| String
+| The URL to the startpage of the element (possibly with language fallback).
+
+| `path`
+| String
+| The original path of the element.
+
+| `fields`
+| JsonObject
+| The fields of the element as loaded by the link:../features/delivering-content.html#_navigation[loadNavigation]
+  GraphQL query.
+
+| `children`
+| JsonArray
+| The original successors of this element.
+|===
+
+NOTE: Note that `children` contains the original successors of a navigation
+element without the special preprocessing of the helper. So the children should
+also be processed by one of the navigation helpers, and not used directly.
+
+The following example will only render the toplevel navigation. In practice, one
+would iterate over the children with the
+<<helper-eachnavfromfolder, eachNavFromFolder>> helper and put the markup for a
+single navigation element in a partial template.
+
+.Example for `eachNav`
+[source]
+----
+<ul>
+    {{# eachNav true }}
+    <li>
+        <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+    </li>
+    {{/ eachNav }}
+
+    <li>
+        <a href="login">Login</a>
+    </li>
+</ul>
+----
+
+[[helper-eachnavfromlevel]]
+=== Helper `eachNavFromLevel`
+
+This helper will iterate over all navigation elements at the specified `minLevel`, or the navigation
+level of the currently displayed page, whichever is higher.
+
+The <<helper-eachnavfromfixedlevel, eachNavFromFixedLevel>> is a variant, that will always start
+at the given level, without regard of the current pages level.
+
+No output will be produced, when the currently displayed page is not at least at the specified level.
+
+In the block body of this helper the variable `@maxLevel` will be set to the (possibly modified)
+`minLevel` plus `maxDepth`, to give helpers processing successor a hint about the maximum level.
+
+It is intended as an alternative to the <<helper-eachnav, eachNav>> helper, to
+start iterating over navigation elements. The
+<<helper-eachnavfromfolder, eachNavFromFolder>> helper is intended for
+recursively processing successors.
+
+As with the <<helper-eachnav, eachNav>> helper, elements which are hidden from the navigation are skipped.
+
+When using this helper, the result will be wrapped with the `prefix` and `postfix` of the used
+<<nav-config, profile>>.
+
+.Usage of `eachNavFromLevel`
+----
+{{# eachNavFromLevel minLevel maxDepth [forceMatchingPath] [profileName] }}
+    this.active | this.current | this.level | this.class |
+    this.name | this.url | this.path | this.fields | this.children
+{{/ eachNav }}
+----
+
+[[nav-parameters-fromlevel]]
+.Parameters for `eachNavFromLevel`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `minLevel`
+| Number
+| *Mandatory*
+| The minimum navigation level for each processed element. When the navigation level of the currently
+  displayed page is higher, that value is used instead of this parameter.
+
+| `maxDepth`
+| Number
+| *Mandatory*
+| The maximum depth, starting from (the possibly modified) `minLevel` up to which elements should be
+  processed.
+
+| `forceMatchingPath`
+| Boolean
+| `true`
+| When this parameter is `true` only elements where the first `minLevel` path segments match with
+  the currently displayed page will be processed. Setting this parameter to `false` will also
+  implicitly set the `forceStartpage` parameter as described for the
+  <<nav-optional-parameters, eachNav>> helper to `false`.
+
+| `profileName`
+| String
+| `"default"`
+| The navigation profile to use.
+|===
+
+The elements this helper iterates over, will have the same <<nav-element-attributes, attributes>>
+as for the `eachNav` helper.
+
+.Example for `eachNavFromLevel`
+[source,handlebars]
+----
+{{# eachNavFromLevel 3 4 'side-nav' }}
+<li>
+    <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+
+    {{# eachNavFromFolder this @maxLevel }} <!--1-->
+        <li>
+            <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+        </li>
+    {{/ eachNavFromFolder}}
+</li>
+{{/ eachNavFromLevel }}
+----
+<1> The body of the helper would normally be in a partial template, so it can be
+used recursively. Otherwise the `maxDepth` argument for the `eachNavFromLevel`
+helper, and the passed `@maxLevel` argument for the `eachNavFromFolder` helper,
+are superfluous because the levels are already determined by the template. It
+was done this way to keep the example simple.
+
+[[helper-eachnavfromfixedlevel]]
+=== Helper `eachNavFromFixedLevel`
+
+This helper will iterate over all navigation elements at the specified `minLevel`.
+level of the currently displayed page, whichever is higher.
+
+The <<helper-eachnavfromlevel, eachNavFromLevel>> is a variant, that will start at the given
+level, or the level of the currently displayed page.
+
+No output will be produced, when the currently displayed page is not at least at the specified level.
+
+In the block body of this helper the variable `@maxLevel` will be set to the (possibly modified)
+`minLevel` plus `maxDepth`, to give helpers processing successor a hint about the maximum level.
+
+It is intended as an alternative to the <<helper-eachnav, eachNav>> helper, to
+start iterating over navigation elements. The
+<<helper-eachnavfromfolder, eachNavFromFolder>> helper is intended for
+recursively processing successors.
+
+As with the <<helper-eachnav, eachNav>> helper, elements which are hidden from the navigation are skipped.
+
+When using this helper, the result will be wrapped with the `prefix` and `postfix` of the used
+<<nav-config, profile>>.
+
+.Usage of `eachNavFromFixedLevel`
+----
+{{# eachNavFromFixedLevel minLevel maxDepth [forceMatchingPath] [profileName] }}
+    this.active | this.current | this.level | this.class |
+    this.name | this.url | this.path | this.fields | this.children
+{{/ eachNav }}
+----
+
+The available parameters are the same as for the <<nav-parameters-fromlevel, eachNavFromLevel>> helper.
+
+The elements this helper iterates over, will have the same <<nav-element-attributes, attributes>>
+as for the `eachNav` helper.
+
+.Example for `eachNavFromFixedLevel`
+[source,handlebars]
+----
+{{# eachNavFromFixedLevel 3 4 'side-nav' }}
+<li>
+    <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+
+    {{# eachNavFromFolder this @maxLevel }} <!--1-->
+        <li>
+            <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+        </li>
+    {{/ eachNavFromFolder}}
+</li>
+{{/ eachNavFromFixedLevel }}
+----
+<1> The body of the helper would normally be in a partial template, so it can be
+used recursively. Otherwise the `maxDepth` argument for the
+`eachNavFromFixedLevel` helper, and the passed `@maxLevel` argument for the
+`eachNavFromFolder` helper, are superfluous because the levels are already
+determined by the template. It was done this way to keep the example simple.
+
+[[helper-eachnavfromfolder]]
+=== Helper `eachNavFromFolder`
+
+This helper will iterate over the children of the specified navigation element,
+but will check visibility of the specified element first. This helper is most
+useful in fragments which recursively render navigation elements.
+
+As with the <<helper-eachnav, eachNav>> helper, elements which are hidden from the navigation are skipped,
+and additionally the children of the specified element will be skipped if one of the following is true:
+
+* their level would exceed the specified `maxLevel`
+* the specified folder does not have a startpage and `forceStartpage` is `true`
+* none of the children is visible because of these rules
+
+When using this helper, the result will be wrapped with the `prefix` and `postfix` of the used
+<<nav-config, profile>>.
+
+.Usage of `eachNavFromFolder`
+[source,handlebars]
+----
+{{# eachNavFromFolder folder [maxLevel] [forceStartpage] [profileName] }}
+    this.active | this.current | this.level | this.class |
+    this.name | this.url | this.path | this.fields | this.children
+{{/ eachNavFromFolder }}
+----
+
+.Parameters for `eachNavFromFolder`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `folder`
+| JsonObject
+| *Mandatory*
+| The folder which children should be iterated over.
+
+| `maxLevel`
+| Number
+| unlimited
+| The maximum depth up to which elements should be processed.
+
+| `forceStartpage`
+| Boolean
+| `false`
+| When this parameter is `true` only elements with a startpage URL will be considered by
+  this helper.
+
+| `profileName`
+| String
+| `"default"`
+| The navigation profile to use.
+|===
+
+The elements this helper iterates over, will have the same <<nav-element-attributes, attributes>>
+as for the `eachNav` helper.
+
+In the following example `this` refers to a navigation element that is provided by any of the
+`eachNav*` helpers, and it is assumed that the markup is in the partial template found in
+__partials/navigation/main_nav_elements.hbs__.
+
+.Example for `eachNavFromFolder`
+[source,handlebars]
+----
+<li>
+    <a href="{{{ this.url }}}" class="{{{ this.class }}}">{{{ this.name }}}</a>
+
+    {{# eachNavFromFolder this true }}
+        {{> partials/navigation/main_nav_elements }}
+    {{/ eachNavFromFolder }}
+</li>
+----
+
+=== Helper `minNavLevel`
+
+A block helper which checks if the currently displayed page is at least at the specified navigation
+level.
+
+When this is true, the contents of the block will be rendered, otherwise the contents of the
+`{{ else }}` block.
+
+.Usage of `minNavLevel`
+[source,handlebars]
+----
+{{# minNavLevel minLevel }}
+    <!-- Markup when the page is at least at navigation level minLevel -->
+{{ else }}
+    <!-- Markup when the page is below navigation level minLevel -->
+{{/ minNavLevel }}
+----
+
+.Parameters for `visibleInNav`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `minLevel`
+| Number
+| *Mandatory*
+| The minimum navigation level to check against.
+|===
+
+=== Helper `visibleInNav`
+
+A block helper which checks if the specified navigation element should be
+visible. When the element is visible the contents of the block will be rendered,
+otherwise the contents of the `{{ else }}` block.
+
+The `eachNav*` helpers above all already include this behavior, so this helper is intended for very
+special cases which cannot be covered with them.
+
+.Usage of `visibleInNav`
+[source,handlebars]
+----
+{{# visibleInNav folder [maxLevel] [forceStartpage] }}
+    <!-- Markup when element is visible -->
+{{ else }}
+    <!-- Markup when element is not visible -->
+{{/ visibleInNav }}
+----
+
+.Parameters for `visibleInNav`
+[%header]
+|===
+| Parameter | Type | Default value | Description
+
+| `folder`
+| JsonObject
+| *Mandatory*
+| The navigation element to check for visibility.
+
+| `maxLevel`
+| Number
+| unlimited
+| The maximum depth up to which elements should be processed.
+
+| `forceStartpage`
+| Boolean
+| `false`
+| When this parameter is `true` only elements with a startpage URL will be considered by this helper.
+|===

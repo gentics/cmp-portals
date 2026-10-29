@@ -1,0 +1,18 @@
+<table>
+	<thead>
+		<tr>
+			<th>String ({{{ stringValue }}})</th>
+			<th>Number ({{{ intValue }}})</th>
+			<th>Boolean ({{{ booleanValue }}})n</th>
+		</tr>
+	</thead>
+	<tbody>
+{{# each data }}
+		<tr>
+			<td>{{{ this.stringValue }}}</td>
+			<td>{{{ this.intValue }}}</td>
+			<td>{{{ this.booleanValue }}}</td>
+		</tr>
+{{/ each }}
+	</tbody>
+</table>

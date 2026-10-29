@@ -1,0 +1,115 @@
+---
+title: Form Generator
+description: "Set up the Form Generator app to work with the Mesh Forms plugin."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The Form Generator plugin is not included with {{%Mesh%}} by default. In this article, you will learn how to configure this functionality.
+
+== Enable Forms plugin
+
+The Forms feature is enabled by default in {{%GPPHP%}}, which renders the FormGen app to handle requests to the Mesh Forms Plugin. The built FormGen app is by default expected to reside in `public/formgen` and is served under the same path. If the setup requires a custom setup, the paths have to be configured in the portal configuration under the keys `forms.staticFileDirectory` and `forms.staticServePath` respectively.
+
+Because the plugin is not included by default with {{%Mesh%}}, please contact our Team.
+
+=== Serving the FormGen app
+
+The FormGen app served by {{%GPPHP%}} is also used for previewing pages in {{%CMS%}}, so the setup must make sure to serve the contents of `public/formgen` with the `Access-Control-Allow-Origin` HTTP header set to `*`, so it can be loaded inside a preview of the CMS. For example for Apache:
+
+```
+<Directory "/portal/public/formgen">
+    Header set Access-Control-Allow-Origin "*"
+</Directory>
+```
+
+== Render forms from views
+
+The recommended way to render forms is to use the `renderForm` helper in a view. This helper will insert the necessary markup to load the FormGen React Native app (see link:https://www.gentics.com/Content.Node/cmp8/guides/formgen.html[FormGen Customizing] for details) which in turn renders the form.
+
+=== Setting base URL
+
+For the preview of forms in pages inside the {{%CMS%}}, the respective blade template must insert a `<base>` tag with the portal URL in the HTML header, so that the URLs for the FormGen files are resolved correctly. The `portalBaseUrl` renders the portal URL. For example:
+
+```
+<html>
+    <head>
+        ...
+
+	    @if(isCmsPreview())
+	    <base href="{{ Helper::portalBaseUrl() }}">
+	    @endif
+    </head>
+    ...
+</html>
+```
+
+=== `renderForm` helper
+
+```php
+@renderForm('<formUuid>')
+```
+
+To render an existing but not yet completely filled form you can pass the form cookie value as an option. The Form Generator feature loads the `$COOKIE_NAME` cookie (default: `fg-data`) into all views into the `$fgCookie` variable. This variable contains the cookie name (`$fgCookie['key']`) and the cookie value (`$fgCookie['value']`).
+The `@renderForm` helper supports passing options, like this cookie value:
+
+*With static variables:*
+```php
+@renderForm('<formUuid>', ['forms-data' => '<cookieValue>'])
+```
+
+*With passed variables (assuming you have a `formUuid` field on your node):*
+```php
+@renderForm($node['fields']['formUuid'], [$fgCookie['key'] => $fgCookie['value']])
+```
+
+It is also possible to add the language for the form via the `language` variable:
+*With static variables:*
+```php
+@renderForm('<formUuid>', ['forms-data' => '<cookieValue>', 'language' => 'de'])
+```
+
+Since Gentics CMP supports different types of forms, the parameters `pluginName` and `externalId` are used to specify the Mesh plugin that will handle requests for the form (with `forms` being the Mesh Forms plugin):
+*With static variables:*
+```php
+@renderForm('<formUuid>', ['pluginName' => 'forms', 'externalId' => '<externalFormId>'])
+```
+
+New versions of the Mesh forms plugin support poll forms and adding a template context to customize rendering. The template context will be concatenated with the base template path configured in the plugin, and if a needed template is found in this path it is prioritized over generic templates.
+*With static variables:*
+```php
+@renderForm('<formUuid>', ['templateContext' => 'customFormTheme'])
+```
+
+When rendering poll forms, the plugin will render the results, only if it determines that the user already participated in that poll. Rendering the results can also be forced by setting the `showResults` option:
+
+*Example:*
+```php
+@renderForm('<formUuid>', ['showResults' => true])
+```
+
+*Disable caching for any page that uses renderForm (or fgRender) directive:*
+Add 'renderForm' to `portal.php` config in `cache.http.exceptions`.
+
+Example:
+```php
+'cache' => [
+        //[...]
+        'http' => [
+            //[...]
+            'exceptions' => [
+                'renderForm',
+            ]
+        ]
+    ],
+```
+
+=== Rendering `submitOnce` results
+
+Forms with the flag `submitOnce` set (which is for example used for poll forms, which a user can fill out once and then only sees the results of the poll) are rendered using a blade template that is configurable under `forms.pollResultsTemplate` in `config/portal.php`. The default path is `forms/form`, which means the blade template must be in the directory `resources/views/forms` and have the filename `form.blade.php`. A simple example for such a template, can be found in the link:https://www.gentics.com/implementation/cmp8.5/forms/forms[Implementation guides].
+
+=== FormGen app
+
+The FormGen app must be built and its output placed as a `formgen` subdirectory inside the directory configured under `forms.staticFileDirectory` in `config/portal.php` (which defaults to the public webroot itself, so the build output is expected at `public/formgen/...`). For more information on the FormGen app see link:https://www.gentics.com/Content.Node/cmp8/guides/formgen.html[FormGen Customization]. The directory is served under the path configured as `forms.staticServePath` (defaulting to `/`, the site root), so with the defaults the app ends up served at `/formgen/...`, matching the FormGen app's own compiled base path.

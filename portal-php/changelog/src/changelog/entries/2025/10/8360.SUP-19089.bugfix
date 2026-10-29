@@ -1,0 +1,7 @@
+Fixed handling of @AUTH_REFRESH@ cookie expiration:
+
+* Fixed an issue where the @AUTH_REFRESH@ cookie was set with a negative expiration time in Laravel versions >= 8.1.
+  This caused the cookie not to be set at all, leading to immediate user logout once the Keycloak @Access Token Lifespan@ expired.
+* The expiration time of the cookie is now calculated correctly from the @exp@ claim of the refresh token, ensuring that
+  the cookie always remains valid until the token actually expires.
+* This fix restores proper session refresh behavior, making the @Session Idle Timeout@ in Keycloak effective again.

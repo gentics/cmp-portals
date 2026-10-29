@@ -1,0 +1,1 @@
+Now a `contenttype` field of a `content`-schemed Mesh page is considered while setting a `Content-Type` HTTP response header value.

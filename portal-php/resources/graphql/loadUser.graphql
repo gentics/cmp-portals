@@ -1,0 +1,8 @@
+{
+    me {
+        uuid
+        username
+        rolesHash
+        emailAddress
+    }
+}

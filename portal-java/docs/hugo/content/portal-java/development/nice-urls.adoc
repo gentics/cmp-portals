@@ -1,0 +1,26 @@
+---
+title: Nice URLs
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+Using the link:https://www.gentics.com/Content.Node/cmp8/guides/nice_urls.html[Gentics CMS Feature Nice URLs] one resource may be reachable with different URLs.
+It is highly advisable to communicate this to search engine crawlers to avoid duplicate content. See link:https://developers.google.com/search/docs/advanced/crawling/consolidate-duplicate-urls[Consolidate duplicate URLs].
+
+* Fist make sure you have the fields `nice_url` and `alternate_urls` setup in your projects contentrepository's tagmap.
+* Add the fields to your graphQl query (`content.graphql`)
+* Use this example implementation in a handlebars template as a content of the `<head>` element:
+
+[source,html]
+----
+{{#unless node.fields.nice_url}}
+<link rel="canonical" href="{{node.path}}" />
+{{else}}
+<link rel="canonical" href="{{node.fields.nice_url}}" />
+<link rel="alternate" href="{{node.path}}" />
+{{/unless}}
+{{#each node.fields.alternate_urls}}
+<link rel="alternate" href="{{this}}" />
+{{/each}}
+----

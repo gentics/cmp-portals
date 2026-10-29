@@ -1,0 +1,3 @@
+fragment fragmentsFragment on Node {
+    uuid
+}

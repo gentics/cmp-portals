@@ -1,0 +1,13 @@
+{
+	"node": {
+		"languages": [
+			{
+				"language": "en",
+				"path": "/error.500.en.html"
+			},
+			{
+				"language": "de",
+				"path": "/error.500.de.html"				}
+		]
+	}
+}

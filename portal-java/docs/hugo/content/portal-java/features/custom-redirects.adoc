@@ -1,0 +1,42 @@
+---
+title: Custom redirects
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+When a page for a request cannot be found, the portal will check if there are
+link:../development/configuration.html#_custom_redirect[custom redirects] configured, and if the URL that caused the _404
+Not Found_ error has an entry in this map, the client will be redirected accordingly.
+
+Whether those redirects will send a `301 Moved Permanently` or a `303 See Other` is controlled by the
+`redirects.custom.permanentRedirects` setting.
+
+## Specifying redirects
+
+Data about redirects can be loaded from Mesh by the `RedirectHandler` itself, or by the
+link:data-provider.html[DataProviderVerticle].
+
+When the `RedirectHandler` should load the page containing redirects itself, the value of the
+`redirects.custom.source` setting is the path to the page. The `redirects.custom.reload` setting controls whether
+this page is loaded every time the `RedirectHandler` is activated (when set to `true`), or if the redirects are only
+loaded once (when set to `false`).
+
+To use data loaded by the `DataProviderVerticle` the value for `redirects.custom.source` must begin with
+`dataProvider:` and after that a valid data key must be specified.
+
+## Redirect helper
+
+The page loaded either by the `RedirectHandler` or the `DataProviderVerticle` is a normal node from Mesh with the
+`[schemaPrefix]_content` schema.footnote:[With `schemaPrefix` being either the value of `meshSchemaPrefix`, or if
+that is not set the `meshProjectName`.]
+
+The actual mapping from old URL to new URL will be extracted by an implementation of the `RedirectHelper` interface,
+which `convertData()` method gets a JsonObject with the loaded Mesh node, is must return a mapping between URLs.
+
+Which implementation is to be used, is configured by specifying the fully qualified class name of the implementation
+in `redirects.custom.helperClass`.
+
+When the `RedirectHandler` is initialized, the settings from `redirects.custom.helperConfig` will be passed to the
+used ``RedirectHelper``s `init()` method.

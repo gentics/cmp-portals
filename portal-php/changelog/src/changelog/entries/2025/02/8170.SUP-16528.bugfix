@@ -1,0 +1,1 @@
+Fixed multilingual sitemap generation to support both legacy behavior and the standard multilingual approach that includes all available language variants. Configuration options allow you to choose which mode to use.

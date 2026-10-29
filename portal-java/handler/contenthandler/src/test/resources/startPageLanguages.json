@@ -1,0 +1,13 @@
+{
+	"node": {
+		"languages": [
+			{
+				"language": "en",
+				"path": "/startpage.en.html"
+			},
+			{
+				"language": "de",
+				"path": "/startseite.de.html"				}
+		]
+	}
+}

@@ -1,0 +1,3 @@
+The default value of the configuration setting @mesh.proxyHeaderWhitelist@, which defines the request headers,
+which are forwarded to Mesh now also includes @Referer@, because this header is necessary for the forms plugin when using
+multipage forms.

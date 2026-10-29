@@ -1,0 +1,49 @@
+query ($path: String, $language: String, $withChildren: Boolean = false) {
+	node(path: $path) {
+		uuid
+		language
+		path
+		schema {
+			name
+		}
+		breadcrumb(lang: [ $language, "en" ]) {
+			uuid
+			path
+			... breadcrumbFields
+			node(lang: [ $language, "en" ]) {
+				uuid
+				path
+				fields {
+					... on %folderSchema% {
+						navhidden
+						startpage {
+							uuid
+							languages {
+								language
+								path
+							}
+						}
+					}
+				}
+				... breadcrumbFields
+			}
+		}
+		fields {
+			... contentFields
+			... folderFields
+		}
+		parent {
+			uuid
+			... parentInfo
+		}
+		children(lang: [ $language ]) @include(if: $withChildren){
+			elements {
+				language
+				path
+				fields {
+					... folderContentsFields
+				}
+			}
+		}
+	}
+}

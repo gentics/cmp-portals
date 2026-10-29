@@ -1,0 +1,101 @@
+---
+title: Helpers
+description: "Built-in helpers for the base URL, navigation and breadcrumbs, and how to extend them."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} has some built-in helpers for navigation, breadcrumbs and the portal's base URL. However, these can be easily extended.
+
+== `portalBaseUrl` helper
+
+Returns the absolute base URL of the portal, e.g. to render a `<base>` tag when portal markup is embedded on another domain (such as form previews rendered inside the Gentics CMS):
+
+```php
+{{ Helper::portalBaseUrl() }}
+```
+
+The value is taken from `config('app.url')`.
+
+== Add a single helper
+
+Adding a new helper can be done with the `Helper::add()` method, which is based on Laravel macros:
+
+```php
+// use Gentics\PortalPhp\Features\Helpers\Helper;
+Helper::add('toLowerCase', function (string $string) {
+    return strtolower($string);
+});
+```
+
+Then the helper can be used by calling it as a static function on the `Helper` class:
+
+```php
+echo Helper::toLowerCase('Test String'); // -> 'test string'
+```
+
+A helper can be used in Blade views too:
+
+```php
+{{ Helper::toLowerCase('Test String') }}
+```
+
+The helpers should be defined in a ServiceProvider in the application to make it globally available. It is possible to
+add a Helper from a Controller's action. The helper will be available once the action got called.
+
+WARNING: Helper names must be unique globally! None-unique helper names will cause an exception.
+
+== Add a helper class
+
+It is possible to add a helper collection as a class. It must extend the `BaseHelper` class:
+
+```php
+use Gentics\PortalPhp\Features\Helpers\BaseHelper;
+
+class MyHelpers extends BaseHelper
+{
+    // Helper::lowerCase('String'); -> 'string'
+    public function lowerCaseHelper (string $string)
+    {
+        return strtolower($string);
+    }
+    
+    // Helper::upperCase('String'); -> 'STRING'
+    public function upperCaseHelper (string $string)
+    {
+        return strtoupper($string);
+    }
+}
+```
+
+Then an instance should be created from this class in a ServiceProvider which adds all the helpers from the class.
+
+NOTE: The helper functions must end with `Helper` and must be public. Other functions will not be added to the helpers, but they can be used in the helper functions.
+
+It is possible to change the `Helper` method name ending in the class and it is possible to add a prefix to the helper functions:
+
+```php
+use Gentics\PortalPhp\Features\Helpers\BaseHelper;
+
+class MyHelpers extends BaseHelper
+{
+    protected static $helperMethodSuffix = 'Utility';
+    protected static $helperMacroPrefix = 'my';
+
+    // Helper::myLowerCase('String'); -> 'string'
+    public function lowerCaseUtility (string $string)
+    {
+        return strtolower($string);
+    }
+    
+    // Helper::myUpperCase('String'); -> 'STRING'
+    public function upperCaseUtility (string $string)
+    {
+        return strtoupper($string);
+    }
+}
+```
+
+TIP: Use prefixes to make the helper method names unique.

@@ -1,0 +1,21 @@
+<h2>Breadcrumb</h2>
+<nav role="navigation">
+	<ol itemscope itemtype="http://schema.org/BreadcrumbList">
+		<li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+			<a itemprop="item" href="/">
+				<span itemprop="name">Home</span>
+			</a>
+		</li>
+		{{# eachBc data.node false }}
+		<li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+			{{# if this.trimmed }}
+			<span>...</span>
+			{{ else }}
+			<a itemprop="item" href="{{{ this.url }}}">
+				<span itemprop="name">{{# if this.current }}&gt;{{/ if }}{{{ this.name }}}</span>
+			</a>
+			{{/ if }}
+		</li>
+		{{/ eachBc }}
+  </ol>
+</nav>

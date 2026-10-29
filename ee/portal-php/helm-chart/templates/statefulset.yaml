@@ -1,0 +1,34 @@
+{{- /*
+Legacy controller, kept for installations created before the Deployment became
+the default. New installations should use controller.kind=Deployment.
+*/}}
+{{- if eq (include "gentics-portal-php.controllerKind" .) "StatefulSet" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "gentics-portal-php.fullname" . }}
+  labels:
+    {{- include "gentics-portal-php.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gentics-portal-php.selectorLabels" . | nindent 6 }}
+  serviceName: "portal"
+  {{- with .Values.controller.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- include "gentics-portal-php.podTemplate" . }}
+  {{- if eq (include "gentics-portal-php.persistentCacheMode" .) "template" }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        {{- with .Values.persistence.data.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      spec:
+        {{- toYaml .Values.persistence.data.spec | nindent 8 }}
+  {{- end }}
+{{- end }}

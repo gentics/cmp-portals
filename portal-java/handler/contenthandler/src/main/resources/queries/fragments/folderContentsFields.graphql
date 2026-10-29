@@ -1,0 +1,3 @@
+fragment folderContentsFields on %contentSchema% {
+  title
+}

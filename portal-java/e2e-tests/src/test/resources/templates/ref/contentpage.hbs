@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="{{{ data.node.language }}}">
+	<head>
+		<title>Gentics Portal | java - {{{ data.node.fields.name }}}</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="description" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="/static/reference/files/css/styles.css" media="all" />
+	</head>
+	<body>
+		<section>
+			{{> partials/navigation/contentnav }}
+			<header>
+				{{> partials/header }}
+				{{> partials/navigation/breadcrumb }}
+			</header>
+
+			<main role="main">
+				<hr>
+				<div>
+					{{# minNavLevel 3 }}
+						We are at least at navigation level 3.
+					{{ else }}
+						We are below navigation level 3.
+					{{/ minNavLevel }}
+				</div>
+
+				<hr>
+				<h3>Sidenav dynamic (min level 3)</h3>
+				{{# eachNavFromLevel 3 0 'aside' }}
+					{{> partials/navigation/sidenav }}
+				{{/ eachNavFromLevel }}
+
+				<hr>
+				<h3>Sidenav fixed (levels 3 & 4)</h3>
+				{{# eachNavFromFixedLevel 3 1 'aside' }}
+					{{> partials/navigation/sidenav }}
+				{{/ eachNavFromFixedLevel }}
+
+				<article>
+					<header>
+						<h1>{{{ data.node.fields.title }}}</h1>
+					</header>
+					<h2>Static test content</h2>
+					<div>
+						<ul>
+							<li>Greeting (dynamic): {{{ i18n 'misc.welcome' }}}</li>
+							<li>Greeting (english): {{{ i18n 'misc.welcome' 'en' }}}</li>
+							<li>Greeting (german): {{{ i18n 'misc.welcome' 'de' }}}</li>
+							<li>Special bundle (english): {{{ i18n 'test' 'en' 'special' }}}</li>
+							<li>Special bundle (german): {{{ i18n 'test' 'de' 'special' }}}</li>
+						</ul>
+						<hr>
+						{{!-- helloWorld helper --}}
+						<p>example helper output: {{{ helloWorld }}}</p>
+
+						<hr>
+						<p>accessing data from custom handlers: {{{ hello_world_handler_data }}}</p>
+						<p>another custom handler is available under: <a href=/api/hello target=_blank>/api/hello/</a></p>
+
+						<hr>
+						<p>
+							Page render mode: {{ getRenderMode }}.
+						</p>
+
+						{{# renderMode 'invalid_mode' }}
+							<p>
+								This should not be visible since it is an invalid mode.
+							</p>
+						{{/ renderMode }}
+
+						{{# renderMode 'unknown' }}
+							<p>
+								This is only visible in <code>unknown</code> mode.
+							</p>
+						{{/ renderMode }}
+
+						{{# renderMode 'publish' }}
+							<p>
+								This is only visible in <code>publish</code> mode.
+							</p>
+						{{/ renderMode }}
+
+						{{# renderMode 'preview' }}
+							<p>
+								This is only visible in <code>preview</code> mode.
+							</p>
+						{{/ renderMode }}
+
+						{{# renderMode 'edit' }}
+							<p>
+								This is only visible in <code>edit</code> mode.
+							</p>
+						{{/ renderMode }}
+					</div>
+
+					<h2>CMS page content</h2>
+					<div>
+						{{{ data.node.fields.teaser }}}
+					</div>
+					<div>
+						{{!-- evaluate helper rendering page content --}}
+						{{{ evaluate data.node.fields.pagecontent }}}
+					</div>
+				</article>
+			</main>
+			<footer>
+				<grid>
+					<div col="1/2">
+						<p>Created by
+							<a att href="http://www.gentics.com" target="_blank">Gentics</a>
+						</p>
+					</div>
+
+					<div col="1/2" txt="r">
+						{{{ config.fields.footerlinks }}}
+					</div>
+				</grid>
+			</footer>
+		</section>
+		<script src="/static/reference/files/js/main.js"></script>
+	</body>
+</html>

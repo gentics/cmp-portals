@@ -1,0 +1,95 @@
+{
+	"rootNode": {
+		"children": {
+			"elements": [
+				{
+					"uuid": "f815fa63486c11e88438005056a9ea60",
+					"path": "/ref",
+					"fields": {
+						"name": "Reference",
+						"navsortorder": null,
+						"startpage": {
+							"languages": [
+								{
+									"language": "en",
+									"path": "/ref/start.en.html"
+								},
+								{
+									"language": "de",
+									"path": "/ref/start.de.html"
+								}
+							]
+						}
+					},
+					"children": {
+						"elements": [
+							{
+								"uuid": "7151e59b8c3211e885740242ac150002",
+								"path": "/ref/products",
+								"fields": {
+									"name": "Products",
+									"navsortorder": 2.0,
+									"navhidden": false,
+									"startpage": {
+										"languages": [
+											{
+												"language": "en",
+												"path": "/ref/products/Products.en.html"
+											}
+										]
+									}
+								},
+								"children": {
+									"elements": [
+									]
+								}
+							},
+							{
+								"uuid": "1dd49e67c35811eaab120242ac140004",
+								"path": "/ref/private",
+								"fields": {
+									"name": "Private",
+									"navsortorder": null,
+									"navhidden": true,
+									"startpage": {
+										"languages": [
+											{
+												"language": "en",
+												"path": "/ref/private/Private.en.html"
+											}
+										]
+									}
+								},
+								"children": {
+									"elements": [
+									]
+								}
+							},
+							{
+								"uuid": "76a1e00c8c3211e885740242ac150002",
+								"path": "/ref/about",
+								"fields": {
+									"name": "About",
+									"navsortorder": 1.0,
+									"navhidden": false,
+									"startpage": {
+										"languages": [
+											{
+												"language": "en",
+												"path": "/ref/about/About_us.en.html"
+											}
+										]
+									}
+								},
+								"children": {
+									"elements": [
+									]
+								}
+							}
+						]
+					}
+				}
+			]
+		}
+	}
+}

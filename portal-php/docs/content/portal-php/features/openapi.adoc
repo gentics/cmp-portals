@@ -1,0 +1,35 @@
+---
+title: OpenAPI
+description: "Generate an OpenAPI v3.0 specification for publicly available resources."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} has an ability to provide an OpenAPI v3.0 specification for every publicly available resource. This feature is powered by the https://scribe.knuckles.wtf/laravel[Scribe] package.
+
+== Setup 
+
+Prerequisites: as OpenAPI feature requires access to the Laravel cache, please make sure the user running the web server has read/write/new file or directory creation access to the `/portal/bootstrap/cache/scribe` directory.
+
+To enable the OpenAPI feature, your project has to extend some {{%GPPHP%}} classes instead of the default ones:
+
+* `Gentics\PortalPhp\Console\Kernel` in place of `Illuminate\Foundation\Console\Kernel`
+* `Gentics\PortalPhp\Providers\ServiceProvider` in place of `Illuminate\Support\ServiceProvider`
+
+Next, the Scribe configuration file has to be published. It is done automatically during the startup, but for troubleshooting you can also do it manually with the following command:
+
+```php
+php artisan vendor:publish --tag=scribe-config
+```
+
+Last, set the `openApi.enable` configuration in the `config/portal.php` file to `true`. The OpenAPI specification will be available at the `/api/openapi.yaml` endpoint.
+
+== Fine tuning
+
+The content of `config/scribe.php` is described at https://scribe.knuckles.wtf/laravel/reference/config[the official documentation]. However, it's worth noting that the config served along with {{%GPPHP%}} is already tuned for the best experience. Please refrain from modifying it unless necessary.
+
+== Example
+
+Can be checked at the link:../examples/api/openapi.yaml[link].

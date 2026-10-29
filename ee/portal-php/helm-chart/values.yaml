@@ -1,0 +1,232 @@
+# Default values for gentics-portal.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  # The portal | php has no pre-built image. A CI job needs to be setup to provide the image.
+  # Reference the image which you build here.
+  # registry and repository are combined to "registry/repository:tag";
+  # global.imageRegistry (umbrella mirror override) takes precedence over registry.
+  
+  #registry: docker.gentics.com
+  #repository: YOUR_ID/PROJECT-portal
+  tag: latest
+  pullPolicy: IfNotPresent
+
+## Image pull secrets for the portal image (Kubernetes-native array format).
+## Leave the key ABSENT (commented) to inherit global.imagePullSecrets / default docker-gentics-com
+## Set it to an EMPTY list ([]) to pull WITHOUT any secret
+#imagePullSecrets:
+#  - name: docker-gentics-com
+
+nameOverride: ""
+fullnameOverride: ""
+
+mesh:
+  ## URL of the Gentics Mesh instance the portal connects to.
+  ## REQUIRED for standalone installs. Under the CMP umbrella chart it is
+  ## auto-wired to the bundled Mesh service ("http://<release>-mesh:80") when left empty.
+  url: ""
+  #secretName: "my-mesh-secret" ## Gentics Mesh API Key secret
+  #apikey: "" ## Or pre-defined Gentics Mesh API KEY (if not set, the secret will be used)
+  ## Key inside the API-key secret (default "apikey").
+  #secretKey: "apikey"
+  ## Let the portal image generate the Mesh API key itself (AUTOGENERATE_MESH_API_KEY).
+  #autogenerate_apikey: "false"
+
+
+controller:
+  ## Workload controller to deploy the portal with: "Deployment" or "StatefulSet".
+  kind: Deployment
+
+  ## Deployment only — spec.strategy. Empty means the Kubernetes default
+  ## (RollingUpdate with maxSurge 25% and maxUnavailable 25%).
+  ##
+  ## Note: persistence is enabled by default. On a ReadWriteMany class (the
+  ## default) the surge is fine, but on a ReadWriteOnce class the extra pod
+  ## cannot attach the volume and the rollout deadlocks — use maxSurge 0 or
+  ## type Recreate in that case.
+  strategy: {}
+  #  type: RollingUpdate
+  #  rollingUpdate:
+  #    maxSurge: 1
+  #    maxUnavailable: 0
+
+  ## StatefulSet only — spec.updateStrategy. Empty means the Kubernetes default
+  ## (RollingUpdate, pods replaced one at a time in reverse ordinal order).
+  updateStrategy: {}
+  #  type: RollingUpdate
+  #  rollingUpdate:
+  #    partition: 0
+
+
+autoscaling:
+  enabled: false
+  maxReplicas: 10
+  minReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+## PodDisruptionBudget — applied when replicaCount > 1 or autoscaling.enabled is true.
+podDisruptionBudget:
+  ## Minimum number/percentage of pods that must stay available during
+  ## voluntary disruptions (node drains, cluster upgrades).
+  minAvailable: "50%"
+  ## Alternative to minAvailable — if set, it is used INSTEAD of minAvailable
+  ## (Kubernetes allows only one of the two).
+  # maxUnavailable: 1
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  useHttp2: false
+  ## targetPort of the service (default: the "http" container port).
+  #targetPort: http
+  ## Name of the service port (default "http").
+  #name: http
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx # Kubernetes <1.19
+    # kubernetes.io/tls-acme: "true"
+  #ingressClassName: nginx # Kubernetes >=1.19
+  host: chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 4000m
+    memory: 384Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+## Add extra configurations to the Portal via Environment Variables
+## It is possible to specify new variables on project level
+extraEnv: []
+
+## Name of an EXISTING ConfigMap that is mounted as the complete /portal/config
+## directory. WARNING: the mount replaces ALL config files shipped in the image —
+## the ConfigMap must contain every config file the portal needs.
+## Leave empty (default) to use the configuration built into the image.
+existingConfigmap: ""
+
+# Define additional volumes which can be
+# added to the started pods
+#extraVolumes:
+#  - name: "extra"
+#    mount:
+#      mountPath: /Node/tmp/extra.conf
+#      subPath: extra.conf
+#    volume:
+#      persistentVolumeClaim:
+#        claimName: "extra"
+#  - name: "extra2"
+#    mount:
+#      mountPath: /Node/tmp/extra2.conf
+#    volume:
+#      persistentVolumeClaim:
+#        claimName: extra2
+
+# Define extraVolumeMounts using existing volumes
+# Can be used for persisting custom data in e.g. the shared portal volume
+#extraVolumeMounts:
+#  - mountPath: "/sharedfolder/custom"
+#    subPath: "custom"
+#    name: "shared"
+
+persistence:
+  enabled: true
+
+  ## Whether the shared Portal volume survives "helm uninstall".
+  ## Unset: follows global.persistence.keepOnUninstall, defaulting to true (keep).
+  ## Leave commented so the global umbrella switch stays effective.
+  # keepOnUninstall: true
+
+  ## Per-pod volume for the PHP bootstrap and framework caches
+  ## (/portal/bootstrap/cache and /portal/storage/framework/cache).
+  ##
+  ## ONLY EFFECTIVE WITH controller.kind=StatefulSet. These caches are per-pod
+  ## state and are provisioned through volumeClaimTemplates, which a Deployment
+  ## does not have — with the default controller this whole block is ignored and
+  ## the caches live in the container layer (rebuilt on every pod start).
+  data:
+    ## Set to true to keep the caches in the container layer even on a StatefulSet.
+    disablePersistentCache: false
+    ## Mount an EXISTING claim instead of creating one per pod. The claim is then
+    ## shared by ALL pods, so use it only with replicaCount 1 or an RWX class.
+    # existingClaim: ""
+    annotations: {}
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      # storageClassName: ""
+      resources:
+        requests:
+          storage: 4Gi
+
+  shared:
+    # existingClaim: ""
+    annotations: {}
+    spec:
+      accessModes:
+        - ReadWriteMany
+      # storageClassName: ""
+      resources:
+        requests:
+          storage: 1Gi
+
+## Container ports (named "http" / "https" in the pod spec).
+#httpPort: 80
+#httpsPort: 443
+
+## Host header sent with the liveness/readiness probes (default "portal").
+#portalHost: "portal"
+
+#Liveness / Readiness Probe
+portalProbeScheme: HTTP
+portalProbePortName: http
+
+liveness:
+  period: 15
+  timeout: 3
+  failureThreshold: 2
+
+readiness:
+  period: 15
+  timeout: 3
+  failureThreshold: 2
+
+
+# Controls whether the session storage volume should be mounted.
+# Set to `false` to disable the mounting of /portal/storage/framework/sessions.
+disableSessionsMount: false
+

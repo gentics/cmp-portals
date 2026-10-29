@@ -1,0 +1,3 @@
+The Portal | php has been updated to allow previews of forms in Gentics CMS using the FormGen app.
+For this to work, the Handlebars template used to render a page must render a @base@ element when rendering previews.
+See the "documentation":https://www.gentics.com/guides/latest/portal-php/features/form-generator.html for details.

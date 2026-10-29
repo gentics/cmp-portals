@@ -1,0 +1,132 @@
+query ($path: String, $folderpath: String, $lang: [String]) {
+  project {
+    uuid
+    rootNode {
+      children(lang: $lang perPage:2147483647) {
+        elements {
+          uuid
+          ...navigation
+          children(lang: $lang perPage:2147483647) {
+            elements {
+              uuid
+              ...navigation
+              children(lang: $lang perPage:2147483647) {
+                elements {
+                  uuid
+                  ...navigation
+                  children(lang: $lang perPage:2147483647) {
+                    elements {
+                      uuid
+                      ...navigation
+                      children(lang: $lang perPage:2147483647) {
+                        elements {
+                          uuid
+                          ...navigation
+                          children(lang: $lang perPage:2147483647) {
+                            elements {
+                              uuid
+                              ...navigation
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  node(path: $path) {
+    uuid
+    language
+    schema {
+      name
+    }
+    breadcrumb {
+      uuid
+      ...navigation_breadcrumb
+    }
+    ...navigation_breadcrumb
+    ...contentInfo
+    pages: children(lang: $lang) {
+      elements {
+        path
+        uuid
+        ...contentInfo
+      }
+    }
+  }
+  folder: node(path:$folderpath) {
+    uuid
+    breadcrumb {
+      uuid
+      ...navigation_breadcrumb
+    }
+    ...navigation_breadcrumb
+  }
+}
+
+fragment contentInfo on Node {
+  fields {
+    ...content
+    ... on %folderSchema% {
+      name
+      description(linkType: SHORT)
+      startpage(lang: $lang) {
+        fields {
+          ...content
+        }
+      }
+    }
+  }
+}
+
+fragment content on %contentSchema% {
+  name
+  description(linkType: SHORT)
+  templateName
+  title
+}
+
+fragment navigation on Node {
+  schema {
+    name
+  }
+  path
+  fields {
+    ... on %folderSchema% {
+      name
+      navhidden
+      navsortorder
+      startpage(lang: $lang) {
+        uuid
+        path
+      }
+    }
+  }
+}
+
+fragment navigation_breadcrumb on Node {
+  node(lang: $lang) {
+    schema {
+      name
+    }
+    path
+    language
+    fields {
+      ... on %folderSchema% {
+        name
+        navhidden
+        navsortorder
+        startpage(lang: $lang) {
+          uuid
+          path
+        }
+      }
+    }
+  }
+}

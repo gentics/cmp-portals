@@ -1,0 +1,17 @@
+<!-- navigation START -->
+<nav fx itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+	<label>
+		<!-- will be used for hamburger -->
+		<input type="checkbox">
+		<header>
+			<a href="/">Gentics Portal | java</a>
+		</header>
+		<ul>
+			{{# eachNav }}
+				{{> partials/navigation/contentnavelements }}
+			{{/ eachNav }}
+			<li><a href="/login">{{ i18n 'auth.login' }}</a></li>
+		</ul>
+	</label>
+</nav>
+<!-- navigation END -->

@@ -1,0 +1,12 @@
+query ($path: String, $folderpath: String) {
+    node(path: $path) {
+        breadcrumb {
+            ...fragment1
+        }
+        ...fragment1
+    }
+}
+
+fragment fragment2 on %contentSchema% {
+    ...fragment3
+}

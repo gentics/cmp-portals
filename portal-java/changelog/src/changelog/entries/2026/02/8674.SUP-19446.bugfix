@@ -1,0 +1,1 @@
+When requests are processed the correct context is maintained now even if other threads (like HTTP clients) are used for external requests.

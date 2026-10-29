@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "gentics-portal-php.fullname" . }}-test-connection"
+  labels:
+{{ include "gentics-portal-php.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  {{- /* The image below honours global.imageRegistry, so under an umbrella that
+       points at a private mirror this pod needs the same pull secret chain as
+       the portal pod. imagePullSecrets is pod-scoped, so it cannot inherit it. */ -}}
+  {{- with (include "gentics-portal-php.imagePullSecrets" .) }}
+  {{- . | nindent 2 }}
+  {{- end }}
+  containers:
+    - name: wget
+      image: "{{ include "gentics-common.image" (dict "root" . "image" (dict "registry" "" "repository" "busybox" "tag" "latest")) }}"
+      command: ['wget']
+      args:  ['{{ include "gentics-portal-php.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

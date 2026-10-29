@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "gentics-portal.fullname" . }}-test-connection"
+  labels:
+{{ include "gentics-portal.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: wget
+      image: "{{ include "gentics-common.image" (dict "root" . "image" (dict "registry" "" "repository" "busybox" "tag" "latest")) }}"
+      command: ['wget']
+      args:  ['{{ include "gentics-portal.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

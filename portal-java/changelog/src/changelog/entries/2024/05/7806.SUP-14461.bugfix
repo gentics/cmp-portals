@@ -1,0 +1,1 @@
+Core: Now all the redirections, including error pages, consider the source branch to pick up the correct content.

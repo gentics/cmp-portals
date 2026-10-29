@@ -1,0 +1,9 @@
+{
+	"node": {
+		"uuid": "startpage-en",
+		"schema": {
+			"name": "dummy_content"
+		},
+		"fields": {}
+	}
+}

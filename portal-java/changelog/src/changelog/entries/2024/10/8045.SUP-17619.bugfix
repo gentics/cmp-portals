@@ -1,0 +1,1 @@
+The inclusion of the @gpj.auth.id@ cookie is now strictly dependent on the Keycloak @rpInitiatedLogout@ setting, avoiding its misusage and saving HTTP headers length.

@@ -1,0 +1,293 @@
+{
+	"uuid": "0e0fd5026a984d19acc9ebd947facd27",
+	"displayField": "name",
+	"segmentField": "filename",
+	"urlFields": [],
+	"container": false,
+	"name": "ref_content",
+	"elasticsearch": {
+		"analysis": {
+			"filter": {
+				"german_stop": {
+					"type": "stop",
+					"stopwords": "_german_"
+				},
+				"german_decompose": {
+					"type": "hyphenation_decompounder",
+					"min_subword_size": 4,
+					"word_list_path": "german-wordlist.txt",
+					"hyphenation_patterns_path": "de_DR.xml"
+				},
+				"german_snowball": {
+					"type": "snowball",
+					"language": "German"
+				},
+				"taglist_filter": {
+					"type": "pattern_capture",
+					"patterns": [
+						"(\\S+)"
+					]
+				},
+				"autocomplete_filter": {
+					"type": "edge_ngram",
+					"min_gram": 1,
+					"max_gram": 20
+				}
+			},
+			"analyzer": {
+				"german_text": {
+					"char_filter": "html_strip",
+					"tokenizer": "standard",
+					"filter": [
+						"lowercase",
+						"german_stop",
+						"german_decompose",
+						"german_snowball"
+					]
+				},
+				"german_search": {
+					"char_filter": "html_strip",
+					"tokenizer": "standard",
+					"filter": [
+						"lowercase",
+						"german_stop",
+						"german_snowball"
+					]
+				},
+				"german_suggest": {
+					"char_filter": "html_strip",
+					"tokenizer": "standard",
+					"filter": [
+						"lowercase",
+						"german_stop",
+						"german_decompose"
+					]
+				},
+				"taglist": {
+					"tokenizer": "keyword",
+					"filter": [
+						"lowercase",
+						"taglist_filter"
+					]
+				},
+				"german_autocomplete_index": {
+					"char_filter": "html_strip",
+					"tokenizer": "standard",
+					"filter": [
+						"lowercase",
+						"german_stop",
+						"autocomplete_filter"
+					]
+				},
+				"german_autocomplete_search": {
+					"char_filter": "html_strip",
+					"tokenizer": "standard",
+					"filter": [
+						"lowercase",
+						"german_stop"
+					]
+				}
+			}
+		}
+	},
+	"fields": [
+		{
+			"name": "creatoremail",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "editdate",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "date"
+		},
+		{
+			"name": "publishtimestamp",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "date"
+		},
+		{
+			"name": "contenttype",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "templateName",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "description",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "name",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "content",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "createdate",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "date"
+		},
+		{
+			"name": "publisher",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "filename",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "cms_id",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "number"
+		},
+		{
+			"name": "editoremail",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "publishermail",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "editor",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "creator",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "footerlinks",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "searchtags",
+			"required": false,
+			"elasticsearch": {
+				"taglist": {
+					"type": "keyword"
+				}
+			},
+			"listType": "string",
+			"type": "list"
+		},
+		{
+			"name": "teaser",
+			"required": false,
+			"elasticsearch": {
+				"german_search": {
+					"type": "text",
+					"analyzer": "german_text",
+					"search_analyzer": "german_search"
+				},
+				"german_suggest": {
+					"type": "text",
+					"analyzer": "german_suggest"
+				},
+				"german_autocomplete": {
+					"type": "text",
+					"analyzer": "german_autocomplete_index",
+					"search_analyzer": "german_autocomplete_search"
+				}
+			},
+			"type": "string"
+		},
+		{
+			"name": "title",
+			"required": false,
+			"elasticsearch": {
+				"german_search": {
+					"type": "text",
+					"analyzer": "german_text",
+					"search_analyzer": "german_search"
+				},
+				"german_suggest": {
+					"type": "text",
+					"analyzer": "german_suggest"
+				},
+				"german_autocomplete": {
+					"type": "text",
+					"analyzer": "german_autocomplete_index",
+					"search_analyzer": "german_autocomplete_search"
+				}
+			},
+			"type": "string"
+		},
+		{
+			"name": "pagecontent",
+			"required": false,
+			"elasticsearch": {
+				"german_search": {
+					"type": "text",
+					"analyzer": "german_text",
+					"search_analyzer": "german_search"
+				},
+				"german_suggest": {
+					"type": "text",
+					"analyzer": "german_suggest"
+				},
+				"german_autocomplete": {
+					"type": "text",
+					"analyzer": "german_autocomplete_index",
+					"search_analyzer": "german_autocomplete_search"
+				}
+			},
+			"type": "string"
+		},
+		{
+			"name": "portalapp",
+			"required": false,
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,1 @@
+An OpenAPI v3.0 YAML specification can now be generated under @/api/openapi.yaml@. This feature can be disabled in the config.

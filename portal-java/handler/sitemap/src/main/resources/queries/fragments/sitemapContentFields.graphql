@@ -1,0 +1,3 @@
+fragment sitemapContentFields on %contentSchema% {
+	editdate
+}

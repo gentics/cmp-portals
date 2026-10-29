@@ -1,0 +1,7 @@
+fragment content on %contentSchema% {
+    name
+    description(linkType: SHORT)
+    templateName
+    title
+    pagecontent
+}

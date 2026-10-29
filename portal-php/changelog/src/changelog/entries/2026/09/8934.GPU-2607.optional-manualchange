@@ -1,0 +1,6 @@
+The default directory and serve path in the portal configuration for the FormGen app have changed:
+
+* @forms.staticFileDirectory@: @public_path('public/static/cpa/')@ -> @public_path()@
+* @forms.staticServePath@: @/static/cpa/@ -> @/@
+
+This means the built FormGen app has to reside in @public/formgen@ now. In case the default configuration was used, the path for the built FormGen app either has to be adapted, or the custom path must be set in the forms configuration.

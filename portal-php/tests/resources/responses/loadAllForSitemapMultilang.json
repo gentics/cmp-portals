@@ -1,0 +1,209 @@
+{
+    "data":{
+        "project":{
+            "uuid":"00000000000000000000000000000000",
+            "rootNode":{
+                "children":{
+                    "elements":[
+                        {
+                            "schema":{
+                                "name":"portalphp_folder"
+                            },
+                            "uuid":"00000000000000000000000000000001",
+                            "path":"/Demo Folder 1",
+                            "language": "en",
+                            "languages": [
+                                {
+                                    "uuid": "00000000000000000000000000000001",
+                                    "path": "/Demo Folder 1",
+                                    "language": "en",
+                                    "fields": {}
+                                }
+                            ],
+                            "children":{
+                                "elements":[
+
+                                ]
+                            }
+                        },
+                        {
+                            "schema":{
+                                "name":"portalphp_folder"
+                            },
+                            "uuid":"00000000000000000000000000000002",
+                            "path":"/Demo Folder 2",
+                            "language": "en",
+                            "languages": [
+                                {
+                                    "uuid": "00000000000000000000000000000002",
+                                    "path": "/Demo Folder 2",
+                                    "language": "en",
+                                    "fields": {}
+                                }
+                            ],
+                            "children":{
+                                "elements":[
+
+                                ]
+                            }
+                        },
+                        {
+                            "schema":{
+                                "name":"portalphp_folder"
+                            },
+                            "uuid":"00000000000000000000000000000003",
+                            "path":"/Demo Folder 3",
+                            "language": "en",
+                            "languages": [
+                                {
+                                    "uuid": "00000000000000000000000000000003",
+                                    "path": "/Demo Folder 3",
+                                    "language": "en",
+                                    "fields": {}
+                                }
+                            ],
+                            "children": {
+                                "elements": [
+                                    {
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "uuid": "00000000000000000000000000000004",
+                                        "path": "/Demo Folder 3/demo_image.jpg",
+                                        "language": "en",
+                                        "fields": {
+                                            "editdate": "2019-02-07T14:15:25Z",
+                                            "noindex": false
+                                        },
+                                        "languages": [
+                                            {
+                                                "uuid": "00000000000000000000000000000004",
+                                                "path": "/Demo Folder 3/demo_image.jpg",
+                                                "language": "en",
+                                                "fields": {
+                                                    "editdate": "2019-02-07T14:15:25Z",
+                                                    "noindex": false
+                                                }
+                                            }
+                                        ],
+                                        "children": {
+                                            "elements": [
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "uuid": "00000000000000000000000000000005",
+                                        "path": "/Demo Folder 3/DemoContent.de.html",
+                                        "language": "de",
+                                        "fields": {
+                                            "editdate": "2019-02-07T14:13:11Z"
+                                        },
+                                        "languages": [
+                                            {
+                                                "uuid": "00000000000000000000000000000005",
+                                                "path": "/Demo Folder 3/DemoContent.en.html",
+                                                "language": "en",
+                                                "fields": {
+                                                    "noindex": false,
+                                                    "editdate": "2024-06-17T13:43:44Z"
+                                                }
+                                            },
+                                            {
+                                                "uuid": "00000000000000000000000000000005",
+                                                "path": "/Demo Folder 3/DemoContent.de.html",
+                                                "language": "de",
+                                                "fields": {
+                                                    "noindex": false,
+                                                    "editdate": "2025-02-24T08:32:52Z"
+                                                }
+                                            }
+                                        ],
+                                        "children": {
+                                            "elements": [
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "uuid": "00000000000000000000000000000006",
+                                        "path": "/Demo Folder 3/DemoContentPrivate.html",
+                                        "language": "de",
+                                        "fields": {
+                                            "editdate": null,
+                                            "noindex": true
+                                        },
+                                        "languages": [
+                                            {
+                                                "uuid": "00000000000000000000000000000006",
+                                                "path": "/Demo Folder 3/DemoContentPrivate.en.html",
+                                                "language": "en",
+                                                "fields": {
+                                                    "noindex": true,
+                                                    "editdate": "2024-06-17T13:43:44Z"
+                                                }
+                                            },
+                                            {
+                                                "uuid": "00000000000000000000000000000006",
+                                                "path": "/Demo Folder 3/DemoContentPrivate.de.html",
+                                                "language": "de",
+                                                "fields": {
+                                                    "noindex": true,
+                                                    "editdate": "2025-02-24T08:32:52Z"
+                                                }
+                                            }
+                                        ],
+                                        "children": {
+                                            "elements": [
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "uuid": "00000000000000000000000000000007",
+                                        "path": "/Demo Folder 3/DemoContent2.html",
+                                        "language": "de",
+                                        "fields": {
+                                            "editdate": "2019-02-07T14:13:11Z",
+                                            "noindex": null
+                                        },
+                                        "languages": [
+                                            {
+                                                "uuid": "00000000000000000000000000000007",
+                                                "path": "/Demo Folder 3/DemoContent2.en.html",
+                                                "language": "en",
+                                                "fields": {
+                                                    "noindex": null,
+                                                    "editdate": "2024-06-17T13:43:44Z"
+                                                }
+                                            },
+                                            {
+                                                "uuid": "00000000000000000000000000000007",
+                                                "path": "/Demo Folder 3/DemoContent2.de.html",
+                                                "language": "de",
+                                                "fields": {
+                                                    "noindex": null,
+                                                    "editdate": "2025-02-24T08:32:52Z"
+                                                }
+                                            }
+                                        ],
+                                        "children": {
+                                            "elements": [
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

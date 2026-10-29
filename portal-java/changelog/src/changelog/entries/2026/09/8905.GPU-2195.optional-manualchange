@@ -1,0 +1,5 @@
+The Gentics Portal | java Kubernetes Helm-Chart has been changed to better match the overall structure of Gentics Charts:
+* Starting with this release, the helm chart will now always be released with the same version number as Gentics Portal | java to ensure compatibility
+* The Image definition (Values.image.repository) has been splitted between the registry and repository. Values.image.registry = docker.gentics.com Values.image.repository = gentics/gentics-portal-java
+* The Application renders now as Deployment by default, it's stateless. If you want to keep the old behaviour configure Values.controller.kind: StatefulSet
+* If not specified, the Chart now uses a default ImagePullSecret (docker-gentics-com)

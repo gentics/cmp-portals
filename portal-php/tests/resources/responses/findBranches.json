@@ -1,0 +1,236 @@
+{
+    "data": [
+        {
+            "uuid": "1065cd203beb49d3a5cd203beba9d3e0",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-27T12:36:04Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-27T12:36:04Z",
+            "name": "Channel_2_2.0",
+            "hostname": "channel2.domain",
+            "ssl": false,
+            "pathPrefix": "/c2",
+            "migrated": true,
+            "latest": false,
+            "tags": [
+                {
+                    "name": "2.0",
+                    "uuid": "b9937ac273d94d72937ac273d98d72f5",
+                    "tagFamily": "gcmsImplementationVersion"
+                },
+                {
+                    "name": "680cbbd8ed9a11e8bae20242ac170004",
+                    "uuid": "0063816bcc4f4a73a3816bcc4f8a73d5",
+                    "tagFamily": "gcmsChannelUuid"
+                },
+                {
+                    "name": "latest",
+                    "uuid": "fc51042efc3c459691042efc3c359628",
+                    "tagFamily": "gcmsInternal"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        },
+        {
+            "uuid": "9d7611da933a4541b611da933ad5417f",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-27T12:36:06Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-27T12:36:06Z",
+            "name": "Channel_of_Portal_PHP_Reference_2.0",
+            "hostname": "channel.domain",
+            "ssl": false,
+            "pathPrefix": "/c",
+            "migrated": true,
+            "latest": false,
+            "tags": [
+                {
+                    "name": "2.0",
+                    "uuid": "b9937ac273d94d72937ac273d98d72f5",
+                    "tagFamily": "gcmsImplementationVersion"
+                },
+                {
+                    "name": "02077495ed8811e8bae20242ac170004",
+                    "uuid": "515df6d140fd4c719df6d140fd2c7155",
+                    "tagFamily": "gcmsChannelUuid"
+                },
+                {
+                    "name": "latest",
+                    "uuid": "fc51042efc3c459691042efc3c359628",
+                    "tagFamily": "gcmsInternal"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        },
+        {
+            "uuid": "46912f5a32ba49c8912f5a32bab9c86c",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-21T14:34:01Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-27T10:00:01Z",
+            "name": "Channel_2_1.0",
+            "hostname": "channel2.domain",
+            "ssl": false,
+            "pathPrefix": "/c2",
+            "migrated": true,
+            "latest": false,
+            "tags": [
+                {
+                    "name": "1.0",
+                    "uuid": "027956762f40498fb956762f40498fa4",
+                    "tagFamily": "gcmsImplementationVersion"
+                },
+                {
+                    "name": "680cbbd8ed9a11e8bae20242ac170004",
+                    "uuid": "0063816bcc4f4a73a3816bcc4f8a73d5",
+                    "tagFamily": "gcmsChannelUuid"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        },
+        {
+            "uuid": "9c25fef21dd846f9a5fef21dd846f95d",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-27T12:36:01Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-27T12:36:01Z",
+            "name": "Portal_PHP_Reference_2.0",
+            "hostname": "master.domain",
+            "ssl": false,
+            "pathPrefix": "",
+            "migrated": true,
+            "latest": true,
+            "tags": [
+                {
+                    "name": "2.0",
+                    "uuid": "b9937ac273d94d72937ac273d98d72f5",
+                    "tagFamily": "gcmsImplementationVersion"
+                },
+                {
+                    "name": "latest",
+                    "uuid": "fc51042efc3c459691042efc3c359628",
+                    "tagFamily": "gcmsInternal"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        },
+        {
+            "uuid": "08af1f7c09654819af1f7c0965281961",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-21T12:22:02Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-27T10:00:02Z",
+            "name": "Channel_of_Portal_PHP_Reference_1.0",
+            "hostname": "channel.domain",
+            "ssl": false,
+            "pathPrefix": "/c",
+            "migrated": true,
+            "latest": false,
+            "tags": [
+                {
+                    "name": "1.0",
+                    "uuid": "027956762f40498fb956762f40498fa4",
+                    "tagFamily": "gcmsImplementationVersion"
+                },
+                {
+                    "name": "02077495ed8811e8bae20242ac170004",
+                    "uuid": "515df6d140fd4c719df6d140fd2c7155",
+                    "tagFamily": "gcmsChannelUuid"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        },
+        {
+            "uuid": "5ca69d3d82bc4612a69d3d82bc76126f",
+            "creator": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "created": "2018-11-20T16:56:12Z",
+            "editor": {
+                "uuid": "bbb7e0cb51964693b7e0cb5196169390"
+            },
+            "edited": "2018-11-26T16:06:02Z",
+            "name": "Portal_PHP_Reference",
+            "hostname": "master.domain",
+            "ssl": false,
+            "pathPrefix": "",
+            "migrated": true,
+            "latest": false,
+            "tags": [
+                {
+                    "name": "1.0",
+                    "uuid": "027956762f40498fb956762f40498fa4",
+                    "tagFamily": "gcmsImplementationVersion"
+                }
+            ],
+            "permissions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true,
+                "publish": true,
+                "readPublished": true
+            }
+        }
+    ],
+    "_metainfo": {
+        "currentPage": 1,
+        "pageCount": 1,
+        "totalCount": 6
+    }
+}

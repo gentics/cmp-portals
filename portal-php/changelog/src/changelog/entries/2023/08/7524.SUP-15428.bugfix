@@ -1,0 +1,1 @@
+Fix Mesh Client instance and Mesh Admin Client is disabled by default when initializing client and authentication is disabled too. This is a breaking change with compatibility fallback. Setting `noAdminClientByDefault` compatibility flag to `false` allows the bring back the old behavior.

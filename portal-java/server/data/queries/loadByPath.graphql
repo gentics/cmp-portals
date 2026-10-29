@@ -1,0 +1,26 @@
+query ($path: String, $language: String, $withChildren: Boolean = false) {
+	node(path: $path) {
+		uuid
+		language
+		path
+		schema {
+			name
+		}
+		parent {
+			uuid
+		}
+		fields {
+			... on %contentSchema% {
+				contenttype
+				templateName
+				content
+			}
+		}
+		children(lang: [ $language ]) @include(if: $withChildren){
+			elements {
+				language
+				path
+			}
+		}
+	}
+}

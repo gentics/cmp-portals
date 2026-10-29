@@ -1,0 +1,6 @@
+fragment sitemapBinaryContentFields on %binaryContentSchema% {
+	... on %binaryContentSchema% {
+        noindex
+    	editdate
+    }
+}

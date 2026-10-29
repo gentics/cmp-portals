@@ -1,0 +1,73 @@
+---
+title: Views
+description: "How templates map to Blade views and which additional directives are available."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Templates and Views relation
+
+The default templating engine in {{%GPPHP%}} is link:https://laravel.com/docs/12.x/blade[Blade] and the portal uses the template name to load the correct view for the pages. For example a page with the `vehicle` template name will try to load the `resources/views/vehicle.blade.php`.
+
+== Directives
+
+Directives are the core elements of the Blade templating engine. {{%GPPHP%}} provides additional directives in addition to the built-in.
+
+=== @renderMode
+
+This directive is an *if* directive, which means it works similar like the `@if` statement in Blade:
+
+```php
+@renderMode('publish')
+    The Portal is in Publish mode.
+@elserenderMode('live')
+    The Portal is in Live Preview mode. (rendered from CMS)
+@elserenderMode('preview')
+    The Portal is in Preview mode. (rendered from CMS)
+@elserenderMode('edit')
+    The Portal is in Edit mode. (rendered from CMS)
+@endrenderMode
+```
+
+The types of renderMode are: `publish`, `preview`, `live` and `edit`. The default mode is publish mode, the preview, live and edit modes are used according to the CMS mode.
+
+You can also get the renderMode with the `renderMode()` helper function as a lower-case string:
+
+```php
+{{ renderMode() }}
+```
+
+This can be also used in an `@if` statement:
+
+```php
+@if(renderMode() === 'publish')
+    Publish mode
+@endif
+```
+
+=== @eval
+
+This directive will compile a blade template string, cache and execute it.
+All the variables of the current scope are accessible, but can be set/overridden with the second argument.
+
+```php
+@php
+    $bladeCode = "The cow is {{ $colors }}";
+@endphp
+
+@eval($bladeCode, ['colors' => 'white and black'])
+```
+
+WARNING: Using the @eval directive can be potentially dangerous when passing template strings from untrustworthy sources.
+The usage of this directive should be avoided whenever possible. It makes the application complex, harder to debug and
+harder to understand.
+
+NOTE: This will cache the compiled blade template fragments in the Laravel view cache. Make sure to run
+`artisan view:clear` from time to time to cleanup diskspace again. This could be done during deployment for example.
+
+=== Overriding the `Content-Type` of a served view.
+
+By default a page content is served with `text/html; charset=UTF-8` content type header. In order to override it, a `content` schema has to contain a text field named `contenttype`, and the pages implementing it can contain a custom value in it. 
+The value must satisfy a Regex pattern `/^(text|application|\*)\/[\s\S]+$/`, i.e. starting with `text/`, `application/`, or `*`.

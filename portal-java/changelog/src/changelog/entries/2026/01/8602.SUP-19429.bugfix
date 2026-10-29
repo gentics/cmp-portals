@@ -1,0 +1,1 @@
+Fixes an issue with handling authentication cookies that prevented users from logging in.

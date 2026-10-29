@@ -1,0 +1,60 @@
+---
+title: Requirements / tool configuration
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+## Requirements
+
+* https://git-scm.com/download/linux[GIT, window="_blank"]
+* https://docs.docker.com/install/[Docker, window="_blank"] - Latest version
+* https://docs.docker.com/compose/install/[Docker-compose, window="_blank"] - Latest version
+* https://www.oracle.com/technetwork/java/javase/downloads/[Java SE, window="_blank"] - {{%GPJava%}} requires at least Java 11 and is also compatible with Java 17.
+* https://maven.apache.org/[Maven, window="_blank"] - Latest version
+
+**Important:** When using Windows, you must configure your GIT client to not convert line endings to windows line endings _before_ cloning this GIT repository.
+
+**Note:** It's also possible to develop and serve an application with {{%GPJava%}} without Docker, but it makes development a lot easier, that's why it is listed as requirement here.
+
+```
+git config --global core.autocrlf input
+```
+
+Read the section <<_installing_the_required_tools_more_specific>> for more specific details on how to install and configure the required tools.
+If you encounter any Docker specific errors, you maybe find a solution in https://github.com/gentics/cms-compose/wiki/Common-problems-&-FAQ[this FAQ, window="_blank"].
+
+### Authentication for repo.gentics.com
+
+Contact mailto:support@gentics.com[Gentics] if you have not received your credentials for repo.gentics.com yet.
+
+With those credentials you can login to the repository with:
+
+```sh
+docker login repo.gentics.com
+```
+
+## Next steps
+
+Continue with link:run-the-demo.html[Run the demo] or link:new-project.html[New project].
+
+## Installing the required tools - more specific
+
+Whenever possible the package manager of your operating system should be used to install the required tools. Additional points to be considered
+for certain operating systems are listed below.
+
+### GIT
+
+#### Windows
+
+Install the GIT client from https://git-scm.com/downloads
+
+Make sure to enable "Checkout as-is, commit Unix-style" when the installer asks you.
+
+### Docker
+
+#### Windows / Mac
+
+* Use Docker with HyperV if avilable
+* We recommend to increase the memory to at least 4 GB or better 6GB and set the available CPU to all CPU cores in the Docker settings

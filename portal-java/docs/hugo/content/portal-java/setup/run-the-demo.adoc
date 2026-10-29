@@ -1,0 +1,64 @@
+---
+title: Run the demo
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+## Run the {{%GPJava%}} demo
+
+Read the section "link:requirements-toolconfiguration.html[Installing requirements]" first and make sure you have
+installed and configured everything correctly.
+
+### Checkout and start the demo
+
+Checkout the demo portal from https://git.gentics.com/psc/portal-java-reference and run
+```bash
+docker-compose up
+```
+to start it. Note that you must be
+link:requirements-toolconfiguration.html#_authentication_for_repo_gentics_com[authenticated] for `repo.gentics.com` to
+download the necessary images.
+
+It will take some time for all services to start up, especially the first time. When all containers have started, the
+following services will be available:
+
+*  Gentics CMS: http://localhost:8080/editor/
+** Username: `node`
+** Password: `node`
+* Gentics Mesh: http://localhost:8100/
+** Username: `admin`
+** Password: `admin`
+* Keycloak: http://localhost:8300/
+** Username: `admin`
+** Password: `admin`
+* Demo portal: http://localhost:8000/
+
+#### Possible problems during startup
+
+Some of the services depend on each other and since the first startup can take considerably longer some containers
+may "give up waiting". When not all services are available, restart the individual containers in this order:
+
+```bash
+docker-compose restart db
+docker-compose restart keycloak
+docker-compose restart cr
+docker-compose restart portal
+docker-compose restart cms
+```
+
+### After the startup
+
+Log in to http://localhost:/.Node/ with `node` / `node` and wait until the publish run has finished and written all
+objects into {{%Mesh%}}. You can also republish all objects in the maintenance page, if the publish does not work.
+
+Follow the status of the `portal` container by running `docker-compose logs -f portal`. You might have to prefix this
+command with `winpty&nbsp;` on Windows.
+
+### Commercial {{%Mesh%}} Plugins
+
+Some {{%Mesh%}} plugins are not available for free -- we still included them in our examples (e.g., ratings with the
+likes plugin). Please refer to these plugins at https://www.gentics.com/mesh/docs/plugins/#_commercial_plugins[Gentics Mesh
+plugins documentation, window="_blank"]. Not installing these plugins should not cause any problems, just the missing
+feature will not displayed.

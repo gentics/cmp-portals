@@ -1,0 +1,3 @@
+The Gentics Portal | java Kubernetes Helm Chart has been improved:
+* The keycloak.realmPublicKey is not necessary anymore, the key is fetched from the Keycloak Instance
+* PodDisruptionBudget can now be configured and is automatically set when more than one replica is configured

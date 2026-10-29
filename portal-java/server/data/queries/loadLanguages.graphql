@@ -1,0 +1,8 @@
+query($path: String) {
+  node(path: $path) {
+    languages {
+      language
+      path
+    }
+  }
+}

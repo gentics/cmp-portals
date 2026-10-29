@@ -1,0 +1,27 @@
+{
+	"uuid": "7151e59b8c3211e885740242ac150002",
+	"language": "en",
+	"parentNode": {
+		"uuid": "4afac1509a63482bac409a8815b3613b"
+
+	},
+	"schema": {
+		"name": "ref_folder"
+	},
+	"fields": {
+		"description": "",
+		"createdate": "2019-01-29T12:58:01Z",
+		"editor": "Node Admin",
+		"creatoremail": "nowhere@gentics.com",
+		"startpage": {
+			"uuid": "ce4c72648c3211e885740242ac150002"
+		},
+		"navsortorder": 1,
+		"creator": "Node Admin",
+		"editdate": "2019-01-29T12:58:01Z",
+		"cms_id": 2,
+		"pub_dir": "products",
+		"editoremail": "nowhere@gentics.com",
+		"name": "Products"
+	}
+}

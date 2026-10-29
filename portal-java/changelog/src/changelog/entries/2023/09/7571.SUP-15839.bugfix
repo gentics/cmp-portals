@@ -1,0 +1,1 @@
+Adds configuration option @checkedQueries@. A list of queries which should be checked for validity on portal startup-up. The possible values are @LANGUAGES@, @LOAD_BY_PATH@, @NAVIGATION@ and @SITEMAP@. An empty list will cause the portal to check all queries.

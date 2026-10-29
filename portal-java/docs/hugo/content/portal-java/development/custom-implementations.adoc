@@ -1,0 +1,165 @@
+---
+title: Custom implementations
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+There are several possibilities to extend the features of {{%GPJava%}}. The most commong beeing writing custom
+Handlebars helpers, implementing portal applications and creating custom handlers.
+
+The link:../features/data-provider.html#_postprocessing[DataProviderVerticle configuration] also accepts custom helper
+implementations for loaded web data, and link:../features/custom-redirects.html[custom redirects] as well as the
+link:../features/delivering-content.html#_navigation[NavigationHandler] require an implementation of a helper class.
+
+## Handlebars helpers
+
+Each method with the signature `Object helperName(Object context, Options options)` can be registered as a Handlebars
+helper (the `Options` parameter can be ommited if it is not needed). The helper can then be used in a Handlebars
+template like this for example `{{ helperName this }}`` (or `{{# helperName this }} ... {{/ helperName }}` if it is a
+block helper).
+
+To register custom helpers simply pass the instance containing the helpers to the injected
+`ControllableHandlebarsTemplateEngine` in the `BootstrapInitializer`:
+
+.Register custom helpers
+```java
+// ...
+
+public class CustomBootstrapInitializer {
+    // ...
+
+    @Inject
+    public ControllableHandlebarsTemplateEngine engine;
+
+    // ...
+
+    @Override
+    public void start() {
+        engine.getHandlebars().registerHelpers(new CustomHelpers());
+    }
+}
+```
+
+WARNING: Since Handlebars helpers are only called during rendering, and rendering is done in a synchronous fashion,
+it is very important that Handlebars helpers do not perform expensive operations that block execution too long. Any
+preparations should be done in custom handlers executed _before_ rendering the response.
+
+## Applications
+
+Portal applications are custom handlers which require additional setup in the corresponding CMS project, but are only called
+for pages, which explicitly specify that they need them.
+
+When the loaded page has a comma separated list of portal application IDs in its `fields.portalapp` field, the injected
+`PortalApplicationRegistry` is queried if it has a portal application with that ID, and executes the `handle()` methods
+of the found application.
+
+By default a `PortalApplicationRegistry` which does not contain any applications is used by the portal, but this can
+be overridden by changing the link:../setup/new-project.html#_dependency_injection[BindModule] accordingly:
+
+.Using a custom `PortalApplicationRegistry`
+```java
+@Module
+public abstract BindModule {
+    // ...
+
+    @Binds
+    abstract PortalApplicationRegistry bindApplicationRegistry(CustomApplicationRegistry e);
+}
+```
+
+The `handle()` method of an `PortalApplication` implementation must either: footnote:rc-def[Where `rc` is the
+`RoutingContext` parameter.]
+
+* call the next handler with `rc.next()`
+* end the response by calling `rc.response().end()` (or any of its variants), or
+* fail the request with `rc.fail()` (passing either an Exception or an error status code)
+
+## Handlers
+
+Custom handlers (implementing the `Handler<RoutingContext>` interface) can be added in the
+link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer]. As with portal applications, custom
+handlers must make sure to either: footnote:rc-def[]
+
+* call the next handler with `rc.next()`
+* end the response by calling `rc.response().end()` (or any of its variants), or
+* fail the request with `rc.fail()` (passing either an Exception or an error status code)
+
+.Adding a custom handler to `BootstrapInitializer`
+```java
+// ...
+@Inject
+public CustomHandler customHandler;
+
+@Override
+public void start() {
+    deployHttpVerticles(router -> {
+        customHandler.addRoutes(router);
+    });
+}
+```
+
+It is recommended that custom handlers extend the `AbstractBaseHandler` class, and implement the
+`addRoutes()` method, which registers the actual endpoints for the handler.
+
+The `RouteOrder` enum can be used to specify when the handlers should be called and defines the
+following route orders:
+
+* `BEFORE_BODY_HANDLER`
+* `BODY_HANDLER`
+* `BEFORE_API_ROUTES`
+* `API_ROUTES`
+* `BEFORE_CONTENT_ROUTES`
+* `CONTENT_ROUTES`
+* `AFTER_CONTENT_ROUTES`
+* `RENDERING_ROUTES`
+
+Data from the link:../features/data-provider.html[DataProviderVerticle] and the requested page are available for the routes
+`CONTENT_ROUTES` and later.
+
+## Auxiliary classes
+
+The following interfaces do not extend the functionality of {{%GPJava%}}, but offer a way to fine tune the portals
+behavior.
+
+### NavigationTransformer
+
+The implementation of the `NavigationTransformer` is responsible for preparing
+the navigation data loaded via GraphQL so that it can be used efficiently in
+Handlebars templates. There are two default implementations available:
+`BasicNavigationTransformer` and `MultipleRootNavigationTransformer`.
+
+Both default implementations will
+
+* remove elements which have the field `navhidden` set to `true`
+* remove elements which neither have a startpage themselves, nor any of their ancestors
+* order the remaining elements by their `navsortorder` fields
+* store the level depth to each element
+
+The `BasicNavigationTransformer` will compare the configured Mesh schema prefix
+and the project name to determine whether _Project Per Node_ is active, and if
+_not_ will skip the (empty) root node of the navigation tree.
+
+The `MultipleRootNavigationTransformer` will process the navigation tree as is.
+Which means the top-level entries _might_ not be actual folders, but could be
+the root folders of projects.
+
+Custom `NavigationTransformers` can implement the `additionalCacheKey()` method
+to extend the cache key, if the shown navigation depends on something else than
+the current portal language, the users roles and the branch. The default
+implementation just returns an empty string.
+
+### DataProviderPostProcessor
+
+A `DataProviderPostProcessor` is responsible for creating a JSON object from data
+link:../features/data-provider.html[loaded] from an external source.
+
+There is no default implementation of a `DataProviderPostProcessor`.
+
+### RedirectHelper
+
+The implementation of the `RedirectHelper` is responsible for extracting a mapping between obsolete URLs and their redirects
+from a page loaded from Mesh.
+
+There is no default implementation of a `RedirectHelper`.

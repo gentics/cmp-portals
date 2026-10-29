@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+	<appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+		<target>System.err</target>
+		<encoder>
+			<pattern> %d{HH:mm:ss.SSS} %-5level [%C{0}] %msg%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
+	</appender>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern> %d{HH:mm:ss.SSS} %-5level [%C{0}] %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="io.vertx" level="OFF"/>
+	<logger name="com.gentics" level="INFO"/>
+
+	<logger name="com.gentics.mesh.portal.authentication" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.authentication.UserClientHandler" level="DEBUG"/>
+	<logger name="io.vertx.ext.auth.oauth2" level="TRACE"/>
+
+	<!--
+	<logger name="com.gentics.mesh.portal.cache.CacheProviderImpl" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.authentication.AuthenticationBaseHandler" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.authentication.UserClientHandler" level="DEBUG"/>
+	<logger name="com.gentics.mesh.portal.content.NavigationHandler" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.cache.CachingHandler" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.context.PortalRoutingContext" level="DEBUG"/>
+	<logger name="com.gentics.mesh.portal.helper.NavigationHelper" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.queries.QueryStore" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.authentication.UserClientHandler" level="OFF"/>
+	<logger name="com.gentics.mesh.portal.server.dagger.PortalModule" level="OFF"/>
+	<logger name="com.gentics.mesh.portal.EncryptionService" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.applications" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.server.core.HandlerProvider" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.server.core.PortalStarter" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.content.ContentPathHandler" level="DEBUG"/>
+	<logger name="com.gentics.mesh.portal.server.CookieProviderImpl" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.content.LanguageVariantLoader" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.server.core.HandlerProvider" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.util.AuthUtilsExt" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.cache" level="DEBUG"/>
+	<logger name="com.gentics.mesh.portal.cache.CacheProviderImpl" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.content.RedirectHandler" level="TRACE"/>
+	<logger name="com.gentics.mesh.portal.handler.AbstractBaseHandler" level="TRACE"/>
+	-->
+
+	<root level="ERROR">
+		<appender-ref ref="STDOUT"/>
+	</root>
+</configuration>

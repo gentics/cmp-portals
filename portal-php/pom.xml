@@ -1,0 +1,54 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.gentics.mesh.portal-php</groupId>
+	<artifactId>mesh-portal-php</artifactId>
+	<version>9.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+    <modules>
+        <module>changelog</module>
+        <module>docs</module>
+        <module>dependency-reporting</module>
+    </modules>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.gentics</groupId>
+					<artifactId>dependency-reporting-plugin</artifactId>
+					<version>1.0.0</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>gentics.nexus.releases-oss</id>
+			<name>Gentics Nexus OSS Maven Repository</name>
+			<url>https://repo.gentics.com/repository/maven-releases-oss/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<distributionManagement>
+		<repository>
+			<id>gentics.nexus.releases-oss</id>
+			<name>Gentics Nexus OSS Maven Repository</name>
+			<url>https://repo.gentics.com/repository/maven-releases-oss/</url>
+		</repository>
+		<snapshotRepository>
+			<id>gentics.nexus.snapshots</id>
+			<name>Gentics Snapshots Repository</name>
+			<url>https://repo.gentics.com/repository/maven-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+</project>

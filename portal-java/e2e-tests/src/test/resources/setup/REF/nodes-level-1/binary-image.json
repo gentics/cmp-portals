@@ -1,0 +1,22 @@
+{
+    "uuid": "a22f189738be11e8904c005056bd2479",
+    "language": "en",
+    "parentNode": {
+        "uuid": "7151e59b8c3211e885740242ac150002"
+    },
+    "schema": {
+        "name": "ref_binary_content"
+    },
+    "fields": {
+        "editdate": "2019-06-14T05:44:13Z",
+        "mimetype": "image/svg+xml",
+        "creatoremail": "s.l@somewhere.at",
+        "createdate": "2018-04-05T10:46:45Z",
+        "editoremail": "p.doerre@gentics.com",
+        "description": "",
+        "creator": "Peter Lustig",
+        "editor": "Gentics Entwickler",
+        "name": "Svg_example4.svg",
+        "cms_id": 2254
+    }
+}

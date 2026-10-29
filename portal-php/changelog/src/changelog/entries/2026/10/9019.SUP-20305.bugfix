@@ -1,0 +1,1 @@
+Fixed console commands (e.g. artisan) failing with "Call to undefined method NunoMaduro\Collision\Adapters\Laravel\ExceptionHandler::prependErrorHandler()" when Keycloak authentication is configured. The authentication and redirect error handlers are now also registered when nunomaduro/collision wraps the exception handler.

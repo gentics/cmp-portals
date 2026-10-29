@@ -1,0 +1,26 @@
+{
+	"uuid": "76a1e00c8c3211e885740242ac150002",
+	"language": "en",
+	"parentNode": {
+		"uuid": "4afac1509a63482bac409a8815b3613b"
+	},
+	"schema": {
+		"name": "ref_folder"
+	},
+	"fields": {
+		"description": "",
+		"createdate": "2019-01-29T12:58:01Z",
+		"editor": "Node Admin",
+		"creatoremail": "nowhere@gentics.com",
+		"startpage": {
+			"uuid": "8ea387438c3211e885740242ac150002"
+		},
+		"navsortorder": 2,
+		"creator": "Node Admin",
+		"editdate": "2019-01-29T12:58:01Z",
+		"cms_id": 7,
+		"pub_dir": "about",
+		"editoremail": "nowhere@gentics.com",
+		"name": "About"
+	}
+}

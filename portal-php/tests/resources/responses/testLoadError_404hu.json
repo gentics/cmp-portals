@@ -1,0 +1,30 @@
+{
+    "data": {
+        "node": {
+            "language": "hu",
+            "languages": [
+                {
+                    "path": "/errors/404.en.html",
+                    "language": "en"
+                },
+                {
+                    "path": "/errors/404.de.html",
+                    "language": "de"
+                },
+                {
+                    "path": "/errors/404.hu.html",
+                    "language": "hu"
+                }
+            ],
+            "schema": {
+                "name": "portalphp_content"
+            },
+            "fields": {
+                "name": "Hiba 404 - A keresett oldal nem található",
+                "description": "",
+                "templateName": "errorpage",
+                "title": ""
+            }
+        }
+    }
+}

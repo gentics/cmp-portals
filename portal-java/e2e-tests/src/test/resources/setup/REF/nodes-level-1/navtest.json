@@ -1,0 +1,27 @@
+{
+    "uuid": "ea7e6ea305c011e8a3fb005056bd2479",
+    "language": "en",
+    "parentNode": {
+        "uuid": "7151e59b8c3211e885740242ac150002"
+    },
+    "schema": {
+        "name": "ref_content"
+    },
+    "fields": {
+        "publishtimestamp": "2019-06-17T09:07:49Z",
+        "description": "",
+        "creatoremail": "p.hoefer@gentics.com",
+        "publishermail": "",
+        "contenttype": "text/html",
+        "name": "Navtest",
+        "editor": "Gentics Entwickler",
+        "editoremail": "p.doerre@gentics.com",
+        "filename": "navtest.html",
+        "createdate": "2018-01-30T08:32:52Z",
+        "editdate": "2019-06-14T05:44:13Z",
+        "cms_id": 1799,
+        "creator": "Patrick Höfer",
+        "searchtags": [],
+        "templateName": "ref/navtest"
+    }
+}

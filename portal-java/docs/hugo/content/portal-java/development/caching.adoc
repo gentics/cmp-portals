@@ -1,0 +1,217 @@
+---
+title: Caching
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPJava%}} is using the https://commons.apache.org/proper/commons-jcs/[Java Caching System, window=_blank] for
+caching rendered content pages, and https://github.com/ben-manes/caffeine[Caffeine, window=_blank] for caching data
+like navigation information, or GraphQL queries in memory.
+
+The portal provides a method to create a cache that can be used in link:custom-implementations.html[custom]
+handlers or helpers.
+
+## Implicit caching
+
+When caching is enabled in the server configuration (which is true by default), the portal automatically caches the
+following:
+
+* *Queries* loaded from the filesystem.
++
+link:../features/search.html[Elasticsearch] will be cached after they where processed by the `QueryBuilder`, and GraphQL
+queries will be put in the cache _after_ the schema.
+
+* *Handlebars templates* loaded from the filesystem.
++
+The caching itself is done by
+link:++http://vertx.io/docs/vertx-web/java/#_handlebars_template_engine++[Vert.x, window=_blank], but whether or not
+templates are cached is controlled by the portal configuration.
+
+* *Navigation data* loaded from Mesh.
++
+The used cache keys take into account the current
+link:../features/delivering-content.html#multilang[language], the current users roles and
+the branch of the Mesh project that is served by this portal. The cached data has already been postprocessed by the
+`NavigationTransformer`.
+
+* *Content* loaded from Mesh.
++
+When a page loaded from Mesh is finished rendering, it is put in the cache and further requests to the same page will
+be served from the cache. The cache key is comprised of the request path and the configured
+link:configuration.html#_caching[custom parameters].
++
+Note that binary files themselves are not cached by the portal, but their ETag headers are to reduce the number of
+requests to Mesh.
++
+Another important note is that content for authenticated requests only uses the users roles for the cache key, so
+the rendered response should _not_ contain user specific data.
++
+Caching content can also be prevented by putting the value `true` in the routing context under the key
+`mesh.portal.cache.disable` before the `+RouteOrder.CONTENT_ROUTES+`.
+
+// TODO Add link to example.
+
+## Cache clear endpoint
+
+A POST request to `/api/clearCache` will clear all from the portal framework
+itself and any created custom caches.
+
+The endpoint is link:api-endpoints.html[protected] and requests must
+come from an link:configuration.html#_security[allowed] IP address,
+or provide the correct portal API key.
+
+## Creating a custom cache
+
+Caching is useful for resource intensive tasks, remote data fetching and you should decide what to cache and when the
+cache should expire.
+
+// TODO Link to JavaDoc
+Custom caches can be created by getting a cache builder by calling `CacheProvider.cacheBuilder()` with the type of
+objects to be cached. Caches are identified by their `namespace`, when the builder already created a cache with the
+same namespace, the existing cache will be returned.
+
+When the builder is configured using the methods explained in the following sections, a `PortaclCache` instance is
+created by calling its `build()` method.
+
+Note that caches can be created even when caching is disabled in the portal
+link:configuration.html#_caching[configuration], then returned caches will just never actually store anything.
+
+### Expiration settings
+
+The cache will always remove old entries once `maximumSize` (the maximum number of elements in the cache) is reached
+and new entries need to be added, but depending on the `expireMode` entries will also be removed when `expireTime`
+seconds have passed.
+
+The available `expireModes` are:
+
+* `None`: entries will never expire (but can still be removed due to size constraints).
+
+* `Write`: entries will be removed `expireTime` seconds after they have been created or updated.
++
+This mode should be used for data that is costly to retrieve, but will get stale after some time.
+
+* `Access`: entries will be removed `expireTime` seconds after they have last been accessed.
++
+This is the default when no expire mode is specified.
+
+### Automatic cache clear
+
+The created cache can be automatically cleared when one of the `clearEvents` is received via the
+link:++https://www.gentics.com/mesh/docs/features/#_eventbus_bridge_websocket++[eventbus]. Common events to clear caches would be
+events about creation, updates or deletion of Mesh nodes.
+
+When no `eventFilter` is specified, the cache will be cleared when any of the `clearEvents` is received. The
+`eventFilter` can inspect the body of the event to decide whether the cache should be cleared or not (e.g only
+when an updated node has a certain schema).
+
+### Key mappers
+
+Most methods of the created `PortalCache` will create a cache key from the
+link:https://vertx.io/docs/apidocs/io/vertx/ext/web/RoutingContext.html[RoutingContext, window=_blank] of the current request.
+By default the key is created from the language, a hash of the users
+link:++https://www.gentics.com/mesh/docs/api/#users__userUuid__get_response++[roles, window=_blank] and the branch of the current
+request.
+
+When the builder is told to `useCustomKeyParams` the configured
+link:configuration.html#_caching[custom parameters] will also be added to the created cache key.
+
+A custom `keyMapper` can also be provided when creating a cache. This mapper can ignore the routing context completely
+and return any key appropriate for the custom cache. Note that `useCustomKeyParams` will have no effect when a custom
+`keyMapper` is specified.
+
+### Auxiliary disc cache
+
+When the `diskCacheRegion()` is specified for the builder, a JCS backed cache is created instead of a Caffeine based
+one. This requires a link:https://commons.apache.org/proper/commons-jcs/RegionProperties.html[cache.ccf] configuration
+file with a basic configuration, in the _config_ directory of the portal.
+
+The `IsEternal`, `MaxLife` and `MaxIdle` element properties, as well as the `MaxObjects` cache property will be
+overwritten with the above mentioned values passed to the builder.
+
+### Example
+
+The following is an example of how to create a custom `PortalCache` for `JsonObject` values.
+
+```java
+@Inject
+public CacheProvider cacheProvider;
+
+private PortalCache<JsonObject> cache;
+
+/* ... */
+
+public void initCache() {
+    cache = cacheProvider.cacheBuilder(JsonObject.class)
+        .namespace("cache.custom.users")
+        .expireTime(60)
+        .expireMode(ExpireMode.Write)
+        .clearEvents(MeshEvent.NODE_UPDATED)
+        .eventFilter(event -> {
+            return "portal_users".equals(
+                event.getBodyAsJson().get("schemaName").textValue());
+        })
+        .keyMapper(ignoredParam -> "users")
+        .build();
+}
+```
+
+## Using a custom cache
+
+### Store and retrieve data
+
+// TODO links to JavaDoc of PortalCache
+
+Whenever a costly operation is performed it should be passed to one of the `get()` methods of a `PortalCache`, which
+will first check if there already is a value in the cache. If not the provided supplier function will be called, and
+the result is put in the cache.
+
+For example the following code would check if the loaded user information is already in the cache, and if not call
+`loadUsersFromDb()`, put the result in the cache and then return it.
+
+```java
+void doSomethingWithUsers(RoutingContext rc) {
+    List<String> users = cache.get(rc, this::loadUsersFromDb);
+    // ...
+}
+```
+
+Since communicating with Mesh involves responses using http://reactivex.io/[ReactiveX] there is also a version of
+`get()` which takes a supplier generating a `Single`.
+
+When need more control is needed over how things are put in the cache, a value can be stored with the `put()` method,
+and retrieved via `getIfPresent()` (which returns `null` when no entry is found in the cache).
+
+### Clearing data
+
+All entries in a single `PortalCache` can be cleared by calling `clear()`, and all cached values of all caches can
+be cleared by calling the `CacheProvider`{zwsp}'s `clearAll()` method.
+
+// TODO add link to JavaDoc
+As mentioned link:++#_automatic_cache_clear++[earlier] the elements in a cache can also be cleared automatically by
+specifying Mesh events which should trigger a cache clear.
+
+## Browser caching
+
+Binary content and static files are not cached by the portal itself, but when caching is enabled the portal will use
+the respective HTTP headers so that the browser can make use of caching.
+
+### Binary content
+
+For binary files (which are loaded from Mesh via the `webroot` or `webrootfield` endpoint) the request headers
+concerning caching will be forwarded to Mesh. When the client sends a request header `If-None-Match: "[ETag]"`, Mesh
+will respond with a _304 Not Modified_ message when the content has not changed and {{%GPJava%}} will in turn forward
+this HTTP response to the client.
+
+Additionally, a `max-age` value can be link:configuration.html#_caching[configured] for the `Cache-Control`
+HTTP header, that will be set for binaries served from Mesh.
+
+The default value for `caching.binaryMaxAge` is `86400` (in seconds = one day). This means clients will be told to not ask again for updates and try to load a binary from their client side cache for one day. Setting `cahce.binaryMaxAge` to `0` means, that each request will be forwarded to Mesh to retrieve the actuall `ETag` header. With that the client can decide to download a newer version if it is avaliable.
+
+### Static files
+
+Resources from the configured link:configuration.html#_static_handler[static path] are served by the Vert.x
+link:++https://vertx.io/docs/vertx-web/java/#_serving_static_resources++[StaticHandler, window=_blank] which does not
+use Etags, but sets the respective HTTP headers such that browsers know they can cache the files themselves. It will
+also respond with a __304 Not Modified__ message, when the request contains the `If-Modified-Since` header and the
+resource has not been changed since then.

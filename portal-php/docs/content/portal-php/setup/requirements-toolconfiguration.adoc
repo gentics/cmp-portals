@@ -1,0 +1,98 @@
+---
+title: Requirements / tool configuration
+description: "Required tools and how to configure access to the Gentics repositories."
+weight: 10
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Requirements
+
+* https://git-scm.com/download[GIT, window="_blank"]
+* https://docs.docker.com/install/[Docker, window="_blank"] - Latest version
+* https://docs.docker.com/compose/install/[Docker-compose, window="_blank"] - Latest version
+* https://php.net/downloads.php[PHP, window="_blank"] - 8.3
+** https://laravel.com/docs/installation#server-requirements[PHP Extensions required by Laravel, window="_blank"] (if not running in Docker)
+** Intl PHP Extension
+* https://getcomposer.org/doc/00-intro.md[Composer, window="_blank"]
+
+**Important:** When using Windows, you must configure your GIT client to not convert line endings to windows line endings BEFORE cloning this GIT repository.
+
+**Note:** It's also possible to develop and serve a Laravel application with {{%GPPHP%}} without Docker, but it makes development a lot easier, that's why it is listed as requirement here.
+
+```
+git config --global core.autocrlf input
+```
+
+Read the section <<_more_details>> for more specific details on how to install and configure the required tools.
+If you encounter any Docker specific errors, you maybe find a solution on https://github.com/gentics/cms-compose/wiki/Common-problems-&-FAQ[this page here, window="_blank"].
+
+=== Authentication for repo.gentics.com / docker.gentics.com
+
+Contact Gentics if you have not received your credentials for repo.gentics.com / docker.gentics.com yet.
+
+==== Composer
+When installing dependencies from `repo.gentics.com`, you'll be prompted to authenticate if you haven't already.
+
+In case that doesn't happen, or you want to do it manually, then you need to open the composer file `auth.json`. You can also edit `%USERPROFILE%\AppData\Roaming\Composer\auth.json` or `~/.composer/auth.json` instead.
+
+```bash
+composer config --global --auth --editor
+```
+
+Make sure your auth.json contains the following configuration:
+
+```
+{
+    "http-basic": {
+        "repo.gentics.com": {
+            "username": "MYUSERNAME",
+            "password": "MYPASSWORD"
+        }
+    }
+}
+```
+
+==== Docker
+
+Log in into the docker registry and use the same credentials like above:
+
+```
+docker login docker.gentics.com
+```
+
+== Next steps
+
+Continue with link:run-the-demo.html[Run the demo] or link:new-laravel-project.html[New Laravel project].
+
+== More details
+
+=== GIT
+
+==== Windows
+
+Install the GIT client from https://git-scm.com/downloads
+
+Make sure to enable "Checkout as-is, commit Unix-style" when the installer asks you.
+
+==== Linux / Mac
+
+Install the package "git" with the package manager.
+
+=== Docker
+
+==== Windows / Mac
+
+* Use Docker with Hyper-V if available
+* We recommend to increase the memory to at least 4 GB or better 6GB and set the available CPU to all CPU cores in the Docker settings
+
+=== PHP
+
+Check if PHP 8.3 is already installed by running `php -version`
+
+If your operating system has a packet manager with PHP 8.2, install the package, otherwise download PHP from https://php.net/downloads.php (PHP 8.2 "VS16 x64 Non Thread Safe" for Windows) and install the required PHP modules as well.
+
+Also the following PHP modules are required (some of these are already available depending on your setup): dom, curl, exif, intl, json, xmlwriter, xml
+

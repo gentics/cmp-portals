@@ -1,0 +1,10 @@
+fragment contentFields on %contentSchema% {
+    name
+    contenttype
+    templateName
+    wnfloatingboxen
+    wnnewsteaserstartpage
+    wnfaqsstartpage
+    osuservicelinks
+    osutaggingeditmode
+}

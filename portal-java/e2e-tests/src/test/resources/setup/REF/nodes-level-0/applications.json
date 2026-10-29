@@ -1,0 +1,22 @@
+{
+	"uuid": "44d7205fdd7d11eb9f030242ac130004",
+	"language": "en",
+	"parentNode": {
+		"uuid": "4afac1509a63482bac409a8815b3613b"
+	},
+	"schema": {
+		"name": "ref_folder"
+	},
+	"fields": {
+		"description": "",
+		"createdate": "2021-07-05T10:39:26Z",
+		"editor": "Node Admin",
+		"creatoremail": "nowhere@gentics.com",
+		"creator": "Node Admin",
+		"editdate": "2021-07-05T10:39:26Z",
+		"cms_id": 8,
+		"pub_dir": "applications",
+		"editoremail": "nowhere@gentics.com",
+		"name": "Applications"
+	}
+}

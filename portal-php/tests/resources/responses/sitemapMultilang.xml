@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+    <url>
+        <loc>http://localhost/Demo Folder 3/demo_image.jpg</loc>
+        <lastmod>2019-02-07T14:15:25+00:00</lastmod>
+    </url>
+    <url>
+        <loc>http://localhost/Demo Folder 3/DemoContent.en.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="http://localhost/Demo Folder 3/DemoContent.en.html" />
+        <xhtml:link rel="alternate" hreflang="de" href="http://localhost/Demo Folder 3/DemoContent.de.html" />
+        <lastmod>2024-06-17T13:43:44+00:00</lastmod>
+    </url>
+    <url>
+        <loc>http://localhost/Demo Folder 3/DemoContent.de.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="http://localhost/Demo Folder 3/DemoContent.en.html" />
+        <xhtml:link rel="alternate" hreflang="de" href="http://localhost/Demo Folder 3/DemoContent.de.html" />
+        <lastmod>2025-02-24T08:32:52+00:00</lastmod>
+    </url>
+    <url>
+        <loc>http://localhost/Demo Folder 3/DemoContent2.en.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="http://localhost/Demo Folder 3/DemoContent2.en.html" />
+        <xhtml:link rel="alternate" hreflang="de" href="http://localhost/Demo Folder 3/DemoContent2.de.html" />
+        <lastmod>2024-06-17T13:43:44+00:00</lastmod>
+    </url>
+    <url>
+        <loc>http://localhost/Demo Folder 3/DemoContent2.de.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="http://localhost/Demo Folder 3/DemoContent2.en.html" />
+        <xhtml:link rel="alternate" hreflang="de" href="http://localhost/Demo Folder 3/DemoContent2.de.html" />
+        <lastmod>2025-02-24T08:32:52+00:00</lastmod>
+    </url>
+</urlset>

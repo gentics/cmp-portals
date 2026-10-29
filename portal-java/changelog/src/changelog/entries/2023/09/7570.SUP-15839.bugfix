@@ -1,0 +1,1 @@
+Adds configuration option @monitoring.startupCheckMode@ which determines the consequence of failed start-up checks: OFF meaning no checks will be performed, ABORT will abort the portal start-up immediatelly and UNREADY will cause the @/health/live@ endpoint to respond that the portal is no longer live.

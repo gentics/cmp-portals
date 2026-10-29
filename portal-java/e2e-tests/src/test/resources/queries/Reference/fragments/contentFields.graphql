@@ -1,0 +1,9 @@
+fragment contentFields on %contentSchema% {
+    name
+    contenttype
+    templateName
+    title
+    teaser
+    content
+    portalapp
+}

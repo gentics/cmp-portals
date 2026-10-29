@@ -1,0 +1,33 @@
+{
+	"uuid": "5e3a0e1ddd7d11eb9f030242ac130004",
+	"language": "en",
+	"parentNode": {
+		"uuid": "44d7205fdd7d11eb9f030242ac130004"
+	},
+
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"creatoremail": "nowhere@gentics.com",
+		"editdate": "2021-07-05T10:54:56Z",
+		"publishtimestamp": "2021-07-05T10:55:59Z",
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"description": "",
+		"name": "Echo Language",
+		"content": "<p style=\"\">EN: Title, Echo Language<br style=\"\"></p>\n<p>EN: Teaser, Echo Language<br></p>\n<p style=\"\">EN: Cotnent: Echo Language, This page should not be visible, since the PortalApp should answer the request<br style=\"\"></p>\n",
+		"createdate": "2021-07-05T10:53:20Z",
+		"publisher": "Node Admin",
+		"filename": "Echo_Language.en.html",
+		"cms_id": 16,
+		"editoremail": "nowhere@gentics.com",
+		"publishermail": "nowhere@gentics.com",
+		"editor": "Node Admin",
+		"creator": "Node Admin",
+		"teaser": "<p>EN: Teaser, Echo Language<br></p>",
+		"title": "<p style=\"\">EN: Title, Echo Language<br style=\"\"></p>",
+		"pagecontent": "<p style=\"\">EN: Cotnent: Echo Language, This page should not be visible, since the PortalApp should answer the request<br style=\"\"></p>",
+		"portalapp": "echo-language"
+	}
+}

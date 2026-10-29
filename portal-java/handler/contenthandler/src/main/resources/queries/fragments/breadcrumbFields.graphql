@@ -1,0 +1,11 @@
+fragment breadcrumbFields on Node {
+	fields {
+		... on %folderSchema% {
+			name
+		}
+
+		... on %contentSchema% {
+			name
+		}
+	}
+}

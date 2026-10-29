@@ -1,0 +1,301 @@
+---
+title: New project
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+This explains how to setup a basic project with the {{%GPJava%}} framework.
+
+== Maven setup
+
+A full link:../examples/new-project/pom.xml[example] for a `pom.xml` is at the end of this section.
+
+=== Repository and dependencies
+
+Make sure to use the Gentics Maven repository located at https://maven.gentics.com/maven2.
+
+The only necessary dependency is
+
+[source,xml]
+----
+<dependency>
+	<groupId>com.gentics.mesh.portal</groupId>
+	<artifactId>mesh-portal-base</artifactId>
+	<version>${mesh.framework.version}</version>
+</dependency>
+----
+
+If you want to use the {{%Mesh%}} plugins for likes, comments or the form generator, you also need to add dependencies
+to the following artifacts
+
+* `mesh-portal-likes`
+* `mesh-portal-comments`
+* `mesh-portal-formgenerator`
+
+The portal framework uses https://google.github.io/dagger/[Dagger, window="_blank"] for dependency injection, so the `dagger-compiler` must be added as a
+dependency in the configuration of the `maven-compiler-plugin`.
+
+It is recommended to build the portal as a single `.jar` file using the `maven-shade-plugin`.
+
+.Example _pom.xml_
+[source,xml]
+----
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<properties>
+		<mesh.framework.version>0.5.1</mesh.framework.version>
+		<dagger.version>2.24</dagger.version>
+	</properties>
+
+	<groupId>com.gentics.mesh.portal</groupId> <!--1-->
+	<artifactId>sample-portal</artifactId> <!--1-->
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<!-- Portal Framework -->
+		<dependency>
+			<groupId>com.gentics.mesh.portal</groupId>
+			<artifactId>mesh-portal-base</artifactId>
+			<version>${mesh.framework.version}</version>
+		</dependency>
+
+		<!-- Dagger -->
+		<dependency>
+			<groupId>com.google.dagger</groupId>
+			<artifactId>dagger-compiler</artifactId>
+			<version>${dagger.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
+				<configuration>
+					<forceJavacCompilerUse>true</forceJavacCompilerUse>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>com.google.dagger</groupId>
+						<artifactId>dagger-compiler</artifactId>
+						<version>${dagger.version}</version>
+						<optional>true</optional>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<!-- Run shade goal on package phase -->
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>com.gentics.mesh.portal.sample.SamplePortalServer</mainClass> <!--2-->
+								</transformer>
+							</transformers>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<repositories>
+		<repository>
+			<id>gentics.nexus.releases-oss</id>
+			<name>Gentics Nexus OSS Maven Repository</name>
+			<url>https://repo.gentics.com/repository/maven-releases-oss/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>gentics.nexus.releases</id><!--3-->
+			<name>Gentics Nexus Maven Repository</name>
+			<url>https://repo.gentics.com/repository/maven-releases/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>gentics.nexus.thirdparty</id>
+			<name>Gentics Nexus Thirdparty Repository</name>
+			<url>https://repo.gentics.com/repository/maven-thirdparty/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+</project>
+----
+<1> Replace with group/artefact ID of your project
+<2> Replace with the name of the class containing the `main()` method
+<3> Access to the commercial `gentics.nexus.releases` repository requires credentials which can be
+requested by contacting mailto:support@gentics.com[Gentics support].
+
+== Needed Java classes
+
+At the very least, a {{%GPJava%}} project needs an implementation of a
+`BootstrapInitializer` and a `PortalServer` class responsible for initializing
+and starting the portal, as well as a `BindModule` and a `PortalServerComponent`
+handling dependency injection.
+
+=== Dependency injection
+
+Several parts of the portal can have custom implementations which can be injected via https://google.github.io/dagger/[Dagger].The bindings of the implementations
+which should be used, must be defined in a `BindModule` which binds the following classes (except for the `BootstrapInitializer` the framework includes basic
+implementations for all necessary parts):
+
+.Example bind module
+[source,java]
+----
+@Module
+public abstract class BindModule {
+	@Binds
+	abstract BootstrapInitializer bindBoot(CustomBootstrapInitializer e);
+
+	@Binds
+	abstract PortalApplicationRegistry bindApplicationRegistry(BasicApplicationRegistry e);
+
+	@Binds
+	abstract NavigationTransformer bindNavigationTransformer(BasicNavigationTransformer e);
+
+	@Binds
+	abstract LoginRedirectHandler bindLoginRedirectHandler(ServerLoginRedirectHandler e);
+}
+----
+
+The `PortalServerComponent` will look almost identical in all projects, but it
+references the custom `BindModule` and can therefore not be provided by the
+portal framework itself.
+
+.Example portal server component
+[source,java]
+----
+@Singleton
+@Component(modules = {
+	PortalModule.class, <1>
+	BindModule.class, <1><2>
+	MicrometerModule.class, <3>
+	CustomModule.class <4>
+})
+public interface PortalServerComponent extends BaseComponent {
+
+	BootstrapInitializer runner();
+
+	@Component.Builder
+	interface Builder {
+
+		@BindsInstance
+		Builder configuration(PortalConfig config);
+
+		PortalServerComponent build();
+	}
+}
+----
+<1> The `PortalModule` and `BindModule` are always required.
+<2> This is the `BindModule` specified above.
+<3> The `MicrometerModule` is required when link:../features/monitoring.html[monitoring]
+is used.
+<4> Custom modules can be handy for injecting objects in custom handlers, or
+providing a project specific configuration.
+
+=== Bootstrapping the portal
+
+The `start()` method of the `BootstrapInitializer` implementation is responsible for initializing handlers and deploying the verticles.
+
+At a minimum the `start()` method must call `deployHttpVerticles()`, but then most functioniality of the portal is disabled.For most projects, initializing the
+`HandlerProvider` and deploying the `DataProviderVerticle` is recommended.
+
+Here is a full example of a `BootstrapInitializer` implementation:
+
+.Example bootstrap initializer
+[source,java]
+----
+@Singleton
+public class CustomBootstrapInitializer extends AbstractBootstrapInitializer {
+
+	@Inject
+	public HandlerProvider handlerProvider;
+
+	@Inject
+	public DataProviderVerticle dataProvider;
+
+	@Inject
+	public CustomBootstrapInitializer(
+			PortalConfig config,
+			Vertx vertx,
+			Provider<PortalHttpVerticle> verticleProvider,
+			MeshRestClient meshClient) {
+		super(config, vertx, verticleProvider, meshClient);
+	}
+
+	@Override
+	public void start() {
+		handlerProvider.init();
+		vertx.deployVerticle(dataProvider, new DeploymentOptions().setWorker(true), deploymentHandler);
+		deployHttpVerticles();
+	}
+}
+----
+
+Finally a class containing a static `main()` method is needed to start the
+portal.
+
+.Example portal server
+[source,java]
+----
+public class PortalServer {
+
+	public static void main(String[] args) {
+		LoggingConfigurator.init();
+
+		PortalConfig config = PortalConfigLoader.createOrLoadOptions();
+
+		PortalStarter.start(() -> DaggerPortalServerComponent.builder().configuration(config).build());
+	}
+}
+----
+
+For a complete example of a small project setup, have a look at the Java sources in the https://git.gentics.com/psc/portal-java-reference[Demo project].
+
+== Configuration
+
+The link:../development/configuration.html[configuration] of the portal (located in _config/server.yml_) must contain at least the following entries:
+
+.config/server.yml
+[source,yaml]
+----
+mesh:
+  apiKey: authentication-token-generated-by-mesh
+meshProject: name-of-the-mesh-project
+portalAPIKey: arbitrary-token-for-portal-access
+serverUrl: http://url-to-portal
+----

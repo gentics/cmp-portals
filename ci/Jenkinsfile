@@ -1,0 +1,349 @@
+@Library('jenkins-pipeline-library') import com.gentics.*
+JobContext.set(this)
+
+final def gitCommitTag         = "[Jenkins | ${env.JOB_BASE_NAME}]"
+final def helmRepositoryProd   = 'https://repo.gentics.com/repository/helm/';
+final def helmRepositoryTest   = 'https://repo.gentics.com/repository/helm-snapshots/';
+
+final def portalPhpMirrorRepo        = 'git@github.com:gentics/portal-php.git'
+final def portalPhpLaravelMirrorRepo = 'git@github.com:gentics/portal-php-laravel.git'
+
+def helmVersion                = null
+def helmRepository             = helmRepositoryTest;
+def version                    = null
+def nextSnapshotVersion        = null
+
+pipeline {
+    agent {
+        kubernetes {
+            label env.BUILD_TAG.take(63)
+            defaultContainer 'build'
+            yaml ocpWorker("""
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: build
+    image: """ + buildEnvironmentDockerImage("ci/Dockerfile.build", "cmp-portals") + """
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 4Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi
+    env:
+    - name: HOME
+      value: /home/jenkins
+    - name: DOCKER_HOST
+      value: tcp://127.0.0.1:2375
+    - name: MAVEN_OPTS
+      value: "-Xmx1g -XX:MaxMetaspaceSize=128m"
+    - name: TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE
+      value: /run/user/1000/docker.sock
+  - name: docker
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 6Gi
+      requests:
+        cpu: 1000m
+        memory: 6Gi
+""")
+        }
+    }
+
+	parameters {
+        booleanParam(name: 'runRelease',          defaultValue: false, description: "Make a release. When this is selected, all other parameters are implicitly set accordingly.")
+		booleanParam(name: 'checkGitCommit',      defaultValue: false, description: 'If set to true, the current git revision is compared with the git revision of the last successful build. If they are equal, the build is skipped and env.BUILD_SKIPPED is set to true')
+        string(name: 'meshVersion',               defaultValue: "",    description: "Mesh version to be used for the build.")
+        string(name: 'testingVersion',            defaultValue: "",    description: "Version for testing")
+        booleanParam(name: 'runTests',            defaultValue: true,  description: "Whether to run the unit tests.")
+        booleanParam(name: 'runHelmBuild',        defaultValue: false, description: "Whether to run the helm build steps.")
+        booleanParam(name: 'runScan',             defaultValue: true,  description: "Whether to run security scans.")
+        booleanParam(name: 'runDeploy',           defaultValue: false, description: "Deploy the built artifacts.")
+    }
+
+    options {
+        withCredentials([
+            usernamePassword(credentialsId: 'docker.gentics.com', usernameVariable: 'repoUsername', passwordVariable: 'repoPassword')
+        ])
+        timestamps()
+        timeout(time: 1, unit: 'HOURS')
+        ansiColor('xterm')
+    }
+
+	stages {
+        stage("Setup") {
+            steps {
+                script {
+                    def portalJavaVersion = ""
+                    def portalPhpVersion  = ""
+
+                    dir ('portal-java') {
+                        portalJavaVersion = MavenHelper.getVersion()
+                    }
+                    dir ('portal-php') {
+                        portalPhpVersion = MavenHelper.getVersion()
+                    }
+
+                    if (portalJavaVersion != portalPhpVersion) {
+                        error("Version of Portal | Java (${portalJavaVersion}) != Version of Portal | PHP (${portalPhpVersion}). Build cancelled.")
+                    }
+
+                    version = portalJavaVersion
+                    helmVersion = GenericHelper.prefixIfNotSemver(version)
+                }
+
+                script {
+                    // when doing a release build, set the other parameters accordingly
+                    // check whether the versions are in sync and proceed to the next release version
+                    if (params.runRelease) {
+                        echo "Doing a release build"
+                        params.runDeploy = true
+                        params.runHelmBuild = true
+                        params.runScan = true
+                        params.checkGitCommit = false
+                        params.meshVersion = ""
+                        helmRepository = helmRepositoryProd
+
+                        version = MavenHelper.transformSnapshotToReleaseVersion(version)
+                        nextSnapshotVersion = MavenHelper.getNextSnapShotVersion(version)
+                        helmVersion = GenericHelper.prefixIfNotSemver(version)
+                        currentBuild.description = "Release ${version}"
+                        dir ('portal-java') {
+                            MavenHelper.setVersion(version)
+                        }
+                        dir ('portal-php') {
+                            MavenHelper.setVersion(version)
+                        }
+                    } else {
+                        if (params.testingVersion?.trim()) {
+                            version = params.testingVersion.trim()
+                            helmVersion = GenericHelper.prefixIfNotSemver(version)
+                            dir ('portal-java') {
+                                MavenHelper.setVersion(version)
+                            }
+                            dir ('portal-php') {
+                                MavenHelper.setVersion(version)
+                            }
+                        }
+
+                        if (params.runTests) {
+                            currentBuild.description = "Run tests for ${version}"
+                        } else {
+                            currentBuild.description = "Run build for ${version}"
+                        }
+                    }
+                }
+
+                script {
+                    if (params.meshVersion) {
+                        dir ('portal-java') {
+                            def oldMeshVersion = MavenHelper.getMavenProperty("mesh.version");
+
+                            echo "Setting Gentics Mesh version to ${params.meshVersion}"
+                            MavenHelper.setProperty("mesh.version", params.meshVersion)
+
+                            def parent = MavenHelper.getParent()
+                            if (parent && parent.groupId == "com.gentics.mesh" && parent.artifactId == "mesh-plugin-parent") {
+                                echo "Setting Parent version to ${params.meshVersion}"
+                                MavenHelper.setParentVersion(params.meshVersion, "-Dmesh.version=${oldMeshVersion}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+		stage('Check git commit') {
+			when {
+				expression {
+					return Boolean.valueOf(params.checkGitCommit)
+				}
+			}
+
+			steps {
+				script {
+					if ( env.GIT_COMMIT == env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ) {
+						echo "env.GIT_COMMIT (" + env.GIT_COMMIT + ") = env.GIT_PREVIOUS_SUCCESSFUL_COMMIT (" + env.GIT_PREVIOUS_SUCCESSFUL_COMMIT + "). Skip building."
+						env.BUILD_SKIPPED = "true"
+					} else {
+						echo "env.GIT_COMMIT (" + env.GIT_COMMIT + ") != env.GIT_PREVIOUS_SUCCESSFUL_COMMIT (" + env.GIT_PREVIOUS_SUCCESSFUL_COMMIT + "). Need to rebuild."
+					}
+ 				}
+			}
+		}
+
+        stage("Build Portal | PHP") {
+            when {
+                expression {
+                    return env.BUILD_SKIPPED != "true"
+                }
+            }
+
+            steps {
+                script {
+                    dir ('portal-php') {
+                        sh "composer --no-ansi config \
+                            --auth http-basic.repo.gentics.com -- $repoUsername $repoPassword"
+                        sh "export COMPOSER_MEMORY_LIMIT=-1; composer build"
+
+                        // build dependency report
+                        sh "composer info --direct --no-dev --locked --latest --ignore-platform-reqs -f json > dependency-reporting/dependencies_composer.json"
+
+                        // build changelog, docs and dependency report
+                        sh "mvn -B clean install"
+                    }
+                }
+            }
+
+			post {
+				always {
+					junit  "portal-php/.reports/*.xml"
+				}
+			}
+        }
+
+        stage("Build Portal | Java") {
+            when {
+                expression {
+                    return env.BUILD_SKIPPED != "true"
+                }
+            }
+
+            steps {
+                script {
+                    def mvnArguments = params.runTests  ? "" : " -DskipTests"
+
+                    dir ('portal-java') {
+                        withDockerRegistry([ credentialsId: "docker.gentics.com", url: "https://docker.gentics.com/v2" ]) {
+                            withEnv(["LICENSEKEY=${mesh_enterprise_licensekey_2}"]) { // TODO Remove when mesh and plugins do not need the LICENSEKEY any more
+                                sh "mvn -U -B -fae -Dgpg.skip=true -Dmaven.test.failure.ignore=true ${mvnArguments} clean install"
+                            }
+                        }
+                    }
+                }
+            }
+
+            post {
+                always {
+                    script {
+                        if (params.runTests) {
+                            dir ('portal-java') {
+                                junit  testResults: "**/target/surefire-reports/TEST-*.xml"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("Helm Charts") {
+            when {
+				expression {
+					return env.BUILD_SKIPPED != "true" && params.runHelmBuild
+				}
+			}
+
+            steps {
+                echo "Packaging Helm Chart gentics/gentics-portal-php with Version ${helmVersion}"
+                sh 'REPO_USERNAME=$repoUsername REPO_PASSWORD=$repoPassword ci/build-helm-chart.sh ' + helmVersion + ' ee/portal-php'
+
+                echo "Packaging Helm Chart gentics/gentics-portal-java with Version ${helmVersion}"
+                sh 'REPO_USERNAME=$repoUsername REPO_PASSWORD=$repoPassword ci/build-helm-chart.sh ' + helmVersion + ' ee/portal-java'
+			}
+        }
+
+        stage("Scan") {
+            when {
+				expression {
+					return env.BUILD_SKIPPED != "true" && params.runScan
+				}
+			}
+
+            steps {
+                echo "Performing security scans"
+
+                scanFilesystem path: "$PWD", exitCode: 1, dockerParams: "-v ${env.WORKSPACE}/ci/trivyignore:/tmp/trivyignore", params: '--ignorefile /tmp/trivyignore --ignore-unfixed --skip-files "**/mockery/mockery/docs/requirements.txt,**/Gemfile.lock,**/gentics-hugo-theme/**"'
+            }
+        }
+
+        stage("Deploy") {
+            when {
+				expression {
+					return env.BUILD_SKIPPED != "true" && params.runDeploy
+				}
+			}
+
+            steps {
+                script {
+                    echo "Deploying Portal | PHP"
+                    dir ('portal-php') {
+                        // deploy maven artifacts
+                        sh "mvn -B deploy -DskipTests"
+
+                        // there is no "deployment" of the composer packages.
+                        // the packages will be made available by packagist when the version tag is generated
+                    }
+
+                    echo "Deploying Portal | Java"
+                    dir ('portal-java') {
+                        // deploy maven artifacts
+                        sh "mvn -B -Dgpg.skip=true deploy -DskipTests"
+                    }
+
+                    if (params.runHelmBuild) {
+                        def helmPackageFilename = "gentics-portal-php-${helmVersion}.tgz"
+                        echo "Deploying Portal | PHP Helm Chart"
+                        sh 'curl -u $repoUsername:$repoPassword ' + helmRepository + ' --upload-file ee/portal-php/target/' + helmPackageFilename
+
+                        helmPackageFilename = "gentics-portal-java-${helmVersion}.tgz"
+                        echo "Deploying Portal | Java Helm Chart"
+                        sh 'curl -u $repoUsername:$repoPassword ' + helmRepository + ' --upload-file ee/portal-java/target/' + helmPackageFilename
+                    }
+
+                    def branchName = GitHelper.fetchCurrentBranchName()
+                    if (params.runRelease) {
+                        def releaseMessage = 'Release of version ' + version
+                        def nextVersion    = null
+
+                        // add commit and tag for the Release
+                        GitHelper.addCommit('.', gitCommitTag + ' ' + releaseMessage)
+                        GitHelper.addTag(version, releaseMessage)
+
+                        // push the subtrees of portal-php and portal-php-laravel to the mirror repositories
+                        sshagent(["git"]) {
+                            // push the release tag to the repo
+                            GitHelper.pushTag(version)
+
+                            sh "ci/push-subtree-tag.sh ${portalPhpMirrorRepo} portal-php ${version}"
+                            sh "ci/push-subtree-tag.sh ${portalPhpLaravelMirrorRepo} portal-php-laravel ${version}"
+                        }
+
+                        // set the next snapshot versions
+                        dir ('portal-php') {
+                            MavenHelper.setVersion(nextSnapshotVersion)
+                        }
+                        dir ('portal-java') {
+                            MavenHelper.setVersion(nextSnapshotVersion)
+                        }
+
+                        // make a commit for setting the next snapshot version
+                        GitHelper.addCommit('.', gitCommitTag + ' Prepare for the next development iteration (' + nextSnapshotVersion + ')')
+
+                        // push branch and tag
+                        sshagent(["git"]) {
+                            GitHelper.pushBranch(branchName)
+                        }
+                    } else {
+                        sshagent(["git"]) {
+                            sh "ci/push-subtree-branch.sh ${portalPhpMirrorRepo} portal-php ${version}"
+                            sh "ci/push-subtree-branch.sh ${portalPhpLaravelMirrorRepo} portal-php-laravel ${version}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

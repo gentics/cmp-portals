@@ -1,0 +1,13 @@
+{
+    "realm": "{{ .Values.keycloak.realmName }}",
+    "auth-server-url": "{{ .Values.keycloak.authUrl }}",
+    "ssl-required": "external",
+    "resource": "{{ .Values.keycloak.clientName }}",
+    "public-client": {{ .Values.keycloak.publicClient }},
+    {{- if not .Values.keycloak.publicClient }}
+    "credentials": {
+        "secret": "{{ .Values.keycloak.clientSecret }}"
+    },
+    {{- end }}
+    "confidential-port": 0
+  }

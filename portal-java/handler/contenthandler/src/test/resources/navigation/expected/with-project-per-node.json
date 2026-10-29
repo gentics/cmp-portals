@@ -1,0 +1,40 @@
+[
+	{
+		"uuid" : "76a1e00c8c3211e885740242ac150002",
+		"path" : "/about",
+		"ancestors": [],
+		"fields" : {
+			"name" : "About",
+			"navsortorder" : 1.0,
+			"navhidden": false,
+			"startpage" : {
+				"languages" : [ {
+					"language" : "en",
+					"path" : null
+				} ]
+			}
+		},
+		"children" : [
+		],
+		"level": 1
+	},
+	{
+		"uuid" : "7151e59b8c3211e885740242ac150002",
+		"path" : "/products",
+		"ancestors": [],
+		"fields" : {
+			"name" : "Products",
+			"navsortorder" : 2.0,
+			"navhidden": false,
+			"startpage" : {
+				"languages" : [ {
+					"language" : "en",
+					"path" : null
+				} ]
+			}
+		},
+		"children" : [
+		],
+		"level": 1
+	}
+]

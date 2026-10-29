@@ -1,0 +1,38 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>mesh-portal-handler</artifactId>
+	<packaging>pom</packaging>
+
+	<parent>
+		<groupId>com.gentics.mesh.portal</groupId>
+		<artifactId>mesh-portal-framework</artifactId>
+		<version>9.0.0-SNAPSHOT</version>
+	</parent>
+
+	<modules>
+		<module>contenthandler</module>
+		<module>formgenerator</module>
+		<module>genticsimagestore</module>
+		<module>sitemap</module>
+		<module>authentication</module>
+		<module>cache</module>
+		<module>redirect</module>
+		<module>likes</module>
+		<module>error</module>
+		<module>branch</module>
+		<module>comments</module>
+		<module>mesh-plugins</module>
+		<module>forms</module>
+		<module>search</module>
+	</modules>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>com.gentics.mesh.portal</groupId>
+			<artifactId>mesh-portal-core</artifactId>
+		</dependency>
+	</dependencies>
+
+</project>

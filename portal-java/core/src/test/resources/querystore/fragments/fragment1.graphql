@@ -1,0 +1,9 @@
+# All comments should disappear
+fragment fragment1 {
+	... on fake_schema           # This should not be altered
+	... on %binaryContentSchema% # This should become dummy_binary_content
+	... on %contentSchema%       # This should become dummy_content
+	... on %folderSchema%        # This should become dummy_folder
+	... fragment2                # This should cause fragments/fragment2.graphql to be added
+	... fragment3                # This should NOT cause fragments/fragment3.graphql to be added again, because it is already there
+}

@@ -1,0 +1,1 @@
+HTTP: Now the max HTTP header size is configurable via `maxHttpHeaderSize` config entry / `MAX_HTTP_HEADER_SIZE` environment variable. Default value is 8192 bytes.

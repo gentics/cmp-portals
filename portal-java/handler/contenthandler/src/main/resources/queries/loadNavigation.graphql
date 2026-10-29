@@ -1,0 +1,40 @@
+{
+  rootNode {
+    children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+      elements {
+        uuid
+        ...navigation
+        children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+          elements {
+            uuid
+            ...navigation
+            children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+              elements {
+                uuid
+                ...navigation
+                children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+                  elements {
+                    uuid
+                    ...navigation
+                    children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+                      elements {
+                        uuid
+                        ...navigation
+                        children(filter: {and: [{schema: {is: %folderSchema%}}, {not: {fields: {%folderSchema%: {navhidden: true}}}}]}) {
+                          elements {
+                            uuid
+                            ...navigation
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

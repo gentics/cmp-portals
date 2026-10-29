@@ -1,0 +1,105 @@
+{
+	"uuid": "be4de3de4e04419d866bd46f18045f49",
+	"displayField": "name",
+	"segmentField": "pub_dir",
+	"urlFields": [],
+	"container": true,
+	"name": "ref_folder",
+	"elasticsearch": {},
+	"fields": [
+		{
+			"name": "description",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "createdate",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "date"
+		},
+		{
+			"name": "editor",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "creatoremail",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "navsortorder",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "number"
+		},
+		{
+			"name": "startpage",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "node",
+			"allow": [
+				"ref_content"
+			]
+		},
+		{
+			"name": "navhidden",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "boolean"
+		},
+		{
+			"name": "creator",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "editdate",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "date"
+		},
+		{
+			"name": "cms_id",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "number"
+		},
+		{
+			"name": "pub_dir",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "editoremail",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		},
+		{
+			"name": "name",
+			"required": false,
+			"elasticsearch": {
+			},
+			"type": "string"
+		}
+	]
+}

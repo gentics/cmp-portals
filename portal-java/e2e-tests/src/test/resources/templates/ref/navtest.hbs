@@ -1,0 +1,22 @@
+<h1>eachBc</h1>
+<ul>
+{{# eachBc data.node }}
+    <li>{{name}}</li>
+{{/eachBc}}
+</ul>
+
+<h1>eachBcRaw</h1>
+<ul>
+{{# eachBcRaw data.node }}
+    <li>{{fields.name}}</li>
+{{/eachBcRaw}}
+</ul>
+
+<h1>eachNav</h1>
+<ul>
+{{# eachNav }}
+    <li>
+        <h2>{{fields.name}}</h2>
+    </li>
+{{/eachNav}}
+</ul>

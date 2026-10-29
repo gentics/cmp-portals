@@ -1,0 +1,60 @@
+query ($lang: [String]) {
+    project {
+        uuid
+        rootNode {
+            children(lang: $lang perPage:2147483647) {
+                elements {
+                    uuid
+                    ...navigation
+                    children(lang: $lang perPage:2147483647) {
+                        elements {
+                            uuid
+                            ...navigation
+                            children(lang: $lang perPage:2147483647) {
+                                elements {
+                                    uuid
+                                    ...navigation
+                                    children(lang: $lang perPage:2147483647) {
+                                        elements {
+                                            uuid
+                                            ...navigation
+                                            children(lang: $lang perPage:2147483647) {
+                                                elements {
+                                                    uuid
+                                                    ...navigation
+                                                    children(lang: $lang perPage:2147483647) {
+                                                        elements {
+                                                            uuid
+                                                            ...navigation
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+fragment navigation on Node {
+    schema {
+        name
+    }
+    path
+    fields {
+        ... on %folderSchema% {
+            name
+            navhidden
+            navsortorder
+            startpage(lang: $lang) {
+                uuid
+                path
+            }
+        }
+    }
+}

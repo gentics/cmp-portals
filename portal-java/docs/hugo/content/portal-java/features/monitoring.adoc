@@ -1,0 +1,112 @@
+---
+title: Monitoring
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Enable monitoring
+
+To enable monitoring, it has to be enabled in the server link:../development/configuration.html#_monitoring[configuration]
+and in the link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer] implementation:
+
+=== Server configuration
+
+The following link:../development/configuration.html#_monitoring[settings] are available to configure monitoring for the
+portal:
+
+.config/server.yml
+[source,yaml]
+----
+mesh:
+    monitoringPort: 8081 <1>
+
+monitoring:
+    enabled: true
+    ignoreMeshReady: false <1>
+    jmxEnabled: true
+    host: 127.0.0.1
+    port: 3001
+----
+<1> Make sure that the `mesh.monitoringPort` is set correctly when setting
+`monitoring.ignoreMeshReady` to `false`. When this setting is false and the
+portal cannot reach the Mesh monitoring verticle, the status of the portal will
+also be _503 Service Unavailable_.
+
+The configuration above will enable the monitoring server, which will listen on `127.0.0.1:3001`, and the metrics are
+available via https://www.oracle.com/technetwork/articles/javase/jmx-138825.html[JMX, window=_blank].
+
+It is strongly recommended to bind the monitoring service to 127.0.0.1 only, so it can only be accessed by local
+services.
+
+=== Deploying the monitoring verticle
+
+Since the monitoring service runs in its own https://vertx.io/docs/vertx-core/java/#_verticles[verticle,
+window=_blank], it must be explicitly deployed by the `BootstrapInitializer` implementation. To do so, make sure the
+verticle is injected either via the `@Inject` annotation or passed to the constructor, and deploy it in the `start()`
+method.
+
+.Example bootstrap initializer
+[source,java]
+----
+public class CustomBootstrapInitializer extends AbstractBootstrapInitializer {
+
+    // ...
+
+    @Inject
+    public MonitoringServiceVerticle monitoringService;
+
+    public void start()  {
+        vertx.deployVerticle(monitoringService, deploymentHandler);
+
+        // ...
+    }
+}
+----
+
+== Monitoring endpoints
+
+The monitoring service provides the following endpoints.
+
+.Table Monitoring endpoints
+|===
+| Endpoint | Description | Response
+
+| `/health/live`
+| Whether the portal is reachable at all
+| Empty response with status `200 OK` when the portal is reachable and no response at all otherwise
+
+| `/health/ready`
+| Whether the portal has finishes startup and can react to HTTP requests
+| Empty response with status `200 OK` when the portal can react to HTTP requests, or the status
+  `503 Service Unavailable` when the portal is still starting
+
+| `/metrics`
+| The metrics collected by https://vertx.io/docs/#devops[Vert.x, window=_blank] and the portal
+| The format of the response depends on the used `MetricsService` implementation
+|===
+
+=== Available metrics services
+
+Currently the only available `MetricsService` implementation will use metrics provided by
+https://vertx.io/docs/vertx-dropwizard-metrics/java/[Dropwizard, window=_blank] and
+https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format[formatted, window=_blank]
+so they can be processed by by the https://prometheus.io/[Prometheus, window=_blank] monitoring toolkit.
+
+=== Additional metrics
+
+Aside from the metrics gathered by Vert.x itself, {{%GPJava%}} will additionally provide the following
+metrics:
+
+* Number of cache hits/misses for link:../development/caching.html#_implicit_caching[content]
+* Duration of page rendering
+* Duration of requests to Mesh for
+** Loading content
+** Loading binaries
+** Loading binaries via GIS
+** Loading navigation data
+
+* Number of outgoing requests in progress
+* Number of outgoing requests in queue
+* Number of outgoing requests per call state
+* bytes sent and received for outgoing requests

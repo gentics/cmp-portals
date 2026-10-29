@@ -1,0 +1,22 @@
+languageCode = "en-us"
+title = "Gentics Portal | java - Documentation"
+baseurl = ""
+theme = "gentics-hugo-theme"
+
+DefaultContentLanguage = "en-us" # change to your language
+
+relativeURLs = true
+hasCJKLanguage = false # if your site has CJK language, set true
+canonifyurls = true
+paginate = 3 # default number of pages per page in pagination
+
+[menu]
+    [[menu.main]]
+        identifier = "changelog"
+        name = "Changelog"
+        url = "https://www.gentics.com/cmp/changelog/8.0.0/merged_changelog.html"
+
+    [[menu.extmain]]
+        identifier = "reference"
+        name = "Reference implementation"
+        url = "https://git.gentics.com/psc/portal-java-reference"

@@ -1,0 +1,273 @@
+---
+title: Caching
+description: "Cache GraphQL requests, navigation, arbitrary data, files and rendered content."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} using the caching capabilities of Laravel behind the scenes. This topic shows the recommended way of
+data caching with {{%GPPHP%}}.
+
+== Caching GraphQL requests
+
+The GraphQL Loader uses traits to do caching and you can add this capability to your own request classes.
+
+For more information please read the link:../features/graphql.html#_example_use_custom_graphqlrequest_class_with_caching[GraphQL feature documentation].
+
+== Cached Navigation
+
+When you request data from GraphQL and it does not contain a navigation, you can use the `NeedsNavigation` trait and
+add navigation to your existing `$responseData` which is the `data` index of the GraphQL response array. By default, the navigation will be cached based on user roles. It also tries to auto-detect the current path based on the request.
+
+```php
+$responseData = $this->addNavigation($responseData);
+```
+
+Navigation can be added without cache:
+
+```php
+$responseData = $this->addNavigation($responseData, false);
+```
+
+Or its even possible to load navigation with admin privileges (cached or not):
+
+```php
+$responseData = $this->addNavigation($responseData, true, true);
+```
+
+Auto-Detect path can be overridden for correct branch detection:
+```php
+$responseData = $this->addNavigation($responseData, null, null, $mypath);
+```
+
+The navigation cache time can be globally configured in the {{% config "portal" %}} file:
+
+```php
+'cache' => [
+    // ...
+    'navigation' => [
+        'cacheTime' => 15 // seconds
+    ],
+    // ...
+],
+```
+
+== Caching any data
+
+=== General rules
+
+Caching is useful for resource intensive tasks and remote fetched data. You should decide on what to cache and when the
+cached data should expire.
+
+- It is recommended to use the link:https://laravel.com/docs/12.x/facades[Cache Facades] in Controllers.
+- The keys should follow this pattern: `portal:myprefixkey:unique_identifier`
+
+**Key pattern explained:**
+
+- `portal` should always be there as a base prefix, but only in portal implementations and not in features!
+- `myprefixkey` should be unique to the data scope you want to manage (eg.: likes, comments)
+- `unique_identifier` is only required when you need to distinguish inside the same data scope (eg.: the id of the comment)
+
+You can use deeper cache keys separated by colons (`:`).
+
+The expiration time should be a `DateTime` instance (eg.: link:https://carbon.nesbot.com/[Carbon]). {{%GPPHP%}}
+uses seconds in the configuration, whenever its possible use also seconds:
+
+```php
+$minute = now()->addMinutes(1);
+$minuteInSeconds = now()->addSeconds(60); // Standard way to specify cache expiration
+```
+
+=== Store and retrieve data
+
+The following code will first try to retrieve data from the cache, and if it is not available on the specified key,
+it will run the function to return data.
+
+```php
+$value = Cache::remember('key', now()->addSeconds(60), function () {
+    return myResourceIntensiveTask();
+});
+```
+
+=== Store and retrieve data "forever"
+
+This will keep the cache data until its cleared, but there is no expiration time on it. Anyway it works the same as the
+`Cache::remember()` method.
+
+```php
+$value = Cache::rememberForever('key', function () {
+    return myResourceIntensiveTask();
+});
+```
+
+=== Store/update cached data
+
+If you need to update some data in other parts of your code using an existing cache key, the following code can
+be used to do so.
+
+**For 60 seconds:**
+```php
+Cache::put('key', 'value', now()->addSeconds(60));
+```
+
+**Forever:**
+```php
+Cache::put('key', 'value');
+```
+
+=== Retrieve cached data
+
+If you want to rely on cached data first, you can use the `Cache::get()` method, and you can specify a fallback
+value if it is not existing. Most of the time you would use the `Cache::remember()` but this is an option also, and
+can be used in pair with `Cache::put()`.
+
+```php
+Cache::get('key', 'default value');
+```
+
+=== Invalidate cached data
+
+Deleting cached data is required when its known that the original data has been changed, in these cases you can
+use the `Cache::forget()` method.
+
+```php
+Cache::forget('key');
+```
+
+== Browser caching for files
+
+=== Mesh Binary files
+By default, the browser cache request headers will be forwarded to Mesh to benefit from the automatic
+Cache handling of Mesh. When the client sends a request header `If-None-Match: 3dea5bee`, Mesh will answer with
+HTTP 304 and {{%GPPHP%}} will also forward this HTTP response code to the browser/HTTP client.
+
+These HTTP 304 responses then cached by {{%GPPHP%}} with the Etag data and it will be used for subsequent requests. Cache TTL can be configured.
+
+You can find the request and response headers that are automatically forwarded in the {{%GPPHP%}} configuration file
+under the key `webrootHttpHeaderWhiteList`.
+
+=== Static files
+
+{{%GPPHP%}} serves static resources from the `portal/public/static` directory. These files are served by Apache without reaching the PHP interpreter for optimal performance.
+
+Therefore Apache need to be configured to instruct the browser to cache these static files. This configuration should be placed in the `portal-files/apache2/portal.conf.d/cache.conf` configuration file.
+
+Example Apache static file cache configuration:
+```
+<Directory "/portal/public/static">
+
+    # Browser caching using Cache-Control headers
+    <IfModule mod_headers.c>
+
+        # One year for image and video files
+        <FilesMatch ".(flv|gif|ico|jpg|jpeg|mp4|mpeg|png|svg|swf|webp|webm)$">
+            Header set Cache-Control "max-age=31536000, public"
+        </FilesMatch>
+
+        # One month for JavaScript and Document files
+        <FilesMatch ".(js|pdf|docx|doc|xlsx|xls)$">
+            Header set Cache-Control "max-age=2592000, public"
+        </FilesMatch>
+
+        # One week for CSS files
+        <FilesMatch ".(css)$">
+            Header set Cache-Control "max-age=604800, public"
+        </FilesMatch>
+
+    </IfModule>
+
+</Directory>
+```
+
+It is important to limit the directory with the Directory directive to only cache static resources. It is possible to configure the caches per file extension.
+
+More details can be found on Apache’s documentation pages:
+
+- https://httpd.apache.org/docs/2.4/mod/mod_expires.html[mod_expires Documentation]
+- https://httpd.apache.org/docs/2.4/mod/mod_headers.html[mod_headers Documentation]
+
+== Content caching
+
+{{%GPPHP%}} can cache full responses to bring even faster loading times. This behavior can be configured in the `config/portal.php` file, under the `cache.http` key.
+
+When `enabled` set to true, all responses that have a MIME type allowed in the `mimeTypes` array are cached by default for the time set for `cacheTime`.
+
+The `mimeTypes` array is matched against the beginning of the `Content-Type` header.
+
+Content caching creates a cache key based on the following data:
+
+- User role hash
+- Language
+- Branch
+
+
+TIP: Please note, that user specific data should not be cached since the key only guarantees that the user with the same permissions can see the same response. Whenever you cache full responses, make sure to not output any individual content like the user name. If you have individual parts of a page, you can load those parts over AJAX requests.
+
+=== Override content cache
+
+You can override content caching by giving the `$response` object a new TTL value with `$response->setTtl(60)`, where `60` is the Time-to-Live in seconds. To disable the caching for a response, set the TTL to `0`.
+
+*Set ttl for 60 seconds on a route:*
+```php
+Route::get('/myRoute', 'MyController@index')
+    ->cache(60); // sets ttl to 60 seconds on the route
+```
+
+*Disable cache on a route:*
+```php
+Route::get('/myRoute', 'MyController@index')
+    ->bypassCache(); // sets ttl to 0 on the route
+```
+
+*Disable cache from any method:*
+This will disable the cache for any page, where this command has been ran.
+
+```php
+//use Gentics\PortalPhp\Features\HttpCache\AppCache;
+AppCache::bypass();
+```
+
+Note: For core features, this method should be called when an exception is exists for the feature in `portal.cache.http.exceptions`, like for 'renderForm':
+ 
+```php
+AppCache::bypassWhen('renderForm');
+```
+
+The `cache` and `bypassCache`, and `AppCache::bypass()` only takes effect when Content Caching is enabled, otherwise it does nothing.
+
+{{% collapsible "Direct TTL middleware configuration" %}}
+It is possible also to change the TTL with Route Middleware, so you can change the TTL for a route or groups of routes at once.
+
+For this, you need to add the route middleware to the Kernel.
+
+```php
+protected $routeMiddleware = [
+    [...]
+    'ttl' => \Gentics\PortalPhp\Features\HttpCache\Http\Middleware\SetTtl::class,
+];
+```
+
+Then for any route or route group you can use this `ttl` middleware and give the TTL seconds as parameter. Example:
+
+```php
+Route::get('/myRoute', 'MyController@index')
+    ->middleware('ttl:60');
+```
+
+TIP: Please note, that the `ttl` middleware is auto-registered by {{%GPPHP%}} when Content Caching is enabled. Otherwise, this middleware is useless, and not registered.
+{{% /collapsible %}}
+
+=== Clear Content Cache
+
+You can clear out the `portal/storage/framework/cache/httpcache` folder or use the following artisan command:
+
+```bash
+php artisan httpcache:clear
+```
+
+== Advanced solutions
+
+For advanced solutions, you may want to get closer with the Laravel documentation,
+in general, you can read about how Laravel's caching works: link:https://laravel.com/docs/12.x/cache[Laravel Cache documentation].

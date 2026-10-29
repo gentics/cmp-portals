@@ -1,0 +1,5 @@
+The default GraphQL queries for loading folder and navigation information no longer contain the @startpageurl@ field. This field was introduced when the possibility was added to define external pages as the startpage of a folder, but this functionality requires a respective tagmap entry in the used Content.Repository. Otherwise the portal start up will fail. To enable external start pages, add the field @startpageurl(linkType: SHORT)@ to the following GraphQL query fragments:
+
+1. resources/graphql/fragments/contentInfo.graphql
+2. resources/graphql/fragments/navigation_breadcrumb.graphql
+3. resources/graphql/fragments/navigation.graphql

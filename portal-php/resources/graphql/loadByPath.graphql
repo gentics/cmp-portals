@@ -1,0 +1,81 @@
+query ($path: String, $folderpath: String, $lang: String) {
+    project {
+        uuid
+        rootNode {
+            children(lang: [$lang, "en"] perPage:2147483647) {
+                elements {
+                    uuid
+                    ...navigation
+                    children(lang: [$lang, "en"] perPage:2147483647) {
+                        elements {
+                            uuid
+                            ...navigation
+                            children(lang: [$lang, "en"] perPage:2147483647) {
+                                elements {
+                                    uuid
+                                    ...navigation
+                                    children(lang: [$lang, "en"] perPage:2147483647) {
+                                        elements {
+                                            uuid
+                                            ...navigation
+                                            children(lang: [$lang, "en"] perPage:2147483647) {
+                                                elements {
+                                                    uuid
+                                                    ...navigation
+                                                    children(lang: [$lang, "en"] perPage:2147483647) {
+                                                        elements {
+                                                            uuid
+                                                            ...navigation
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    node(path: $path) {
+        uuid
+        path
+        language
+        schema {
+            name
+        }
+        breadcrumb (lang: [$lang, "en"]) {
+            uuid
+            ...navigation_breadcrumb
+        }
+        ...navigation_breadcrumb
+        ...contentInfo
+        ...pages
+
+        parent {
+            uuid
+            path
+            breadcrumb (lang: [$lang, "en"]) {
+                uuid
+                ...navigation_breadcrumb
+            }
+            ...navigation_breadcrumb
+            ...pages
+        }
+    }
+
+    folder: node(path: $folderpath) {
+        uuid
+        path
+        breadcrumb (lang: [$lang, "en"]) {
+            uuid
+            ...navigation_breadcrumb
+        }
+        ...navigation_breadcrumb
+        ...pages
+    }
+}

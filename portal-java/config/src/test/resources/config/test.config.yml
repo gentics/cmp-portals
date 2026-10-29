@@ -1,0 +1,3 @@
+ mail:
+   hostname: "gentics.com"
+   port: 1234

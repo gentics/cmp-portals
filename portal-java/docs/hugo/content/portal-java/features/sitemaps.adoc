@@ -1,0 +1,18 @@
+---
+title: Sitemaps
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+For requests to `/sitemap.xml` the portal will dynamically create a sitemap.
+
+The items for the sitemap will be loaded via the `loadAllForSitemap` GraphQL query which must reside in the directory
+configured under `queryPath`. This GraphQL query should already filter the elements such that folders are not
+included.
+
+The handler that will create the sitemap, will check for the `editdate` and `noindex` fields:
+
+* `editdate`: specifies the `lastmod` property in the sitemap
+* `noindex`: if set to `true` the item will _not_ be put into the sitemap

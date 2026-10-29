@@ -1,0 +1,15 @@
+authentication:
+  # The value is no longer used, but the configuration should still be parsed without errors.
+  redirectCookieSameSiteStrict: false
+
+additionalResponseHeaders:
+  "X-Additional-Header": "deprecated-header-setting"
+
+### BEGIN mandatory configuration entries, regardless of the test
+mesh:
+  apiKey: not-important-for-the-test
+  networkTimeout: 1
+
+meshProject: mesh-project-not-important-for-the-test
+portalAPIKey: deprecated-portal-key-setting
+serverUrl: http://server-url-not-important-for-the-test

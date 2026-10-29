@@ -1,0 +1,22 @@
+---
+title: Likes & comments
+description: "Configure the portal proxies for the Mesh Like and Comment plugins."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The Like plugin and Comment plugin is not included with {{%Mesh%}} by default. In this article you will learn how to configure this functionality.
+
+== Enable Likes plugin
+
+The Likes feature is enabled by default in {{%GPPHP%}}, which proxies requests to the Like Mesh Plugin. Every requests to `\http://<portal>/api/like/(.*)` will be passed to `\http://<mesh>/api/v1/<project-name>/plugins/like/` and the portal's route path will be removed from the request, also if a user is logged in the token will be passed with the request. Generally these endpoints should be used from client-side scripts, so the {{%GPPHP%}} side configuration is automatically done this way.
+
+Because the plugin is not included by default with {{%Mesh%}}, please refer to the link:https://www.gentics.com/mesh/premium-features/like/[Gentics Mesh likes plugin documentation] for more.
+
+== Enable Comments plugin
+
+The Comments feature is enabled by default in {{%GPPHP%}}, which proxies requests to the Comment Mesh Plugin. Every reques tto `\http://<portal>/api/comment/(.*)` will be passed to `\http://<mesh>/api/v1/<project-name>/plugins/comment/` and the portal's route path will be removed from the request, also if a user is logged in the token will be passed with the request. Generally these endpoints should be used from client-side scripts, so the {{%GPPHP%}} side configuration is automatically done this way.
+
+Because the plugin is not included by default with {{%Mesh%}}, please refer to the link:https://www.gentics.com/mesh/premium-features/comment/[Gentics Mesh comment plugin documentation] for more.

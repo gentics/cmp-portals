@@ -1,0 +1,12 @@
+[options="header",cols="42%,27%,30%"]
+|======
+| Variable | Field | Description
+{{# each entries }}
+	{{~# with this }}
+
+| *{{ name }}*
+| {{ field }}
+| {{ description }}
+	{{~/ with }}
+{{/ each ~}}
+|======

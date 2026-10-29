@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gentics-portal-php.fullname" . }}
+  labels:
+    {{- include "gentics-portal-php.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port | default "80" }}
+      targetPort: {{ .Values.service.targetPort | default "http" }}
+      protocol: TCP
+      name: {{ .Values.service.name | default "http" }}
+      {{- if .Values.service.useHttp2 }}
+      appProtocol: h2c
+      {{- end }}
+  selector:
+    {{- include "gentics-portal-php.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gentics-portal.fullname" . }}-config
+  labels:
+    {{- include "gentics-portal.labels" . | nindent 4 }}
+data:
+{{ (.Files.Glob "config/logback.xml").AsConfig | indent 2 }}
+{{ (.Files.Glob "config/cache.ccf").AsConfig | indent 2 }}
+
+{{- if .Values.keycloak.enabled }}
+  keycloak.json: |-
+{{- $file := .Files.Get "config/keycloak.json" | indent 6 }}
+{{ tpl $file . }}
+{{- end }}
+
+{{- if .Values.portalConfig }}
+  server.yml: |-
+{{ .Values.portalConfig | indent 4 }}
+{{- end }}

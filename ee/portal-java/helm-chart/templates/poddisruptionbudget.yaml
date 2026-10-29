@@ -1,0 +1,22 @@
+{{- /*
+PodDisruptionBudget — rendered when running more than one replica or when the
+HPA is enabled (a PDB at a fixed single replica would block node drains).
+maxUnavailable, when set, takes precedence over minAvailable (K8s allows only one).
+*/}}
+{{- if or (gt (.Values.replicaCount | int) 1) .Values.autoscaling.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: "{{ include "gentics-portal.fullname" . }}-pdb"
+  labels:
+    {{- include "gentics-portal.labels" . | nindent 4 }}
+spec:
+  {{- if ((.Values.podDisruptionBudget).maxUnavailable) }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ ((.Values.podDisruptionBudget).minAvailable) | default "50%" }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "gentics-portal.selectorLabels" . | nindent 6 }}
+{{- end }}

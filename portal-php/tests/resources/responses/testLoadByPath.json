@@ -1,0 +1,122 @@
+{
+    "data": {
+        "project": {
+            "uuid": "c0bc067dd4b04822bc067dd4b02822ca",
+            "rootNode": {
+                "children": {
+                    "elements": [
+                        {
+                            "uuid": "233605c5b0f711e89da70242ac190002",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/portalphp",
+                            "fields": {
+                                "name": "Portal PHP Reference",
+                                "navhidden": null,
+                                "navsortorder": null,
+                                "startpage": null
+                            },
+                            "children": {
+                                "elements": [
+                                    {
+                                        "uuid": "4aca1a2bbb2311e898eb0242ac1b0003",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/portalphp/apa-it.png",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "47994097b10b11e89da70242ac190002",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/portalphp/Contentpage2.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "26378545b0f811e89da70242ac190002",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/portalphp/Contentpage.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "node": {
+            "uuid": "26378545b0f811e89da70242ac190002",
+            "language": "en",
+            "schema": {
+                "name": "portalphp_content"
+            },
+            "breadcrumb": [
+                {
+                    "uuid": "233605c5b0f711e89da70242ac190002",
+                    "node": {
+                        "schema": {
+                            "name": "portalphp_folder"
+                        },
+                        "path": "/portalphp",
+                        "language": "en",
+                        "fields": {
+                            "name": "Portal PHP Reference",
+                            "navhidden": null,
+                            "navsortorder": null,
+                            "startpage": null
+                        }
+                    }
+                }
+            ],
+            "node": {
+                "schema": {
+                    "name": "portalphp_content"
+                },
+                "path": "/portalphp/Contentpage.html",
+                "language": "en",
+                "fields": {}
+            },
+            "fields": {
+                "name": "Contentpage",
+                "description": "",
+                "templateName": "contentpage",
+                "title": "<p>Abc das ist schön</p>"
+            },
+            "pages": {
+                "elements": []
+            }
+        },
+        "folder": {
+            "uuid": "233605c5b0f711e89da70242ac190002",
+            "breadcrumb": [],
+            "node": {
+                "schema": {
+                    "name": "portalphp_folder"
+                },
+                "path": "/portalphp",
+                "language": "en",
+                "fields": {
+                    "name": "Portal PHP Reference",
+                    "navhidden": null,
+                    "navsortorder": null,
+                    "startpage": null
+                }
+            }
+        }
+    }
+}

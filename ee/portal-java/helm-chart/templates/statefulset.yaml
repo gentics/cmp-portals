@@ -1,0 +1,23 @@
+{{- /*
+Legacy controller, kept for installations created before the Deployment became
+the default. New installations should use controller.kind=Deployment.
+*/}}
+{{- if eq (include "gentics-portal.controllerKind" .) "StatefulSet" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "gentics-portal.fullname" . }}
+  labels:
+    {{- include "gentics-portal.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gentics-portal.selectorLabels" . | nindent 6 }}
+  serviceName: "portal"
+  {{- with .Values.controller.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- include "gentics-portal.podTemplate" . }}
+{{- end }}

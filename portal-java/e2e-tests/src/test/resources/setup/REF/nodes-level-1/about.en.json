@@ -1,0 +1,32 @@
+{
+	"uuid": "8ea387438c3211e885740242ac150002",
+
+	"language": "en",
+	"parentNode": {
+		"uuid": "76a1e00c8c3211e885740242ac150002"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"creatoremail": "nowhere@gentics.com",
+		"editdate": "2021-07-02T13:53:26Z",
+		"publishtimestamp": "2021-07-02T13:55:18Z",
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"description": "",
+		"name": "About us",
+		"content": "<p>EN: Title, About us</p>\n<p>EN: Teaser, About us<br></p>\n<p>EN: Content, About us<br></p>\n",
+		"createdate": "2019-01-29T12:58:01Z",
+		"publisher": "Node Admin",
+		"filename": "About_us.en.html",
+		"cms_id": 10,
+		"editoremail": "nowhere@gentics.com",
+		"publishermail": "nowhere@gentics.com",
+		"editor": "Node Admin",
+		"creator": "Node Admin",
+		"teaser": "<p>EN: Teaser, About us<br></p>",
+		"title": "<p>EN: Title, About us</p>",
+		"pagecontent": "<p>EN: Content, About us<br></p>"
+	}
+}

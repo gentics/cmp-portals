@@ -1,0 +1,7 @@
+fragment contentFields on %contentSchema% {
+  name
+  contenttype
+  templateName
+  title(linkType: SHORT)
+  teaser(linkType: SHORT)
+}

@@ -1,0 +1,1 @@
+Authentication: Expired authentication cookies will now be simply ignored instead of causing a 500 Server Error response.

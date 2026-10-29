@@ -1,0 +1,39 @@
+mesh:
+  host: localhost
+  port: 8100
+  apiKey: set-in-server.local.yml
+
+vertx:
+  eventPoolSize: 1
+
+meshProject: dev
+meshSchemaPrefix: dev
+
+serverUrl: http://portal.localhost.gentics.com:8000
+serverPort: 8000
+startPage: /servicekatalog/Servicecatalog.en.html
+
+security:
+  apiKey: Not-A-Real-Key
+
+authentication:
+#  loginEndpoint: /login
+#  logoutEndpoint: /logout
+#  logoutRedirect: /
+  singleSignOut:
+    externalPortals:
+      - http://portal.localhost.gentics.com:8000
+      - http://portal.localhost.gentics.com:8001
+      - http://portal.localhost.gentics.com:8002
+  protectedEndpoints:
+    - path: /api/protected
+      permissions:
+        - portal:special
+        - guest
+  keycloak:
+    realmUrl: http://localhost:8200/realms/test
+    clientId: account
+
+caching:
+  enabled: false
+

@@ -1,0 +1,217 @@
+---
+title: Authentication
+description: "Enable and configure user authentication for the portal."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Enable Authentication
+
+The authentication feature is *disabled* by default in {{%GPPHP%}}, you have to remove the comments from the Authentication part of the configuration. After that, you need to use the authentication middleware, so you need to replace the `App\Http\Middleware\Authenticate` with the following base code:
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Gentics\PortalPhp\Features\Keycloak\Http\Middleware\Authenticate as Middleware;
+
+class Authenticate extends Middleware
+{
+}
+```
+
+The **keycloak** guard must be setup in to the `auth.php` configuration:
+
+```php
+    'guards' => [
+        'web' => [
+            'driver' => 'keycloak',
+        ],
+    ],
+```
+
+== Disable Authentication
+
+The authentication can be disabled completely with the following steps:
+
+* Comment out or remove the `authentication` key from the `portal.php` configuration.
+* Disable the `App\Http\Middleware\Authenticate` middleware by comment out or remove in the `App\Http\Kernel` class.
+
+== Configuration
+
+To configure Keycloak in {{%GPPHP%}} you have to login to Keycloak server and copy the details. After you logged in, select your Realm, and go to the `Clients` menu. Click on the `Installation` tab and choose `Keycloak OIDC JSON`.
+
+image:/assets/keycloak_json.png[Keycloak, title="Keycloak", width="100%"]
+
+You can copy the settings from here to the portal.authentication.keycloak configuration with the following key mapping (JSON key → Config key):
+
+* auth-server-url → authUrl
+* realm → realm
+* resource → client_id
+* credentials.secret → client_secret
+
+To map users to roles and groups, you have to use an link:https://gentics.com/mesh/docs/plugin-types/auth-service-plugin/[Authentication Service Plugin]. To get started a https://git.gentics.com/psc/portal-reference-mesh-authentication-plugin[Reference Authentication plugin] already exists.
+
+== Detect authentication state
+
+You can detect if authentication is enabled or not by using the `authEnabled()` helper.
+
+== Authenticator
+
+An Authenticator creates an instance of a new *User* from the provided token. The provided properties/fields are defined on the `Authenticator` class. By default {{%GPPHP%}} provides the mandatory fields including the token which need to be supplied with the `Authenticator`.
+
+=== How to get more information from a claim / user?
+
+By default only mandatory fields like the username and email are extracted from the claim Keycloak provides.
+
+To access additional fields, you need to extend or create your own Authenticator class. In {{%GPPHP%}} the default Authenticator is the `UserAuthenticator` (`Gentics\PortalPhp\Features\Keycloak\Adapter\UserAuthenticator`)
+
+First you need to register your new Authenticator e.g.: *WhateverAuthenticator* in `App\Providers\AuthServiceProvider.php` at the `register()` method.
+
+*Register WhateverAuthenticator*
+
+```php
+$this->app->singleton(Authenticator::class, function () {
+    return new WhateverAuthenticator();
+});
+```
+
+Then you need to create your new Authenticator class:
+
+*Sample WhateverAuthenticator (w/ lcobucci/jwt:^4.x)*
+```php
+<?php
+
+namespace Gentics\PortalPhp\Features\Keycloak\Adapter;
+
+use Gentics\PortalPhp\Features\Keycloak\User;
+use Gentics\PortalPhp\Features\Keycloak\Util;
+use Gentics\PortalPhp\Features\Keycloak\Contract\Authenticator;
+
+use Lcobucci\JWT\Token;
+
+class WhateverAuthenticator implements Authenticator
+{
+    /**
+     * @param Token $token
+     * @return mixed|void
+     */
+    public function authUser(Token $token)
+    {
+        $claims = Util::getClaims($token);
+
+        $model = new User([
+            'username' => $claims->get('name'),
+            'name' => $claims->get('email'),
+            'email' => $claims->get('name'),
+            'claims' => $claims->all(),
+            'token' => $token
+        ]);
+
+        \Auth::setUser($model);
+    }
+}
+```
+
+{{% collapsible "Usage if `lcobucci/jwt:^3.x` used as dependency (deprecated):" %}}
+*Sample WhateverAuthenticator (w/ lcobucci/jwt:^3.x)*
+```php
+<?php
+
+namespace Gentics\PortalPhp\Features\Keycloak\Adapter;
+
+use Gentics\PortalPhp\Features\Keycloak\User;
+use Gentics\PortalPhp\Features\Keycloak\Contract\Authenticator;
+use Lcobucci\JWT\Token;
+
+class WhateverAuthenticator implements Authenticator
+{
+    /**
+     * @param Token $token
+     * @return mixed|void
+     */
+    public function authUser(Token $token)
+    {
+        $model = new User([
+            'username' => $token->getClaim('name'),
+            'name' => $token->getClaim('email'),
+            'email' => $token->getClaim('name'),
+            'claims' => $token->getClaims(), // then you can use it as an array to get a value eg.: Auth::user()->claims['email']->getValue()
+            'token' => $token
+        ]);
+
+        \Auth::setUser($model);
+    }
+}
+```
+{{% /collapsible %}}
+
+If you want to use another `User` model, you can also change `use Gentics\PortalPhp\Features\Keycloak\User;` to your own model.
+
+== Token Storage
+A Token Storage holds the actual token of the user, to use it for authentication. By default Cookie is used to store the Authentication token in the user's browser.  You can also create your own Token Storage.
+
+=== How to replace the default Token Storage?
+You need to register your Token Storage e.g.: *WhateverTokenStorage* in `App\Providers\AppServiceProvider.php` at the `register()` method.
+
+*WhateverTokenStorage*
+```php
+$this->app->singleton(TokenStorage::class, function ($app) {
+    return new WhateverTokenStorage($app[Parser::class]); // needs: use Lcobucci\JWT\Parser; at the top of this file
+});
+```
+
+=== Refresh Token Storage
+A Refresh Token Storage holds a refresh token of the user, to use it for renew the authentication token. By default Laravel Cache provider is used, so the refresh tokens are stored server side on the file system. The actual cache backend can be configured or replaced, but you can also create your own Refresh Token Storage.
+
+=== How to change the Cache provider's backend?
+Please read the documentation of Laravel: link:https://laravel.com/docs/12.x/cache#configuration[Laravel Cache documentation].
+
+=== How to replace the default Refresh Token Storage?
+You need to register your Refresh Token Storage e.g.: *WhateverRefreshTokenStorage* in `App\Providers\AppServiceProvider.php` at the `register()` method.
+
+*WhateverRefreshTokenStorage*
+```php
+$this->app->singleton(RefreshTokenStorage::class, function ($app) {
+    return new WhateverTokenStorage($app[Parser::class]); // needs: use Lcobucci\JWT\Parser; at the top of this file
+});
+```
+
+== Compatibility
+
+=== Logout Redirect Uri
+Since https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout[Keycloak 18.0.0], the logout url parameters have been changed, so {{%GPPHP%}} follows this change too. If you use an older Keycloak version,
+it is possible to activate the previous behavior.
+
+Set the `keycloakV18LogoutRedirectParams` to `false` in the `portal.php` configuration file at the compatibility flags.
+
+=== Migration from `lcobucci/jwt` **3.x** to **4.x**
+There are some breaking changes with this upgrade so please follow this upgrade guide when your project is affected:
+
+**Getting claims**
+
+`lcobucci/jwt` **3.x**:
+```php
+// Previously using the claims object property
+$email = Auth::user()->claims['email']->getValue();
+
+// When using in the a custom authenticator, withing the token
+$email = $token->getClaim('email');
+$allClaims = $token->getClaims();
+```
+
+`lcobucci/jwt` **4.x**:
+```php
+// The claims object-property array now does not need the getValue() method
+$email = Auth::user()->claims['email'];
+
+// Internally, withing the token
+use Gentics\PortalPhp\Features\Keycloak\Util;
+
+$claims = Util::getClaims($token);
+$email = $claims->get('email');
+$allClaims = $claims->all();
+```

@@ -1,0 +1,64 @@
+---
+title: Search
+description: "Proxy search queries to the Mesh Search plugin and configure the search."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} search calls the underlying {{%Mesh%}} Search plugin endpoints and returns the result as a proxy.
+
+== Requirements
+
+* {{%Mesh%}} Search plugin
+* Plugin configuration
+* Search queries
+* ElasticSearch index setup
+* Additional queries (optional)
+
+== Switch from the Legacy Search Handler
+
+If a project has a previous search implementation, it should have an `elasticSearch` configuration key in the `portal.php` file. Until this key exists, the `SearchHandlerLegacy` will be loaded for backward compatibility.
+
+To switch to the `SearchHandlerMeshPlugin` handler you must either comment out or remove this configuration key.
+
+== Client side search
+
+{{%GPPHP%}} exposes two endpoints under the `/api/search` path:
+
+* To do a search query, use the `/api/search/search` endpoint
+* To do an autocomplete query, use the `/api/search/autocomplete` endpoint
+
+The authentication token is injected automatically if {{%GPPHP%}} can authenticate the user. Otherwise, it will be used anonymously.
+
+== Server-side search
+
+It is possible to render the search results from Laravel. The built-in `SearchController` has an `index` action, which is usable out-of-the-box and the results can be displayed in your views. The action is mapped to the `/search` route by default.
+
+=== Input query parameters
+* `q` - The search query
+* `t` - The search tags
+* `b` - The branch to search
+* `p` - Search results page number
+* `l` - Search for specific language
+
+=== Search results output
+The view will contain a `$search` variable which has the following properties:
+
+* `results` - The results array
+* `resultCount` - The results count
+* `page` - The current page
+* `query` - The search query details
+* `searchtags` - The search tags data
+* `hasMore` - It tells if there are more search result pages
+* `didYouMean` - Provides did you mean data, if available
+
+=== Non-blocking requests
+
+Search requests by default in Mesh waits for ElasticSearch's idle state. To avoid this, either Mesh need to be configured to disable the link:https://www.gentics.com/mesh/docs/elasticsearch/#endpoints[`waitForIdle`] state or {{%GPPHP%}} can be configured to do so per request.
+
+The configuration for {{%GPPHP%}} can be set in the `portal.php` configuration file:
+```php
+    'meshNoWaitForIdle' => true,
+```

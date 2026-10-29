@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<ruleset name="Custom">
+	<description>PSR2</description>
+
+	<config name="warning_severity" value="6" />
+	<config name="ignore_warnings_on_exit" value="true" />
+
+	<rule ref="PSR2" />
+</ruleset>

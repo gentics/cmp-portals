@@ -1,0 +1,144 @@
+---
+title: Data provider
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The `DataProviderVerticle` can periodically load data from {{%Mesh%}} or any HTTP resource which is then available
+for handlers of the portal and during rendering of a page.
+
+## Enabling the data provider
+
+This feature is not active automatically, but must be added in the implementation of the
+link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer].
+
+.Activating the `DataProviderVerticle`
+```java
+// ...
+
+@Inject
+public DataProviderVerticle dataProvider;
+
+@Override
+public void start() {
+  vertx.deployVerticle(<1>
+    dataProvider,
+    new DeploymentOptions().setWorker(true),
+    deploymentHandler);<1>
+}
+```
+<1> The reference to `vertx` as well as the `deploymentHandler` are available from the abstract base class.
+
+## Loading data
+
+The intervall in seconds between refreshing the Mesh and web data can be configured via the
+`dataProvider.refreshTime` link:../development/configuration.html#_data_provider[setting].
+
+### Meta data
+
+Whenever the portal loads the configured datasources, it will add the field `dpvmeta` to the loaded JSON data. This
+field contains the `timestamp` and `fresh` fields, which contain the timestamp of the last successful refresh and
+a boolean value indicating whether the data is fresh or stale respectively.
+
+### Handling errors
+
+When a data source (either Mesh or web) cannot be loaded, and the
+link:../development/configuration.html#_data_provider[setting] `dataProvider.retryOnError` is `false`, the respective entry
+will be removed from the list, and not be tried again. Additionaly when this happens during the startup process of
+the portal and `dataProvider.preventStartupOnError` is `true`, the portal will refuse to start with an appropriate
+error message.footnote:[This setting is mostly useful, when there are datasources which the portal definitely needs
+to function properly.]
+
+Already loaded data for a data key will _not_ be removed when refreshing fails, but will instead be marked as `stale`.
+
+### Mesh data
+
+What data to load from Mesh is configured in the
+link:../development/configuration.html#_data_provider[dataProvider.meshData] setting. Each entry is a mapping from a data
+key to a list of paths. Since the portal can load data from different
+https://www.gentics.com/mesh/docs/features/#_content_branches[branches] from Mesh, and the actual path may depend on the
+selected branch, a data key is mapped to a list of paths.
+
+The dataprovider will use the first path it can successfully load data from those lists, and store it under the
+respective data key. A single path as value, will be wrapped in a list automatically.
+
+The following example will load `/masterSettings/config.html` or `/branchSettings/config.html` depending on the
+branch the portal serves and make it available under the data key `settings` (see <<_accessing_data, accessing
+data>>). Additionaly the single path `/misc/stuff.html` will be wrapped in a list containing only this path, and make
+the loaded data available under `otherStuff`.
+
+.Example for Mesh data configuration
+```yml
+dataProvider:
+  meshData:
+    settings:
+      - /masterSettings/config.html
+      - /branchSettings/config.html
+    otherStuff: /misc/stuff.html
+```
+
+### Web data
+
+The link:+++../development/configuration.html#_web_data+++[configuration] for loading web data is a mapping from data keys
+to web data options. Each entries options _must_ have a URL specified from where to load the data. Addiopnally the
+format can be set to `JSON` or `RAW` (which is the default). Loaded `JSON` data is assumed to be a string
+representing a valid JSON object, which can be used as is. For `RAW` data the loaded string will be put in a new JSON
+object with the field `data`.
+
+IMPORTANT: Since Mesh data and web data are configured in different settings, it is syntactically possible to define
+a Mesh data source and a web data source with the same data key. When `dataProvider.preventStartupOnError` is
+enabled, this will prevent the portal from even starting. Otherwise a warning is logged, to inform that the web data
+source will just be ignored.
+
+.Example for web data configuration
+```yml
+dataProvider:
+    webData:
+        systemStatus:
+            url: https://some.other.site/system/status
+            format: JSON
+            postProcessor: com.gentics.mesh.portal.custom.StatusHelper
+            options:
+                verboseInfo: true
+```
+
+#### Postprocessing
+
+In both cases (`JSON` or `RAW`) the loaded data can be passed through the configured `DataProviderPostProcessor`
+which `process()` method gets a generic `Object` and is expected to return a `JsonObject` which should be made
+available by the `DataProviderVerticle`.
+
+The post processor to use is specified by setting `+dataProvider.webData.*.postProcessor+` to the fully qualified name
+of the class implementing `DataProviderPostProcessor`. Upon initialization the post processors `init()` method will
+be passed the entries of `+dataProvider.webData.*.options+`.
+
+## Accessing data
+
+For each request to the portal, the `DataProviderVerticle` will insert the loaded data into the `RoutingContext`. The
+respective handler is called during the `API_ROUTES` route order, so any custom handlers only have access to it, when
+they run during the `BEFORE_CONTENT_ROUTES` route order or later.
+
+The data can be retrieved from the routing context via `RoutingContext#get()` by specifying the data key of the data
+source. In Handlebars templates and link:../development/custom-implementations.html#_handlebars_helpers[custom Handlebars
+helpers] the data is available in the context under the same name.
+
+Both of the following examples access data loaded for the data key `config`.
+
+.Example of accessing data in a handler
+```java
+// ...
+
+@Override
+public void handle(RoutingContext rc) {
+    JsonObject config = rc.get("config");
+
+    // ...
+}
+```
+
+.Example of accessing data in a template
+```html
+<img src="{{{ config.fields.logo_url }}}" title="{{{ config.fields.logo_title }}}"/>
+```

@@ -1,0 +1,12 @@
+{
+	"schema": {
+		"name": "dummy_content"
+	},
+	"parentNode": {
+		"uuid": "not-a-uuid"
+	},
+	"fields": {
+		"contenttype": "text/html",
+		"templateName": "template"
+	}
+}

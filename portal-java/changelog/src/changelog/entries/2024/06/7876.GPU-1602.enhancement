@@ -1,0 +1,1 @@
+Replaces deprecated Vert.x logging with SLF4J and cleans up log levels and messages.

@@ -1,0 +1,6 @@
+fragment sitemapContentFields on %contentSchema% {
+	... on %contentSchema% {
+        noindex
+    	editdate
+    }
+}

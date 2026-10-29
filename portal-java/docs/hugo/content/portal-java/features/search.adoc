@@ -1,0 +1,44 @@
+---
+title: Search handler
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+There is a possibility to implement a simple full text search functionality using {{%GPJava%}} and link:+++https://www.gentics.com/mesh/premium-features/search/#overview+++[Gentics Mesh Search Plugin]. Using a dedicated
+link:+++../config/search_options+++[search handler configuration] one can enable the handler itself (disabled by default), provide a Handlebars template
+for the results rendering, as well as perform some basic search request configuration.
+
+== Query parameters
+
+By default the search handler expects a template named `searchresults.hbs`, serving at `/search` endpoint, accepting the following parameters:
+
+* `q` contains the actual query text for a full text search
+ * `p` contains the current page index
+ * `t` contains the comma separated list of tags to look upon (if the content is tagged)
+ * `l` contains the target content language in ISO 639-1 code
+
+== Results
+
+An example of Handlebars template for results visualizing:
+
+[source,html]
+----
+{{#if gpj_search_results.totalHits }}
+<h2>{{ gpj_search_results.totalHits }} result{{#if equals gpj_search_results.totalHits 1}}{{else}}s{{/if}}</h2>
+        <ul>{{#each gpj_search_results.results}}
+            <li><a href="{{ raw.fields.gtx_url }}">{{ raw.fields.name }}</a></li>
+        {{/each}}</ul>
+{{else}}
+        <h2>No results</h2>
+{{/if}}
+----
+
+Where the variables are:
+
+* `gpj_request_query` contains an object of request query parameters and values
+ * `gpj_search_curAction` contains a string with request endpoint and action
+ * `gpj_search_results` contains an object with search results.
+
+See link:+++https://www.gentics.com/mesh/premium-features/search/#docs+++[Gentics Mesh Search Plugin documentation] for details.

@@ -1,0 +1,3 @@
+Pre
+{!! renderBlade(NULL) !!}
+Post

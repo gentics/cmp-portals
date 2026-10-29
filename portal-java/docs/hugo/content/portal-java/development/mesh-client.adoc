@@ -1,0 +1,55 @@
+---
+title: Mesh REST Client
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The portal uses the link:https://www.gentics.com/mesh/docs/platforms/#_java[Java Mesh REST Client] internally to load data from
+{{%Mesh%}}. A custom handler can get an instance of such a client via the injected `MeshRestClientProvider`.
+
+## Getting a client
+
+A link:custom-implementations.html#_handlers[custom handler] can inject the `MeshRestClientProvider` and use
+it to get instances of the Mesh REST client as shown in the following example.
+
+.Example using a Mesh REST client
+```java
+// ...
+
+@Inject
+MeshRestClientProvider meshClientProvider;
+
+// ...
+
+@Override
+public void handle(RoutingContext rc) {
+    MeshRestClient client = meshClientProvider.get(rc);
+
+    client.getApiInfo().toSingle().subscribe(info -> {
+        log.info("Connected to Mesh version {}", info.getMeshVersion());
+    });
+}
+```
+
+### User clients
+
+When the link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer] inserts the
+`UserClientHandler`, that handler will provide a Mesh REST Client using the authentication information from the
+`AUTH` cookie when the request is link:../features/authentication.html#_authentication_cookies[authenticated], or an
+anonymous client if it is not.
+
+The `MeshRestClientProvider` will return these user clients, when they are available. Which means that loaded pages
+or navigation, are subject to user permissions set in Mesh.
+
+When no user client is available the client provider will just return the admin client, which by default can load any
+data from Mesh.
+
+NOTE: Note that the user client handler _can_ be used even when the portal does not do any authentication. In that
+case all requests to Mesh will be made using an anonymous client.
+
+## Using the client
+
+Documentation for the Java Mesh REST Client is available on the link:https://www.gentics.com/mesh/docs/platforms/#_java[Mesh
+homepage], and a simple example is available on link:https://github.com/gentics/mesh-vertx-example[Github].

@@ -1,0 +1,1 @@
+Fixes path resolving of Handlebars template partials on Windows systems.

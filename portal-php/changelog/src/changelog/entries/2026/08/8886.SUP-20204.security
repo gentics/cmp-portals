@@ -1,0 +1,5 @@
+Some dependencies have been updated:
+* guzzlehttp/guzzle: 7.15.5
+* guzzlehttp/psr7: 2.13.1
+* league/commonmark: 2.10.0
+* squizlabs/php_codesniffer: 3.13.6

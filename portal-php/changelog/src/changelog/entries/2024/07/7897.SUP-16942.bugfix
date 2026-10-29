@@ -1,0 +1,1 @@
+Fix Authentication Refresh Token Handling. Refresh Token is now also set as a cookie instead of server side storage. This allows more stateless setups without a shared cache

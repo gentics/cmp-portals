@@ -1,0 +1,285 @@
+---
+title: Mesh Requests
+description: "Build and send GraphQL and binary requests to Gentics Mesh."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} has an advanced GraphQL loader and request builder feature built for {{%Mesh%}}
+
+== GraphQL
+
+=== Example: How to make a GraphQL Request
+
+GraphQL request can be made easily with the following example, assuming that it is in a controller's method:
+
+```php
+use Gentics\PortalPhp\Features\Mesh\Mesh;
+
+class Controller
+{
+
+    public function example()
+    {
+        // Basic Query starts with the request() factory method
+        $response = Mesh::request()
+            // This will load resources/graphql/myTemplate.graphql
+            ->setTemplateName('myTemplate')
+            // Send request to Mesh
+            ->fetch();
+
+        // If you need an array, you can convert the response
+        $responseArray = $response->toArray();
+
+        // Return the response array as JSON
+        return response()->json($responseArray);
+    }
+}
+```
+
+=== Example: How to make a complex GraphQL Request
+
+Sometimes you need to make much more complex requests, with parameters, variables, custom Mesh client, etc.
+
+```php
+use Gentics\PortalPhp\Features\ErrorHandler\MeshClientErrorHandler;
+use Gentics\Mesh\Client\MeshClient;
+use Gentics\PortalPhp\Features\Mesh\Mesh;
+
+class Controller
+{
+
+    public function example2()
+    {
+        $myMeshClient = new MeshClient("http://custom-mesh-url:8080", [
+            'handler' => app()->make(MeshClientErrorHandler::class)->createErrorHandlerStack()
+        ]);
+        $myMeshClient->setAPIKey('my-own-mesh-client-token');
+
+        // Basic Query starts with the request() factory method
+        $response = Mesh::request()
+            // This will load resources/graphql/myTemplate2.graphql
+            ->setTemplateName('myTemplate2')
+            // Use a custom mesh client
+            ->setMeshClient($myMeshClient)
+            // Search and replaces keys to values in template
+            ->setPlaceholders([
+                '%myPlaceholder%' => 'replace_to_this'
+            ])
+            // (JSON) Variables to be set for the GraphQL query
+            ->setVariables([
+                'myVar' => 'myValue'
+            ])
+            // Parameters to be sent to Mesh
+            ->setParameters([
+                'version' => 'published'
+            ])
+            ->fetch(); // Send request to Mesh
+
+        // If you need an array, you can convert the response
+        $responseArray = $response->toArray();
+
+        // Return the response array as JSON
+        return response()->json($responseArray);
+    }
+}
+```
+
+See *Gentics\PortalPhp\Features\Mesh\GraphqlRequest* for more options.
+
+=== Example: Use custom GraphQLRequest class
+
+Some queries will be reused multiple times, so it is worth to make a reusable class of it, to doing so, you need
+to extend the *Gentics\PortalPhp\Features\Mesh\GraphqlRequest* class
+
+```php
+use Gentics\PortalPhp\Features\Mesh\GraphqlRequest;
+
+/**
+ * Class MyCustomRequest
+ * @method $this|MyCustomRequest setReturnAsArray(bool $value)
+ */
+class MyCustomRequest extends GraphqlRequest
+{
+    protected $properties = [
+        'returnAsArray',
+    ];
+
+    protected $returnAsArray;
+
+    // Override template name, this means resources/graphql/loadCustom.graphql
+    // If not specified, here, it can be overridden with properties on request
+    // Or defaults to myCustomRequest (based on this class's name)
+    protected $templateName = 'loadCustom';
+
+    public function fetch()
+    {
+        // You can use the response from the Base class to do whatever you want, then return
+        $response = parent::fetch();
+
+        // Based on the custom property it returns as array
+        if ($this->returnAsArray && $response instanceof GraphqlResponse) {
+            return $response->toArray();
+        } else {
+            return $response;
+        }
+
+    }
+}
+```
+
+And you can use it as in the previous example, but passing your class to the `request()` method.
+
+```php
+use Gentics\PortalPhp\Features\Mesh\Mesh;
+use MyCustomRequest;
+
+class Controller
+{
+
+    public function example3()
+    {
+        // Use your own class, which extends the base functionality
+        $response = Mesh::request(MyCustomRequest::class)
+            ->setReturnAsArray(true)
+            ->fetch();
+
+        // Return the response array as JSON
+        return response()->json($response);
+    }
+}
+```
+
+=== Example: Use custom GraphQLRequest class with caching
+
+If you have cacheable queries you can use the *WithCache* trait, add a unique cache key prefix and identifier, expiry
+time and global configuration path.
+
+```php
+use Gentics\PortalPhp\Features\Mesh\GraphqlRequest;
+use Gentics\PortalPhp\Features\Mesh\Traits\WithCache;
+
+/**
+ * Class MyCustomRequest2
+ */
+class MyCustomRequest2 extends GraphqlRequest
+{
+    use WithCache;
+
+    /** @var string The prefix to be used for the cacheKey */
+    protected $cacheKeyPrefix = "mesh:graphql_mycustomreq:";
+    /** @var int Default cache timeout in seconds */
+    protected $cacheTimeDefault = 300;
+    /** @var string Cache timeout configuration key */
+    protected $cacheTimeConfigKey = "portal.cache.customRequest.cacheTime";
+
+    /** Example: Use session id as unique identifier for the cache key */
+    protected function getCacheIdentifier()
+    {
+        return session()->getId();
+    }
+}
+```
+
+Then you can still use `fetch()` to get the response (non-cached) or use `fetchCached()` to use cached
+data.
+
+You can use the {{% config "portal" %}} configuration to add the cache expiration time as the dot notation references.
+
+**Note:** The `fetch()` never stores and uses cached data.
+
+=== Use GraphQL response as a Collection
+
+Collections is a fundamental of Laravel and it enhances arrays. To get a GraphQL response as a collection use the following syntax:
+
+```php
+$response = Mesh::request(LoadContent::class)
+            ->setPath('/')
+            ->fetch()
+            ->toCollection();
+```
+
+It is possible to get just a piece of the response as collection:
+
+```php
+$response = Mesh::request(LoadContent::class)
+            ->setPath('/')
+            ->fetch();
+
+// Response has ['data']['folder']['pages']['elements'] keys
+$folderCollection = $response->toCollection('data.folder.pages.elements');
+```
+
+Then handling data getting easier:
+```php
+// Get all pages from response with 'contentpage' template
+$contentPages = $folderCollection->where('fields.templateName', 'contentpage');
+
+// Results as Array
+$contentPagesArray = $contentPages->toArray();
+
+// Results as JSON
+$contentPagesArray = $contentPages->toJson();
+```
+
+Please read link:https://laravel.com/docs/12.x/collections[Laravel Collections documentation] for more information.
+
+=== Writing GraphQL files
+
+The {{%GPPHP%}} GraphQL loader supports reusing fragments between different queries, so you can keep your
+GraphQL query templates clean. If you use a fragment in your query eg.: `...yourFragment` the GraphQL loader checks
+if this fragment is available inside your query, and if not, it tries to load it from `resources/graphql/fragments/yourFragment.graphql`. That means, if you want to reuse fragments, you should write your
+partial files in the `resources/graphql/fragments` folder with the same name you want to use in the query.
+
+The queries files are cached, so it will build a bundle of the fragments - if any of the fragments or the query get changed
+it will invalidates the cached bundle.
+
+=== Non-blocking requests
+
+When a GraphQL request contains a search request by default Mesh waits for ElasticSearch's idle state. To avoid this, either Mesh need to be configured to disable the link:https://gentics.com/mesh/docs/elasticsearch/#endpoints[`waitForIdle`] state or {{%GPPHP%}} can be configured to do so per request.
+
+The configuration for {{%GPPHP%}} can be set in the `portal.php` configuration file:
+```php
+    'meshNoWaitForIdle' => true,
+```
+
+== Binary
+
+=== Range request
+
+{{%Mesh%}} support range request on binary files. You should change the allowed headers on requests and responses to enable this feature:
+
+*Request header:*
+
+* `Range`
+
+*Response headers:*
+
+* `Accept-Ranges`
+* `Content-Length`
+* `Content-Range`
+* `Content-Type`
+* `Transfer-Encoding`
+
+These headers can be configured in the {{% config "portal" %}} file:
+
+```php
+'webrootHttpHeaderWhiteList' => [
+    'request' => [
+        // ...
+        'Range',
+        // ...
+    ],
+    'response' => [
+        // ...
+        'Accept-Ranges',
+        'Content-Length',
+        'Content-Range',
+        'Content-Type',
+        'Transfer-Encoding',
+        // ...
+    ]
+],
+```

@@ -1,0 +1,18 @@
+{{- if eq (include "gentics-portal-php.controllerKind" .) "Deployment" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gentics-portal-php.fullname" . }}
+  labels:
+    {{- include "gentics-portal-php.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gentics-portal-php.selectorLabels" . | nindent 6 }}
+  {{- with .Values.controller.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- include "gentics-portal-php.podTemplate" . }}
+{{- end }}

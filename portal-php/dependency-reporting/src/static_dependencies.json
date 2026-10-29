@@ -1,0 +1,25 @@
+{
+  "components": [
+    {
+      "name": "Portal | php",
+      "modules": [
+        {
+          "name" : "External",
+          "dependencies": [
+            {
+              "name" : "PHP Runtime",
+              "description": "Minimum required version.",
+              "current" : "8.2",
+              "latest" : "8.4"
+            },
+            {
+              "name" : "Laravel framework",
+              "current": "12",
+              "latest": "12"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

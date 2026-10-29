@@ -1,0 +1,1 @@
+Fixed NavigationHelper breadcrumbs check, for the pages without `breadcrumb` loaded, to have a default value `[]` and avoid fatal error thrown for iterating over non-iterable variable.

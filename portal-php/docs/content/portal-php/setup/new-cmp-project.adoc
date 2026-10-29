@@ -1,0 +1,23 @@
+---
+title: New CMP Project
+description: "Create a new portal project from the default Docker Compose template."
+weight: 20
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Create a new {{%GPPHP%}} Project
+
+The easiest way to create a new {{%GPPHP%}} Project, is by using our default template for it, which already sets up required services with docker compose.
+
+To get started, simply check out the repository in the version of the portal you with to use. Example:
+
+```bash
+git clone --b hotfix-3.5.x git@github.com:gentics/portal-php-reference.git myproject
+```
+
+This will create a setup for local development and building with docker in the directory `myproject`.
+
+All further descriptions of how to continue the installation and setup are described in the README of the now cloned repository.

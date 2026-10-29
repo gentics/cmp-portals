@@ -1,0 +1,1 @@
+Fix deserialization issue when reading more than one configuration file.

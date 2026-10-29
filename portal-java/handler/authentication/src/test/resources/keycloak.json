@@ -1,0 +1,11 @@
+{
+    "realm": "reference",
+    "realm-public-key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkmkAHw7Kkb01v3fRyxYquNr3CTDgQY5+EIzGnzd4i4k7gCHfRwsANzvoprtQ4CIju27R4rq2xuGPxxYhQ5w39oXJXfssFMuzjb8rCZWsquclkyeIh9paLBCoGb5HllbH+vG7bUQpe0uOgBuFoOcag6NV+9CSsghh+z1FM+g4DnSizfpgidzrWWGH/U6uDUNs9Avp7VZis3w6w+u0TAww3BLYq4RI7dje1zHmywaJ6FCtU0ZVkV9TzSbS1ZjOctJDGPVmcT+jCECkNoGLr5/7eBBZONEmy3+LXCGNLqNcYWHfv/wd1BNH7TeDOArweex9Q/JEYUESeJ+LmkIafabcOwIDAQAB",
+    "auth-server-url": "http://localhost:8301/auth",
+    "ssl-required": "external",
+    "resource": "reference",
+    "credentials": {
+        "secret": "not-a-real-secret"
+    },
+    "confidential-port": 0
+}

@@ -1,0 +1,15 @@
+fragment navigation on Node {
+  path
+  fields {
+    ... on %folderSchema% {
+      name
+      navsortorder
+      startpage {
+        languages {
+          language
+          path
+        }
+      }
+    }
+  }
+}

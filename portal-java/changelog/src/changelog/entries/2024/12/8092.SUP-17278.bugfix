@@ -1,0 +1,1 @@
+Fixes adding of additional HTTP headers via @security.additionalResponseHeaders@ in the portals responses.

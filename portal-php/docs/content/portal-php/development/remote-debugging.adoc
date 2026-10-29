@@ -1,0 +1,77 @@
+---
+title: Remote debugging
+description: "Enable Xdebug in the reference Docker setup to debug the portal remotely."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Using the reference Docker files
+
+Edit `docker-compose.override.yml` and set `XDEBUG_ENABLED` to `true` for the `portal` service.
+Also make sure that the xdebug.ini configuration file is mounted.
+
+```yaml
+services:
+  portal:
+    volumes:
+      - ./portal-files/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      XDEBUG_ENABLED: "true"
+```
+
+Edit the file `portal-files/xdebug.ini` and change the IP to match the IP of your Docker network interface.
+
+Run `docker-compose up -d`
+
+== Without docker / Custom webserver ==
+
+Install and enable the PHP extension `xdebug` and copy the configuration from `portal-files/xdebug.ini`.
+
+== IDE configuration
+
+=== PHPStorm
+
+==== Add a new `PHP Remote Debug` configuration
+
+* Go to `Run` -> `Edit  configurations`.
+* Click on the `Validate` link in the first list item. Enter the path to the `portal/public` directory and for the URL use `http://127.0.0.1:8080/` or the URL to your Laravel application.
+* Click on the `Validate` button. All items should pass the test (Ignore the php.ini warning).
+* Install the browser toolbar from the second point
+* Click `OK`
+
+==== Server configuration and path mappings
+
+Go to `File` -> `Settings` (CTRL + ALT + S)
+
+Go to `Languages & Frameworks` -> `PHP` -> `Servers`
+
+Add a new server, if your server isn't listed yet.
+
+When using a Docker container, enable `Use path mappings` and add the following mapping:
+
+[width="70%",options="header,footer"]
+|==========================
+| File/Directory | Absolute path on the server
+|portal          |/portal
+|==========================
+
+If you do development on a composer package (eg.: gentics/portal-php), and have installed the package with the composer symlink feature, you also have to add a mapping for the resolved symlink path:
+
+[width="70%",options="header,footer"]
+|==========================
+| File/Directory                  | Absolute path on the server
+|portal/vendor/my/example-package |/example-package
+|==========================
+
+== Start debugging
+
+* Go to `Run` -> `Start Listening for PHP Debug connections`
+* Place a break point anywhere
+* Enable `Debug` in the browser extension you installed and refresh the page
+
+== Further links
+
+* http://xdebug.org/docs/remote
+* https://www.jetbrains.com/help/phpstorm/creating-php-web-application-debug-configuration.html

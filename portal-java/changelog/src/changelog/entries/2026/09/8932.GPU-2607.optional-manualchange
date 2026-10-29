@@ -1,0 +1,6 @@
+The default directory and serve path in the portal configuration for the FormGen app have changed:
+
+* @forms.formgenStaticFileDirectory@: @/portal/data/static/cpa/@ -> @data/static/cpa/formgen@
+* @forms.formgenStaticServePath@: @/static/cpa/@ -> @/formgen/@
+
+In case the default configuration was used, the path for the built FormGen app either has to be adapted, or the custom path must be set in the forms configuration.

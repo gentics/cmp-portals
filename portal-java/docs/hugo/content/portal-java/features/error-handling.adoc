@@ -1,0 +1,17 @@
+---
+title: Error handling
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+Special status pages can be link:+++../development/configuration.html#_redirects+++[configured], which will be loaded when a
+request to the portal causes the respective status code. It is recommended to configure status pages at least for the
+HTTP status codes _404 Not Found_ and _500 Internal Server Error_.
+
+When the status page is available in several languages, the language variant best matching the current portal
+language will be loaded.
+
+In case of a _404 Not Found_ error, the portal will first check if there is a link:custom-redirects.html[custom
+redirect], for that URL.

@@ -1,0 +1,12 @@
+{
+    "name": "gentics/portal-php-laravel",
+    "type": "metapackage",
+    "require": {
+        "gentics/portal-php": "self.version",
+        "guzzlehttp/guzzle": "^7.2",
+        "laravel/framework": "^9.19",
+        "laravel/sanctum": "^2.14.1",
+        "laravel/tinker": "^2.7",
+        "spatie/laravel-ignition": "^1.0"
+    }
+}

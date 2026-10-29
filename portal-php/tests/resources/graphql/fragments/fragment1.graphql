@@ -1,0 +1,6 @@
+fragment fragment1 on Node {
+    uuid
+    fields {
+        ...fragmentsFragment
+    }
+}

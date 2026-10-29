@@ -1,0 +1,37 @@
+query ($path: String, $folderpath: String, $lang: String) {
+    node(path: $path) {
+        uuid
+        language
+        schema {
+            name
+        }
+        breadcrumb (lang: [$lang, "en"]) {
+            uuid
+            ...navigation_breadcrumb
+        }
+        ...navigation_breadcrumb
+        ...contentInfo
+        ...pages
+
+        parent {
+            uuid
+            path
+            breadcrumb (lang: [$lang, "en"]) {
+                uuid
+                ...navigation_breadcrumb
+            }
+            ...navigation_breadcrumb
+            ...pages
+        }
+    }
+
+    folder: node(path: $folderpath) {
+        uuid
+        breadcrumb (lang: [$lang, "en"]) {
+            uuid
+            ...navigation_breadcrumb
+        }
+        ...navigation_breadcrumb
+        ...pages
+    }
+}

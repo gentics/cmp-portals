@@ -1,0 +1,139 @@
+---
+serverPort: 3000
+serverHost: "0.0.0.0"
+templatesPath: "data/templates"
+templatesTolerateErrors: true
+queryPath: "data/queries"
+i18nPath: "data/i18n"
+breadcrumbsLevel: 0
+startPage: ""
+cookieHintPage: ""
+autoDeleteUploads: false
+uploadDir: "data/uploads"
+licenseKeyPath: "license.key"
+remoteLicenseRetrievalBypass: false
+defaultLanguage: "en"
+networkTimeout: 30
+additionalResponseHeaders: {}
+maxHttpHeaderSize: 8192
+checkedQueries: []
+mesh:
+  host: "localhost"
+  port: 8080
+  protocolVersion: "DEFAULT"
+  monitoringPort: 8081
+  ssl: false
+  requiredPlugins: []
+  networkTimeout: 30
+  proxyHeaderWhitelist:
+  - "Authorization"
+  - "Cookie"
+  - "Accept"
+  - "Content-Encoding"
+  - "Referer"
+  - "Accept-Encoding"
+  - "Content-Length"
+  - "Content-Type"
+  maxRequests: 64
+  maxRequestsPerHost: 64
+  writeQueueMaxSize: 8192
+  cookieForwardWhitelist:
+  - "forms-voted"
+  - "forms-data"
+  authenticationMode: "BOTH"
+  webrootFieldAvailable: false
+  eventbus:
+    pingInterval: 100
+    retryTimeout: 5000
+vertx:
+  workerPoolSize: 20
+  eventPoolSize: 40
+  developmentMode: false
+dataProvider:
+  refreshTime: 60
+  preventStartupOnError: false
+  retryOnError: true
+  meshData: {}
+  webData: {}
+mail:
+  hostname: "localhost"
+  port: 25
+  ssl: false
+  trustAll: false
+  maxPoolSize: 10
+  keepAlive: true
+redirects:
+  statusPages: {}
+security:
+  allowedIps: []
+  additionalResponseHeaders: {}
+  useHostCookiePrefix: false
+  encryptCookies: false
+  encryptionMode: "DISABLED"
+  cookieSameSitePolicy: "STRICT"
+authentication:
+  loginEndpoint: "/auth/login"
+  logoutEndpoint: "/auth/logout"
+  insecureSsl: false
+  logoutRedirect: "/"
+  redirectCookieMaxAge: -1
+  useUnauthorizedRedirect: false
+  redirectCookieSameSiteStrict: true
+  useSessionCookies: false
+  maxTemporaryEntries: 0
+  protectedEndpoints: []
+  keycloak:
+    callbackPath: "/auth/callback"
+    rpInitiatedLogout: false
+    retryPeriodSeconds: 60
+  singleSignOut:
+    externalPortals: []
+    singleSignOutPath: "/auth/logoutAll"
+  loginRedirect:
+    path: "/auth/loggedin"
+    defaultRedirect: "/"
+    cmsPage: false
+proxy:
+  active: false
+customConfigMap:
+  configMap: {}
+static:
+  path: "data/static"
+  caching: false
+  maxAge: 86400
+navigation:
+  breadcrumbsLevel: 0
+  sortOrderField: "navsortorder"
+  hiddenField: "navhidden"
+  expireTime: 15
+caching:
+  enabled: true
+  maximumSize: 256
+  expireTime: 60
+  customParameters: []
+  diskCacheConfig: "config/cache.ccf"
+  diskCacheRegionName: "content"
+  binaryMaxAge: 86400
+monitoring:
+  enabled: false
+  ignoreMeshReady: true
+  jmxEnabled: false
+  port: 3001
+  host: "127.0.0.1"
+  conservativePortalState: false
+  maxTimeouts: 10
+  startupCheckMode: "ABORT"
+  livePath: "gpj.live"
+  liveUpdateInterval: 10
+compatibility:
+  preview: false
+  mapNodeResponse: true
+search:
+  enabled: false
+  template: "searchresults"
+  endpoint: "/search"
+  querySize: 8
+  paginationMaxPages: 6
+  paginationPrevious: "<"
+  paginationEllipsis: "..."
+  paginationNext: ">"

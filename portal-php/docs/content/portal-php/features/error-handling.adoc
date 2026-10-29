@@ -1,0 +1,127 @@
+---
+title: Error handling
+description: "Configure and extend the portal's custom error handler."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} has a custom error handler. In this article you will learn how to configure and extend this functionality.
+
+== Use the {{%GPPHP%}} error handler
+
+Add an error handler to your {{%GPPHP%}} feature or project
+Use {{%GPPHP%}} error handler
+By default the custom error handler of {{%GPPHP%}} is registered, so you don't have to do anything to make it work.
+
+=== Custom Error Pages
+
+In production mode {{%GPPHP%}} error handler can display custom error pages from {{%Mesh%}}, which you can configure in the {{% config "portal" %}} file:
+
+```php
+'exceptionHandler' => [
+    'httpCodes' => [
+        404 => 'errors/404.html',
+        403 => 'errors/403.html',
+    ],
+    'default' => 'errors/', // [default path]
+],
+```
+
+In the `httpCodes` array you can assign status codes to pages, the `default` path is the folder of your error pages where the portal finds for suitable error pages in the following order:
+
+* `[default path]` + `status code` + `.html`
+* `[default path]` + `default.html`
+
+The first valid result will be displayed to the user. The error page view receives the exception in the `$exception` variable.
+
+It is possible to localize the custom error pages, more information can be found in the link:../development/localization.html#_localized_custom_error_pages[Localization documentation].
+
+Custom Error Pages are cached, the cache time can be globally configured in the {{% config "portal" %}} file:
+
+```php
+'cache' => [
+  // ...
+  'errorPage' => [
+      'cacheTime' => 300 // seconds
+  ],
+  // ...
+],
+```
+
+== Add an error handler to your {{%GPPHP%}} feature or project
+
+When you create a specific feature for the {{%GPPHP%}} you may want catch some exceptions and do actions. Therefor you can extend the custom error handler with your own tasks, like Laravel's middleware system. You have to implement the `Gentics\PortalPhp\Features\ErrorHandler\Contract\ErrorHandler` interface, which should have at least a `handle()` method.
+
+=== Custom ErrorHandler class
+
+```php
+use Exception;
+use Gentics\PortalPhp\Features\ErrorHandler\Exceptions\Mesh\PermissionException;
+use Gentics\PortalPhp\Features\ErrorHandler\Contract\ErrorHandler;
+
+/**
+ * Class ShinyNewFeatureErrorHandler
+ * @package Gentics\PortalPhp\Features\ShinyNewFeature
+ */
+class ShinyNewFeatureErrorHandler implements ErrorHandler
+{
+    /**
+     * @param $request
+     * @param Exception $exception
+     * @return bool|mixed
+     */
+    public function handle($request, Exception $exception)
+    {
+        // Whenever Mesh PermissionException occurs, then take some actions
+        if ($exception instanceof PermissionException) {
+            // Return a forbidden page
+            abort(Response::HTTP_FORBIDDEN, $exception->getMessage());
+        }
+
+        // If you cannot handle this Exception, you should return always this constant
+        return static::CANNOT_HANDLE_THIS_ERROR;
+    }
+}
+```
+
+Also you have to register this Error Handler:
+
+```php
+use Illuminate\Support\ServiceProvider as ServiceProviderIlluminate;
+
+class ServiceProvider extends ServiceProviderIlluminate
+{
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        // Register error handling on the top of the stack - note that we are in the same namespace
+        // If you want to register at the bottom, you can use the pushErrorHandler() method instead
+        $this->app['Illuminate\Contracts\Debug\ExceptionHandler']
+            ->prependErrorHandler(ShinyNewFeatureErrorHandler::class);
+    }
+}
+```
+
+If you want to add a custom error handler in your project, you should register the error handler in you App's service provider.
+
+=== Debugging View
+
+During development, error pages are usually displayed via the "Whoops" package which shows the error in detail for simple debugging.
+This is usually turned off on staging or production servers, as it's a security risk and you want to display a nicely formatted error
+page instead.
+
+To make it possible to identify errors on the server without having to enable a maintanance-mode or similar,
+you can use a query-parameter to enable it on a per-request basis.
+
+This feature is opt-in and can be enabled by providing a key in the config: `portal.debuggerKey`,
+or via the Environment Key: `DEBUGGER_KEY`.
+
+The key should be a secure one, similar to a password - the longer and complex the better.
+It's also recommended to use a different key for each stage and implementation,
+to minimize security risks in case of a key leak.

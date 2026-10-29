@@ -1,0 +1,30 @@
+{
+    "data": {
+        "node": {
+            "language": "en",
+            "languages": [
+                {
+                    "path": "/errors/404.en.html",
+                    "language": "en"
+                },
+                {
+                    "path": "/errors/404.de.html",
+                    "language": "de"
+                },
+                {
+                    "path": "/errors/404.hu.html",
+                    "language": "hu"
+                }
+            ],
+            "schema": {
+                "name": "portalphp_content"
+            },
+            "fields": {
+                "name": "Error 404 - Not found",
+                "description": "",
+                "templateName": "errorpage",
+                "title": ""
+            }
+        }
+    }
+}

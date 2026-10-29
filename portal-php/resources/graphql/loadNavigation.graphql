@@ -1,0 +1,34 @@
+query ($lang: String) {
+  rootNode {
+    children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+      elements {
+        ...navigation
+        children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+          elements {
+            ...navigation
+            children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+              elements {
+                ...navigation
+                children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+                  elements {
+                    ...navigation
+                    children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+                      elements {
+                        ...navigation
+                        children(lang: [$lang, "en"], filter: {schema: {or: [{is: %folderSchema%}, {is: %contentSchema%}]}}) {
+                          elements {
+                            ...navigation
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

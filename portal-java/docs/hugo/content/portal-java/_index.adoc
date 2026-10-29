@@ -1,0 +1,10 @@
+---
+title: "Gentics Portal | java"
+layout: "single"
+cascade:
+  product: "Gentics CMP"
+---
+
+{{%GPJava%}} is a commercial library built on https://vertx.io[Vert.x] that enables you to fetch and
+render content from the open-source {{%Mesh%}} Content Repository. It is typically used in combination with the commercial content
+management system {{%CMS%}}.

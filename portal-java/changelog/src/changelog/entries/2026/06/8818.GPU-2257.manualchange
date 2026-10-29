@@ -1,0 +1,4 @@
+Portal | Java has been modified to support the reworked forms feature. Please consult the "Gentics Portal | Java Guides":https://www.gentics.com/guides/latest/portal-java/index.html for details.
+* The routes, which are forwarded to the forms plugin have been changed to reflect the new forms plugin API
+* When using forms in the portal, it is now necessary to include the FormGen React App into the portal.
+* When using poll forms, the poll results template now needs to be included into the portal, as the poll results are no longer rendered in the forms plugin.

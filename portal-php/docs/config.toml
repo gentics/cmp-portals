@@ -1,0 +1,33 @@
+languageCode = "en-us"
+title = "Gentics Portal | php - Documentation"
+baseurl = ""
+theme = "gentics-hugo-theme"
+
+DefaultContentLanguage = "en-us" # change to your language
+
+relativeURLs = true
+hasCJKLanguage = false # if your site has CJK language, set true
+canonifyurls = true
+paginate = 3 # default number of pages per page in pagination
+
+publishDir = "docs" # if you use GitHub to deploy
+
+[menu]
+    [[menu.extmain]]
+        identifier = "reference"
+        name = "Reference project"
+        title = "Reference project on github"
+        url = "https://github.com/gentics/portal-php-reference"
+        weight = -100
+    [[menu.main]]
+        identifier = "changelog"
+        name = "Changelog"
+        title = "Release versions changelog"
+        url = "/changelog/"
+        weight = -200
+
+[params.docsBase]
+    laravel = "https://laravel.com/docs/9.x"
+    carbon  = "https://carbon.nesbot.com/docs"
+    mesh    = "https://getmesh.io/docs"
+    jira    = "https://jira.gentics.com/browse"

@@ -1,0 +1,73 @@
+---
+title: Routes
+description: "Overview of the most important default routes provided by the portal."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== Routes
+
+=== Overview
+
+This is a list of the most important default routes defined by {{%GPPHP%}}.
+More routes can be found in various `routes.php` files inside the package.
+
+.{{%GPPHP%}} routes overview
+[cols="32%,35%,5%,28%"]
+|===
+| Name |Uri pattern |Method |Action
+
+|content
+|`/{path}`
+|any
+|`ContentController@index`
+
+|genticsimagestore.cropandresize
+|`/{width}/{height}/cropandresize/{mode}/{topleft_x}/{topleft_y}/{cropwidth}/{cropheight}/{path}`
+|GET
+|`ContentController@genticsImageStore`
+
+|genticsimagestore.resize
+|`/{width}/{height}/{mode}/{path}`
+|GET
+|`ContentController@genticsImageStore`
+
+|api.preview
+|`/preview/{folderPath?}`
+|POST
+|`CmsController@index`
+
+|health.live
+|`/api/health/live`
+|GET
+|`Closure`
+
+|health.ready
+|`/api/health/ready`
+|GET
+|`Closure`
+
+|===
+
+=== Priority
+
+The route files are loaded in the following order:
+
+. Routes from your application (routes/*)
+. Routes from {{%GPPHP%}} package
+
+The first route that is defined wins. The routing table can be displayed with `php artisan route:list`.
+
+There is one exception though:
+
+If a route is added with the exact same URI pattern that already exists or a wider wildcard added later, the old route will be replaced by the new route.
+However {{%GPPHP%}} uses priorization on routes, and will therefore not overwrite routes already defined by your application.
+That means you can "overwrite" any routes that are defined by {{%GPPHP%}}.
+
+If you need custom priorities, you can use the `-&gt;priority(50)` method on your routes (default value is 50). The higher one is the winner.
+
+=== Laravel documentation
+
+https://laravel.com/docs/12.x/routing

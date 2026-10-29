@@ -1,0 +1,35 @@
+---
+title: Sitemaps
+description: "Configure and extend the automatically generated sitemaps."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} sitemaps are generated automatically for every publicly available resource. In this article you will learn how to configure and extend this functionality.
+
+== Setup {{%Mesh%}} permissions
+
+The default {{%Mesh%}} setup does not provide permissions for anonymous users to generate a sitemap. You should give permissions to your *Project* and the *Node(s)* and its children you want to make available for everyone.
+
+== No authentication at all
+If you are not using any authentication, you can set {{%GPPHP%}} to always use {{%Mesh%}} with administrator tokens, in that case you don't have to configure permissions in {{%Mesh%}}.
+
+== Extended {{%Mesh%}} fields for sitemap
+The sitemap feature respects the `editdate` and `noindex` fields of elements.
+
+* `editdate` This data specifies the lastmod property in the sitemap
+* `noindex` If this property is true, then the element will not be listed in the sitemap. Any other value keeps the element in the list.
+
+== Change the sitemap template
+
+To change the default sitemap template first you have to publish the defaultviews to your project:
+
+```php
+php artisan vendor:publish --tag=views --provider='Spatie\Sitemap\SitemapServiceProvider'
+```
+
+After that, you can edit the templates in your `resources/views/vendor/laravel-sitemap/` folder.
+
+Maybe its a good idea to remove the changefreq and priority if you do not need these properties, also check https://support.google.com/webmasters/answer/183668?hl=en[Google's specifications] on that and adopt according to this.

@@ -1,0 +1,176 @@
+---
+title: Delivering content
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+## Loading content from Mesh
+
+The portal loads page content from Mesh via the `loadByPath` GraphQL query. The portal framework already comes with
+a `loadByPath.graphql` that has the necessary structure so that the response can be processed correctly. What the
+query returns exactly is specified in the query fragments
+
+* `breadcrumbFields`
+* `contentFields`
+* `folderFields`
+* `folderContentsFields`, and
+* `parentInfo`
+
+which can be overridden with custom values. Complete GraphQL queries can be overridden by putting them in the
+configured link:+++../development/configuration.html#_general+++[_queryPath_] or _queryPath/fragments_ directories. The
+filenames containing fragments must be exactly the fragment name with the extension _.graphql_.
+
+For most use cases it should only be necessary to adapt the `contentFields` fragment. The default `contentFields`
+fragment looks like this, and should be extended to load all necessary fields defined in the tagmap:
+
+```graphql
+fragment contentFields on %contentSchema% {
+  name
+  contenttype
+  templateName
+  title(linkType: SHORT)
+  teaser(linkType: SHORT)
+  pagecontent(linkType: SHORT)
+}
+```
+
+## Navigation
+
+The portal will periodically load navigation information from Mesh via the `loadNavigation` GraphQL query. The structure
+of this query and its fragment `navigation` should not be changed, or the link:../development/helpers.html#_navigation[navigation helpers]
+might not work as expected.
+
+By default the query will load folders up to a depth of six and the result will provide information about the name, sort
+order and start page of the folders.
+
+The loaded navigation information is cached depending on user roles, and will be cleared each minute, or when folders or
+pages are published by the CMS.
+
+## Preview handling
+
+The {{%CMS%}} will use the `/api/preview` endpoint to render pages for preview or edit mode, with a query parameter
+to distinguish betweeen the two cases.
+
+### Preview modes
+
+The portal distinguishes between the following render modes:
+
+* `UNKNOWN`: The page is rendered as a preview, but the exact mode is not available.
++
+This will happen when an older version of the {{%CMS%}} is used, which does not yet provide the necessary information
+for the `/api/preview` endpoint
+
+* `PREVIEW`: The page is being previewed (but _not_ edited) in the {{%CMS%}}
+
+* `EDIT`: The page is being edited in the {{%CMS%}}
+
+* `PUBLISH`: The published version of the page is viewed in the front-end
+
+### Working with the render mode in the templates
+
+The following Handlebars link:../development/helpers.html#_common[helpers] can be used to distinguish the different modes a page can be viewed:
+
+* `{{ getRenderMode }}` will just print print the current preview mode, and is intended for debugging purposes
+* `{{# renderMode 'mode' }}` will evaluate the enclosed block only if the current preview mode is `mode`
+
+### Working with the render mode in the portal
+
+When data is `POSTed` to `/api/preview` the `ContentPreviewHandler` will enable preview mode by calling
+`PortalRoutingContext#enablePreview()`. This will in turn try to determine the exact mode by looking at the
+`renderMode` query parameter.
+
+When this value is `preview` or `edit` the respective <<_preview_modes,preview mode>> is set, otherwise it will be
+`UNKNOWN`. In either case `PortalRoutingContext#isPreview()` will return true from now on, so that the following
+handlers can react to the preview mode.
+
+When link:++../development/configuration.html#_compatibility++[compatibility mode] for previews is active, the portal will
+_not_ distinguish between `PREVIEW` and `EDIT` mode. All requests to the `/api/preview` endpoint will set the
+mode to `PREVIEW`.
+
+[#multilang]
+## Delivering Multi-language content
+
+The portal will always deliver content pages in the language that matches the requested path, but the preferred language
+is saved in the cookie `mesh.portal.language`, and will be used for example to display the
+
+* configured start page, or
+* error pages
+
+in the correct language.
+
+Only one language has to be configured for the `startPage` or in the `redirect.statusPages` mapping,footnote:[Actually
+only one path _can_ be configured.] but before showing the start page or the respective error page, the portal will try
+to lookup the path for the page in the correct language.
+
+When a page is not available in the preferred language, the path from the configuration is used as is.
+
+These mappings are cached and use the default `caching.expireTime` configuration.
+
+### Determining the preferred language
+
+The portal will choose the preferred language from one of these sources (in descending priority):
+
+. The value of the `mesh.portal.language` cookie
+. The language of the currently loaded Mesh node
+. The `Accept-Language` HTTP header
+. The configured `defaultLanguage`
+
+*Note* that previews in the {{%CMS%}} will ignore the language cookie.
+
+When the portal has chosen a language and did not have to fallback to the default language, the response will contain the
+cookie to use the language for future requests. Requesting a page in a different language than specified in the cookie
+will _not_ change the value of the cookie since the already set cookie has a higher priority than the current page language
+for determining the preferred language. The actual language of the served page is available in the routing context with the
+key `[mesh.portal.node.language]`.
+
+### Setting the preferred language explicitly
+
+The preferred language can be set by a request to the endpoint `/api/language` with the `lang` query parameter. The response
+will set the language cookie accordingly, so that future requests will prefer the specified language.
+
+When the `redirect` query parameter is set, the response will redirect to the specified path. Note that the value will
+be sanitized so that it does _not_ contain a protocol or domain to prevent redirection to an external site.footnote:[For
+example the redirect URL `\http://some.other.domain/path` will be sanitized to `/path`.]
+
+The `Referer` HTTP header will be used when it is present and the `redirect` parameter is missing (the referer URL will
+_not_ be sanitized).
+
+When neither the `redirect` parameter nor the `Referer` header are present, the portal will respond with an empty
+_200 OK_ answer.
+
+[#multichanneling]
+## Delivering Multichannelling Content
+
+When the feature link:https://www.gentics.com/Content.Node/cmp8/guides/mc_admin.html[Multichannelling] is enabled in the CMS, channels will be published to Mesh in separate branches.
+
+To deliver content from a certain branch in Mesh, {{%GPJava%}} needs to be configured with a `BranchSelectorHandler`.
+
+{{%GPJava%}} provides the following three branch selector handlers out-of-the-box:
+
+1. The `HostnameBranchSelector` will select the branch by comparing each branches hostname with the `Host` HTTP header of the request.
+2. The `PathPrefixBranchSelector` will select the branch by comparing each branches path prefix with the start of the requests path.
+3. The `QueryParameterBranchSelector` will select the branch by the branch UUID given in the query parameter `channelUuid`.
+
+The desired branch selector handler must be injected in the projects  link:../setup/new-project.html#_bootstrapping_the_portal[BootstrapInitializer]:
+
+.Example hostname branch selector
+[source,java]
+----
+// ...
+
+@Inject
+public HostnameBranchSelector hostnameBranchSelector;
+
+// ...
+
+@Override
+public void start() {
+	// ...
+
+    deployHttpVerticles(router -> {
+		hostnameBranchSelector.addRoutes(router);
+    });
+}
+----

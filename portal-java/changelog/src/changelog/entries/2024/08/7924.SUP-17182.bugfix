@@ -1,0 +1,1 @@
+Fixes the search handler handlebars helpers which caused an internal server error upon rendering pagination for search results.

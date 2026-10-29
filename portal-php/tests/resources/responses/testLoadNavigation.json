@@ -1,0 +1,292 @@
+{
+    "data": {
+        "project": {
+            "uuid": "2334abbbb0f711e89da70242ac190002",
+            "rootNode": {
+                "children": {
+                    "elements": [
+                        {
+                            "uuid": "554f1fc5bb4711e8b2de0242ac120002",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/Aircrafts",
+                            "fields": {
+                                "name": "Aircrafts",
+                                "navhidden": null,
+                                "navsortorder": 3,
+                                "startpage": null
+                            },
+                            "children": {
+                                "elements": []
+                            }
+                        },
+                        {
+                            "uuid": "4ee77b8bbb4711e8b2de0242ac120002",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/Yachts",
+                            "fields": {
+                                "name": "Yachts",
+                                "navhidden": null,
+                                "navsortorder": 2,
+                                "startpage": null
+                            },
+                            "children": {
+                                "elements": []
+                            }
+                        },
+                        {
+                            "uuid": "1e4f40f8cd5e11e898420242ac140005",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/settings",
+                            "fields": {
+                                "name": "[Settings]",
+                                "navhidden": true,
+                                "navsortorder": 1,
+                                "startpage": {
+                                    "uuid": "26378545b0f811e89da70242ac190002",
+                                    "path": "/Home.html"
+                                }
+                            },
+                            "children": {
+                                "elements": [
+                                    {
+                                        "uuid": "896ceaf235d411e9b9c60242ac130002",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/settings/Redirects.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "07db7363cd5f11e898420242ac140005",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/settings/Configuration.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "uuid": "45446f75bb4711e8b2de0242ac120002",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/Automobiles",
+                            "fields": {
+                                "name": "Automobiles",
+                                "navhidden": null,
+                                "navsortorder": 1,
+                                "startpage": {
+                                    "uuid": "800b88aebb7611e8b2de0242ac120002",
+                                    "path": "/Automobiles/List.html"
+                                }
+                            },
+                            "children": {
+                                "elements": [
+                                    {
+                                        "uuid": "ded28dcfc05111e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/audi.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "a6f29665c05111e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/dodge.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "800b88aebb7611e8b2de0242ac120002",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/List.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "44f02a04c05111e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Dodge.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "eb4bd7a9c03311e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Tesla.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "b97f4a2ec02811e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Mustang.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "b85f00f1bb4811e8b2de0242ac120002",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Porsche.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "47da989ac05111e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Toyota.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "4a266ac3c05111e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/Automobiles/Audi.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "0386ca3ec03411e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/tesla.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "dc178745c02811e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/mustang.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "1df13b20bff211e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/porsche.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    },
+                                    {
+                                        "uuid": "ca8b03a4c05311e892b70242ac120004",
+                                        "schema": {
+                                            "name": "portalphp_binary_content"
+                                        },
+                                        "path": "/Automobiles/toyota_1.jpg",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "uuid": "26378545b0f811e89da70242ac190002",
+                            "schema": {
+                                "name": "portalphp_content"
+                            },
+                            "path": "/Home.html",
+                            "fields": {},
+                            "children": {
+                                "elements": []
+                            }
+                        },
+                        {
+                            "uuid": "d7d752c0c1e011e8a9b50242ac140003",
+                            "schema": {
+                                "name": "portalphp_folder"
+                            },
+                            "path": "/errors",
+                            "fields": {
+                                "name": "[Error Pages]",
+                                "navhidden": true,
+                                "navsortorder": 1,
+                                "startpage": {
+                                    "uuid": "26378545b0f811e89da70242ac190002",
+                                    "path": "/Home.html"
+                                }
+                            },
+                            "children": {
+                                "elements": [
+                                    {
+                                        "uuid": "ea7c2579c1e011e8a9b50242ac140003",
+                                        "schema": {
+                                            "name": "portalphp_content"
+                                        },
+                                        "path": "/errors/default.html",
+                                        "fields": {},
+                                        "children": {
+                                            "elements": []
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

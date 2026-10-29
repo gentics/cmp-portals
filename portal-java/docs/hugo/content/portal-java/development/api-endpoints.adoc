@@ -1,0 +1,72 @@
+---
+title: API endpoints
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+The {{%GPJava%}} provides some API endpoints intended for facilitating the
+integration in the {{%CMP%}}.
+
+All of these endpoints are protected by a security handler which will only
+allow the request to be processed when it
+
+* comes from an allowed remote host (if allowed IPs are configured)
+* provides the correct API key (if it is configured)
+
+When neither API key nor allowed IPs are configured, the security handler will
+always send a _403 Forbidden_ response.
+
+== Security handler
+
+Both settings for restricting access to API endpoints are in the
+link:configuration.html#_security[security] section of the portal
+configuration.
+
+The list of allowed remote hosts may contain
+
+* fixed IP addresses like 127.0.0.1 (IPv4) or ::1 (IPv6)
+* IP addresses in CIDR notation like 192.168.0.0/16 or fc00::/7 (IPv6)
+* a hostname which can be resolved by `InetAddress#getByName()`
+
+A request can provide the API key either in the `X-GPJ-API-Key` HTTP header, or
+in the request body as the `key` field of a JSON object as seen in the example
+below.
+
+.API key in body example
+[source,json]
+----
+{
+    "key": "secret-portal-api-key"
+}
+----
+
+When only the API key is configured, the requests IP address is not checked.
+When only the list of allowed IPs is configured, the API _must not_ be sent by
+requests.
+
+== Endpoints
+
+Currently there are only two API endpoints available: one for clearing all the
+caches, and for for preview in the {{%CMS%}}.
+
+=== Cache clear
+
+A valid POST request to `/api/clearCache` will clear all caches the portal
+instance is using including
+
+* loaded Handlebars templates
+* GraphQL queries
+* cached content pages
+* loaded redirects
+* data loaded by the data provider
+* any custom created `PortalCaches`
+
+=== Preview
+
+A valid GET request to `/api/preview` will retrieve the current {{%GPJava%}}
+version in a JSON object.
+
+A valid POST request to `/api/preview` with a JSON object containing all the
+information for a loaded node from the Mesh project will render a preview
+based on the posted data.

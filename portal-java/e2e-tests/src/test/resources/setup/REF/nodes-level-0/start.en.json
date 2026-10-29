@@ -1,0 +1,31 @@
+{
+	"uuid": "b3efa88f641011e88438005056a9ea60",
+	"language": "en",
+	"parentNode": {
+		"uuid": "4afac1509a63482bac409a8815b3613b"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"creatoremail": "nowhere@gentics.com",
+		"editdate": "2021-07-02T13:50:40Z",
+		"publishtimestamp": "2021-07-02T13:55:12Z",
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"description": "",
+		"name": "start",
+		"content": "<p>EN: Title, Startpage<br></p>\n<p>EN: Teaser, Startpage<br></p>\n<p>EN: Content, Startpage, <a target='_self' href=\"{{mesh.link(8ea387438c3211e885740242ac150002, en, Reference)}}\">Link</a><br></p>\n",
+		"createdate": "2019-01-29T12:58:01Z",
+		"publisher": "Node Admin",
+		"filename": "start.en.html",
+		"cms_id": 11,
+		"editoremail": "nowhere@gentics.com",
+		"publishermail": "nowhere@gentics.com",
+		"editor": "Node Admin",
+		"creator": "Node Admin",
+		"teaser": "<p>EN: Teaser, Startpage<br></p>",
+		"title": "<p>EN: Title, Startpage<br></p>",
+		"pagecontent": "<p>EN: Content, Startpage, <a target='_self' href=\"{{mesh.link(8ea387438c3211e885740242ac150002, en, Reference)}}\">Link</a><br></p>"
+	}
+}

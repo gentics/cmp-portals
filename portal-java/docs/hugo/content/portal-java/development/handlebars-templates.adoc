@@ -1,0 +1,57 @@
+---
+title: Handlebars templates
+---
+
+:icons: font
+:source-highlighter: prettify
+:imagesdir: /images
+:toc:
+
+:PortalJava: Gentics Portal | java
+
+== Overview
+
+The {PortalJava} uses the
+https://jknack.github.io/handlebars.java/[Handlebars.java] implementation of
+https://mustache.github.io/mustache.5.html[Mustache] as its template engine.
+
+With Handlebars one can access values in a _context_ via the `{{ ... }}`
+notation. For example the template
+
+[source,html]
+----
+<p>
+    Hello {{ firstname }} {{ lastname }}!
+</p>
+----
+
+applied to the context
+
+[source,json]
+----
+{
+    firstname: "John",
+    lastname: "Doe"
+}
+----
+
+would yield the result
+
+[source,html]
+----
+<p>
+    Hello John Doe!
+</p>
+----
+
+The https://handlebarsjs.com/guide/#simple-expressions[Handlebars]
+documentation{zwsp}footnote:[The page covers the JavaScript version of
+Handlebars, but the syntax in the templates as well as the default helpers are
+the same.] provides more detailed examples, of simple expressions as well as how
+to use helpers.
+
+== Context variables
+
+* `data`
+* `loggedin`
+* `navigation`

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{{data.node.fields.title}}}</title>
+	</head>
+	<body>
+		<h1>{{{data.node.fields.title}}}</h1>
+
+		<h2>Static content</h2>
+		<ul>
+			<li><a href=/login>Login</a></li>
+			<li><a href=/logout>Logout</a></li>
+			<li><a href=/api/protected>Protected</a></li>
+		</ul>
+
+		<hr/>
+
+		<h2>Authentication</h2>
+		<h3>User info</h3>
+		<pre>
+			{{~{prettyPrint userInfo}}}
+		</pre>
+
+		<hr/>
+
+		<h2>Page content</h2>
+		{{!--
+		<h3>Teaser</h3>
+		<p>{{data.node.fields.teaser}}</p>
+
+		<h3>Content</h3>
+		<p>{{data.node.fields.content}}</p>
+		--}}
+
+		<h3>Raw page data</h3>
+		<pre>
+			{{~prettyPrint data}}
+		</pre>
+	</body>
+</html>

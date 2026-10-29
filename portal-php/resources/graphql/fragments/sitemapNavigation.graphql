@@ -1,0 +1,21 @@
+fragment sitemapNavigation on Node {
+    schema {
+        name
+    }
+  	uuid
+  	path
+  	language
+  	fields {
+		...sitemapContentFields
+        ...sitemapBinaryContentFields
+  	}
+    languages {
+        uuid
+        path
+        language
+        fields {
+            ...sitemapContentFields
+            ...sitemapBinaryContentFields
+        }
+    }
+}

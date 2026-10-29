@@ -1,0 +1,257 @@
+---
+title: Configuration
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+This section describes all the configuration options of {{%GPJava%}}.
+
+## Configuration file
+
+The portal configuration is loaded from the _config/server.yml_ file, which has to be a
+valid https://yaml.org[YAML] file.
+
+The default configuration is available at the <<default-config, end of this section>>.
+
+There are default values for most entries but the following settings must be explicitly set
+for every project:
+
+* the link:#_general[Mesh project]
+* the link:#_general[portal API key]
+* the link:#_general[server URL], and
+* the link:#_mesh[Mesh API key]
+
+## Overriding settings
+
+While it is advisable to manage the portal configuration for a project in a version control
+system, it is often necessary to overwrite some settings for a local development setup, or
+because of project staging.
+
+### Local config file
+
+All settings in _config/server.local.yml_ will override (or extend) the values specified in the
+main configuration file. Note that list values, are not merged but completely overwritten.
+
+### Environment variables
+
+Many settings can be overwritten by setting environment variables. What settings can be specified
+this way, and the names of the environment variables are listed in <<#environment-variables, this table>>.
+
+## Settings
+
+This section contains all available settings for {{%GPJava%}}.
+
+### General
+
+In the general section setting the `meshProject`, `portalAPIKey` and `serverUrl` is mandatory, for
+portal to start.
+
+While configuring the `startPage` is not mandatory, the portal cannot serve `/` without the setting
+(requests for valid paths will be fine).
+
+include::content/portal-java/config/portal_config.adoc-include[]
+
+### Authentication
+
+Note that authentication must be explicitly enabled by initializing an
+implementation of `AuthenticationBaseHandler` in the projects
+`BootstrapInitializer` (see also the
+link:../features/authentication.html[authentication documentation]).
+
+include::content/portal-java/config/authentication_options.adoc-include[]
+
+#### Keycloak
+
+Missing settings will be taken from the _.../config/keycloak.json_ if it is
+available.
+
+include::content/portal-java/config/keycloak_options.adoc-include[]
+
+#### Endpoints
+
+There are no mandatory fields, but endpoint definitions without any permissions, or an invalid
+path (e.g. an `*` that is not at the end of the path) will be ignored. See the detailed
+link:../features/authentication#_authentication_handler.html[authentication documentation] for examples.
+
+include::content/portal-java/config/endpoint_options.adoc-include[]
+
+#### Single sign out
+
+All single sign out settings have usable default values.
+
+include::content/portal-java/config/single_sign_out_options.adoc-include[]
+
+### Caching
+
+All caching settings have usable default values.
+
+include::content/portal-java/config/caching_options.adoc-include[]
+
+### Compatibility
+
+All compatibility settings are disabled by default.
+
+include::content/portal-java/config/compatibility_options.adoc-include[]
+
+### Data provider
+
+All data provider options have usable default values.
+
+include::content/portal-java/config/data_provider_options.adoc-include[]
+
+#### Web data
+
+include::content/portal-java/config/web_data_options.adoc-include[]
+
+////
+// The e-mail configuration is a remnant from the formgenerator and is not used by the portal
+// at the moment.
+
+### E-Mail
+
+All e-mail settings have usable default values.
+
+include::content/portal-java/config/mail_options.adoc-include[]
+////
+
+### Mesh
+
+The `apiKey` should be configured in a <<#_local_config_file, server.local.yml>> file, to prevent
+storing the API key in a version control system.
+
+include::content/portal-java/config/mesh_options.adoc-include[]
+
+#### Eventbus
+
+All eventbus settings have usable default values.
+
+include::content/portal-java/config/eventbus_options.adoc-include[]
+
+### Monitoring
+
+All monitoring settings have usable default values.
+
+include::content/portal-java/config/monitoring_options.adoc-include[]
+
+### Navigation
+
+All navigation settings have usable default values.
+
+include::content/portal-java/config/navigation_options.adoc-include[]
+
+////
+// The proxy configuration is a remnant from the form generator, and is not used by the portal
+// at the moment.
+
+### Proxy
+
+include::content/portal-java/config/proxy_options.adoc-include[]
+////
+
+### Redirects
+
+While there are no mandatory redirect settings, it is highly recommended to at least define
+link:../features/error-handling.html[redirects] for the HTTP status codes _404 Not Found_ and _500 Internal Server Error_
+(and _403 Forbidden_ if <<_authentication, authentication>> is enabled). Otherwise these errors will just result in
+an empty response.
+
+include::content/portal-java/config/redirect_options.adoc-include[]
+
+#### Custom redirects
+
+See the documentation for the link:../features/custom-redirects.html[custom redirects feature] for
+a detailed description about the `source` and `helperClass` settings.
+
+include::content/portal-java/config/custom_redirect_options.adoc-include[]
+
+### Security
+
+include::content/portal-java/config/security_options.adoc-include[]
+
+### Static handler
+
+All static handler settings have usable default values.
+
+include::content/portal-java/config/static_handler_options.adoc-include[]
+
+### Vert.x
+
+All Vert.x settings have usable default values.
+
+include::content/portal-java/config/vertx_options.adoc-include[]
+
+### Search
+
+All search handler settings have usable default values.
+
+include::content/portal-java/config/search_options.adoc-include[]
+
+[[environment-variables]]
+## Environment variables
+
+The following environment variables can be used to override configuration settings.
+
+include::content/portal-java/environment/portal-env.adoc-include[]
+
+## Custom options
+
+There are two possibilities to provide project specific settings for a portal: loading a
+custom configuration file, or configuring a custom options map in the _server.yml_.
+
+### Custom configuration file
+
+To avoid polluting the server configuration, this is the recommended way to load project
+specific settings.
+
+. Create a custom configuration class which extends `com.gentics.mesh.portal.api.Config`
+  (assume it is called `ProjectConfig`)
+. Create a YAML file corresponding to your `ProjectConfig` and place it in the _config_
+  directory of the portal (assume the file is called _project.yml_)
+. Load the custom configuration by calling `ConfigUtil#loadConfig()` which will return an
+  instance of `ProjectConfig` with the settings from _project.yml_.
+. Optionally call `loadConfig()` again, with a local override file
+
+.Example for loading project specific configuration
+```java
+// Load base configuration.
+ProjectConfig config = ConfigUtil.loadConfig("project.yml", null, ProjectConfig.class);
+
+// Load local overrides.
+config = ConfigUtil.loadConfig("project.local.yml", config, ProjectConfig.class);
+```
+
+When the project specific configuration is very simple it might also suffice to use
+`ConfigUtil#loadJson(String filename)` to load a JSON file into a Vert.x `JsonObject`.
+
+### Custom options map
+
+Note that using a custom options map is not recommended.
+
+The `configMap` can hold a custom class with the specified values.
+
+include::content/portal-java/config/custom_options_map.adoc-include[]
+
+The following configuration will result in an entry `customConfig` of type `CustomConfig`
+where the String field `setting1` has the value `"value1"`:
+
+```yaml
+customConfigMap:
+  configMap:
+    key1:  !&lt;com.gentics.mesh.portal.config.CustomConfig&gt;
+      setting1: "value1"
+```
+
+
+[[default-config]]
+## Default configuration
+
+This is the complete link:../examples/config/server.yml[default configuration].
+
+WARNING: Using this file as is will _not_ work, because the Mesh and Portal API keys,
+as well as the Mesh project and the server URL are missing.
+
+[source, yaml]
+.Default _server.yml_
+include::content/portal-java/examples/config/server.yml[]

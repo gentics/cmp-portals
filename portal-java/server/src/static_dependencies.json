@@ -1,0 +1,26 @@
+{
+  "components": [
+    {
+      "name": "Portal | java",
+      "modules": [
+        {
+          "name": "External",
+          "dependencies": [
+            {
+              "name": "Java Runtime",
+              "description": "Version used by automated tests.",
+              "current": "17",
+              "latest": "25"
+            },
+            {
+              "name": "Keycloak",
+              "description": "Version used by automated tests.",
+              "current": "25.0.2",
+              "latest": "26.4.7"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

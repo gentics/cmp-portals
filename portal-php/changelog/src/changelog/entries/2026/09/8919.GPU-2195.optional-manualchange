@@ -1,0 +1,7 @@
+The Gentics Portal | php Kubernetes Helm-Chart has been changed to better match the overall structure of Gentics Charts:
+* Starting with this release, the helm chart will now always be released with the same version number as Gentics Portal | php to ensure compatibility
+* The Image definition (Values.image.repository) has been splitted between the registry and repository. Values.image.registry = docker.gentics.com (default) and Values.image.repository
+* The Application renders now as Deployment by default, it's stateless without a perPod storage. If you want to keep the old behaviour configure Values.controller.kind: StatefulSet
+* If not specified, the Chart now uses a default ImagePullSecret (docker-gentics-com)
+* The option `portalConfigOverride` is discontinued, use `existingConfigmap` to mount the portal/config directory instead. The proposed way of configuring the portal is to have portal/config inside the Image and some settings to be overriden perStage with Environment Variables 
+* A problem with the ResourceName Generation has been fixed. This maybe affects your installation name if the Release.Name contained "gentics", "portal" or "php". If you depend on the old resources names, you can always set the Installation Name with Values.fullnameOverride

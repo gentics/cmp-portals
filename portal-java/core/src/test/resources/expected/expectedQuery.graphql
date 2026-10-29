@@ -1,0 +1,33 @@
+query {
+	... on fake_schema
+	... on dummy_binary_content
+	... on dummy_content
+	... on dummy_folder
+	... fragment1
+	... fragment3
+	... fragment4
+}
+fragment fragment4 {
+	This is a dummy fragment
+}
+fragment fragment1 {
+	... on fake_schema
+	... on dummy_binary_content
+	... on dummy_content
+	... on dummy_folder
+	... fragment2
+	... fragment3
+}
+fragment fragment3 {
+	... on fake_schema
+	... on dummy_binary_content
+	... on dummy_content
+	... on dummy_folder
+}
+fragment fragment2 {
+	... on fake_schema
+	... on dummy_binary_content
+	... on dummy_content
+	... on dummy_folder
+	... fragment3
+}

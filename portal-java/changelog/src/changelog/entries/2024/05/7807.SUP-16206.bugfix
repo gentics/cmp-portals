@@ -1,0 +1,1 @@
+Templating: Now the tolerance of the errors in the templating engine can be configured in the portal config. Either a silent acceptance (status quo) or HTTP 500 throwing is possible.

@@ -1,0 +1,82 @@
+---
+title: Custom redirects
+description: "Redirect old URLs to new ones on 404 errors and add custom redirect helpers."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+In the case of a 404 error, you can redirect old pages to a new URL. In this article you will learn how to configure and extend this functionality.
+
+== Add a new redirect helper
+
+You can create a custom redirect helper, if the built in not suits your needs. You have to implement the *Gentics\PortalPhp\Features\Redirect\Contract\RedirectHelper* interface. The `init()` function of the class will be called when Redirects getting initialised, and the `convertData()` method parses the data structure of the source. The sample below is actually the built in code, just renamed.
+
+In the end, you have to return an array of Redirect objects, which should contain at least an `oldUrl`, a `newUrl` and optionally you can set if you want `permanent` redirection per URL - otherwise the global config value will take effect.
+
+=== Custom RedirectHelper class
+
+```php
+use Gentics\PortalPhp\Features\Redirect\Contract\RedirectHelper;
+use Illuminate\Support\Arr;
+
+class CustomRedirectHelper implements RedirectHelper
+{
+    protected $fieldName = 'addredirecttag';
+
+    /**
+     * {@inheritdoc}
+     * @param array $helperConfig
+     * @return mixed|void
+     */
+    public function init(array $helperConfig)
+    {
+        if (Arr::has($helperConfig, 'fieldName')) {
+            $this->fieldName = Arr::get($helperConfig, 'fieldName');
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     * @param array $jsonData
+     * @return array|mixed
+     */
+    public function convertData(array $jsonData)
+    {
+        $redirectsMap = [];
+
+        // Try to get the fieldName field and parse JSON data
+        $rawData = json_decode(Arr::get($jsonData, implode('.', ['fields', $this->fieldName]), ''));
+
+        if (!empty($rawData)) {
+            $mapper = new JsonMapper();
+            $redirects = $mapper->mapArray($rawData, [], Redirect::class);
+
+            array_map(function (Redirect $item) use (&$redirectsMap) {
+                $redirectsMap[$item->getOldUrl()] = $item;
+            }, $redirects);
+        }
+
+        return $redirectsMap;
+    }
+}
+```
+
+Then you just have to specify that new helper class in your configuration.
+
+=== Configuration
+
+```php
+'redirects' => [
+     // ...
+     // Helper class to process the custom redirects map
+     'helperClass' => App\Redirect\CustomRedirectHelper::class,
+
+     // Helper settings to pass
+     'helperConfig' => [
+         'fieldName' => 'addredirecttag',
+     ],
+     // ...
+],
+```

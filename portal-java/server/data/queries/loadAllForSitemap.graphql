@@ -1,0 +1,10 @@
+query sitemap($lang: [String]){
+	# TODO Load nodes from schema instead of using filter. The anonymous user needs permissions to read the schema for that.
+	# TODO Do not use lang parameter but instead load all nodes regardless of language when https://github.com/gentics/mesh/issues/971 is fixed
+	nodes(lang: $lang, filter: {schema: {is: %contentSchema%}}) {
+		elements {
+		    uuid
+			path
+		}
+	}
+}

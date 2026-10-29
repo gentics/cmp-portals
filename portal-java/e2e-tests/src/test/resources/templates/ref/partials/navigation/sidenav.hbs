@@ -1,0 +1,12 @@
+<li>
+	{{# if this.url }}
+	<a href="{{{ this.url }}}" class="{{{ this.class }}}">
+		{{# if this.current }}&gt;{{/ if }}{{ langFallback this 'name' }}{{# if this.active }}*{{/ if }}
+	</a>
+	{{ else }}
+	<span class="this.class">{{{ this.name }}}{{# if this.active }}*{{/ if }}</a>
+	{{/ if }}
+	{{# eachNavFromFolder this @maxLevel }}
+		{{> partials/navigation/sidenav }}
+	{{/ eachNavFromFolder }}
+</li>

@@ -1,0 +1,45 @@
+---
+title: Localization
+description: "How the portal determines the visitor's language and how to localize content."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+== {{%GPPHP%}} default language
+
+When a user opens a portal page, which does not have specific language setting, it tries to determinate the most suitable
+language for the visitor in the following order and by availability:
+
+* Language stored in the session for the current user
+* Browser language preference (Accept-Language header)
+* Portal's default language
+
+If any of these fails an error message or a fallback page will be displayed depending on the feature.
+
+The {{%GPPHP%}} default language is stored in the {{% config "portal" %}} configuration file:
+
+```php
+'defaultLanguage' => 'en'
+```
+
+== Localized Custom Error Pages
+
+{{%GPPHP%}} supports custom error pages which need to be configured first described in the link:../features/error-handling.html#_custom_error_pages[Error Handling documentation].
+
+When you use localized custom error pages, you should configure the default language versions of the custom error pages then the other languages
+will load automatically. To translate error pages you have to create language variants of the error pages and publish them, the portal will
+choose the correct language as the default language.
+
+
+== Startpage
+
+When a user navigates to only the domain without any path of the site run with {{%GPPHP%}} the portal will serve the page configured in `config/portal.php` at `startPage` in language determined as described in the link:#_default_language[default language section].
+
+=== Startpage example:
+* startpage configured is `/index.de.html`
+* there is also another language variant: `/index.en.html`
+* a user visits our site for the first time (no session stored) and his browsers user-agent prefers 'english'
+* {{%GPPHP%}} will serve `/index.en.html` while the browsers address-bar will still show only the domain name with no additional path
+

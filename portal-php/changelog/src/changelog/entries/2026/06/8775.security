@@ -1,0 +1,6 @@
+Some dependencies have been updated:
+* laravel/framework: 12.60.2
+* symfony/http-foundation: 7.4.13
+* symfony/polyfill-intl-idn: 1.38.1
+* symfony/routing: 7.4.13
+* symfony/security-http: 7.4.13

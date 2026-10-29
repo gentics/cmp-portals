@@ -1,0 +1,1 @@
+<div>@foreach($results as $result)Element: {{ $result['element']['name'] }} = Total: {{ $result['total'] }}@endforeach</div>

@@ -1,0 +1,63 @@
+---
+title: Gentics Image Store
+---
+
+:icons: font
+:source-highlighter: prettify
+:imagesdir: /images
+:toc:
+
+:PortalJava: Gentics Portal | java
+:GIS: Gentics Image Store
+
+## Overview
+
+The {PortalJava} supports all
+https://www.gentics.com/mesh/docs/image-manipulation/[image manipulation] operations
+supported by {{%Mesh%}}. The endpoints image manipulation are the same as
+for the
+https://www.gentics.com/Content.Node/guides/feature_genticsimagestore.html#usage[Gentics Image Store]
+offered by the {{%CMS%}}.
+
+All requests starting with `/GenticsImageStore/` will be handled by the
+respective {GIS} handler.
+
+### Restrictions
+
+Only images in the formats PNG, JPEG, BMP and GIF can be resized via the {GIS}.
+Furthermore, animated GIFs should _not_ be resized this way, because all but the
+first frame in the animation will be discarded.
+
+### Resizing
+
+An image accessible via the path `/path/to/image.png` can be resized with a
+request to
+
+```
+/GenticsImageStore/[width]/[height]/[mode]/path/to/image.png
+```
+
+where `width` and `height` are the desired dimensions in pixels, and `mode` is
+one of
+
+* `prop`: Proportional resizing, the aspect ratio of the image will be preserved
+* `force`: Forced resizing, the aspect ratio of the original image will _not_ be preserved
+* `smart`: Crop image before resizing to correct the aspect ratio
+
+For more information about the different modes see the description of the Mesh
+https://www.gentics.com/mesh/docs/image-manipulation/#_resizing_options[resizing options].
+
+### Cropping
+
+An image accessible via the path `/path/to/image.png` can be cropped (and
+resized) with a request to
+
+```
+/GenticsImageStore/[width]/[height]/cropandresize/[mode]/[topleft_x]/[topleft_y]/[cropwidth]/[cropheight]/path/to/image.png
+```
+
+After cropping the image will be resized to the specified `width` and `height`
+where `mode` has the same meaning as described above.
+
+For more information about the different modes have a look at the respective
+Mesh https://www.gentics.com/mesh/docs/image-manipulation/#_crop[documentation].

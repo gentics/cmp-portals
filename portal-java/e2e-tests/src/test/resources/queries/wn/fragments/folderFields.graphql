@@ -1,0 +1,8 @@
+fragment folderFields on %folderSchema% {
+  startpage(lang: [$language, "en"]) {
+    path
+    fields {
+      ... contentFields
+    }
+  }
+}

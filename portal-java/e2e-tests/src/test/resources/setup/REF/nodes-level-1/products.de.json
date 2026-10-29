@@ -1,0 +1,31 @@
+{
+	"uuid": "ce4c72648c3211e885740242ac150002",
+	"language": "de",
+	"parentNode": {
+		"uuid": "7151e59b8c3211e885740242ac150002"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"creatoremail": "nowhere@gentics.com",
+		"editdate": "2021-07-02T13:55:00Z",
+		"publishtimestamp": "2021-07-02T13:55:24Z",
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"description": "",
+		"name": "Produkte",
+		"content": "<p>DE: Titel, Produkte<br></p>\n<p>DE: Teaser, Produkte<br></p>\n<p style=\"\">DE: Inhalt, Produkte<br style=\"\"></p>\n",
+		"createdate": "2021-07-02T13:54:26Z",
+		"publisher": "Node Admin",
+		"filename": "Produkte.de.html",
+		"cms_id": 14,
+		"editoremail": "nowhere@gentics.com",
+		"publishermail": "nowhere@gentics.com",
+		"editor": "Node Admin",
+		"creator": "Node Admin",
+		"teaser": "<p>DE: Teaser, Produkte<br></p>",
+		"title": "<p>DE: Titel, Produkte<br></p>",
+		"pagecontent": "<p style=\"\">DE: Inhalt, Produkte<br style=\"\"></p>"
+	}
+}

@@ -1,0 +1,21 @@
+---
+title: OpenAPI
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPJava%}} has an ability to provide an OpenAPI v3.0 specification for every publicly available resource.
+
+== Setup 
+
+To enable the OpenAPI feature, simply set the `dataProvider.serveOpenApi` configuration in the `server.yml` file to `true`. The OpenAPI specification will be available at the `/api/openapi.yaml` endpoint.
+
+== Example
+
+Can be checked at the link:../examples/api/openapi.yaml[link] or below:
+
+[source, yaml]
+.Default _openapi.yaml_
+include::content/portal-java/examples/api/openapi.yaml[]

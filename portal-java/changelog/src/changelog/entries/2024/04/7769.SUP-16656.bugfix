@@ -1,0 +1,1 @@
+Fixes a dependency issue introduced with the update to Vert.x 4.5.0 which caused an error when reading the portal configuration.
