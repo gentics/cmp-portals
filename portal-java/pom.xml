@@ -39,6 +39,14 @@
 		<version>5.1.1</version>
 	</parent>
 
+	<licenses>
+		<license>
+			<name>Apache-2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
 	<modules>
 		<module>api</module>
 		<module>base</module>

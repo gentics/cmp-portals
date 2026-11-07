@@ -69,4 +69,6 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+The portal code is licensed under the [Apache License, Version 2.0](LICENSE). The Helm charts in `ee/` are
+licensed under the Business Source License 1.1 and convert to Apache 2.0 on their Change Date. See
+[LICENSING.md](LICENSING.md) and [TRADEMARKS.md](TRADEMARKS.md).

@@ -2,7 +2,7 @@
     "name": "gentics/portal-php",
     "description": "Gentics Portal | php",
     "type": "library",
-    "license": "proprietary",
+    "license": "Apache-2.0",
     "require": {
         "php": "^8.3",
         "ext-intl": "*",

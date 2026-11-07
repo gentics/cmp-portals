@@ -1,6 +1,7 @@
 {
     "name": "gentics/portal-php-laravel",
     "type": "metapackage",
+    "license": "Apache-2.0",
     "require": {
         "gentics/portal-php": "self.version",
         "guzzlehttp/guzzle": "^7.2",
