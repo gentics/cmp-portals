@@ -50,7 +50,7 @@ return [
     | views:   Replaces resources/views
     | graphql: Replaces resources/graphql
     | lang:    Replaces the lang folder
-    | public:  Is copied into the public folder. Existing files of the portal
+    | static:  Is copied into public/static. Existing files of the portal
     |          are kept, files with the same path are replaced while they are
     |          contained in the portal implementation.
     | The folders views, graphql and lang are emptied, when the package does

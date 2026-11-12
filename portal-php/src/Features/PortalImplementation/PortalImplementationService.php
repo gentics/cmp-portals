@@ -74,7 +74,7 @@ GRAPHQL;
     protected $targets;
 
     /**
-     * @var string Folder for the state, the temporary files and the backups of the public folder
+     * @var string Folder for the state, the temporary files and the backups of the static folder
      */
     protected $stateDir;
 
@@ -86,7 +86,7 @@ GRAPHQL;
     /**
      * @param PortalPhp $portalPhp
      * @param array $targets Map of package folder names to the target paths
-     * @param string $stateDir Folder for the state, the temporary files and the backups of the public folder
+     * @param string $stateDir Folder for the state, the temporary files and the backups of the static folder
      * @param PortalImplementationExtractor|null $extractor
      */
     public function __construct(
@@ -99,6 +99,16 @@ GRAPHQL;
         $this->targets = $targets;
         $this->stateDir = $stateDir;
         $this->extractor = $extractor ?? new PortalImplementationExtractor();
+    }
+
+    /**
+     * Get the target paths of the package folders.
+     *
+     * @return array Map of package folder names to the target paths
+     */
+    public function getTargets(): array
+    {
+        return $this->targets;
     }
 
     /**

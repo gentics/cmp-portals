@@ -13,10 +13,10 @@ use ZipArchive;
  * The folders views, graphql and lang of the package replace the contents of their target folders. Target folders,
  * whose folder is missing in the package, are emptied.
  *
- * The folder public is copied over the target folder (the public folder of the portal), so that the static files of
- * the portal instance are kept. The files provided by the portal implementation are recorded in a manifest, so that
- * they can be removed again with the next update. Files of the portal instance, which are overwritten by the portal
- * implementation, are backed up and restored, when the portal implementation does no longer contain them.
+ * The folder static is copied over the target folder (the folder public/static of the portal), so that the static
+ * files of the portal instance are kept. The files provided by the portal implementation are recorded in a manifest,
+ * so that they can be removed again with the next update. Files of the portal instance, which are overwritten by the
+ * portal implementation, are backed up and restored, when the portal implementation does no longer contain them.
  *
  * All other entries of the package are ignored (with a warning). The package is completely unzipped before any target
  * folder is changed, so an invalid package leaves all target folders untouched.
@@ -26,20 +26,20 @@ class PortalImplementationExtractor
     public const FOLDER_VIEWS = 'views';
     public const FOLDER_GRAPHQL = 'graphql';
     public const FOLDER_LANG = 'lang';
-    public const FOLDER_PUBLIC = 'public';
+    public const FOLDER_STATIC = 'static';
 
     public const KNOWN_FOLDERS = [
         self::FOLDER_VIEWS,
         self::FOLDER_GRAPHQL,
         self::FOLDER_LANG,
-        self::FOLDER_PUBLIC,
+        self::FOLDER_STATIC,
     ];
 
-    /** Name of the manifest file (in the state folder) listing the files copied into the public folder */
-    public const PUBLIC_MANIFEST = 'public-manifest.json';
+    /** Name of the manifest file (in the state folder) listing the files copied into the static folder */
+    public const STATIC_MANIFEST = 'static-manifest.json';
 
-    /** Name of the folder (in the state folder) holding the overwritten files of the public folder */
-    public const PUBLIC_BACKUP = 'public-backup';
+    /** Name of the folder (in the state folder) holding the overwritten files of the static folder */
+    public const STATIC_BACKUP = 'static-backup';
 
     /**
      * @var Filesystem
@@ -59,7 +59,7 @@ class PortalImplementationExtractor
      *
      * @param string $zipFile Path to the package
      * @param array $targets Map of package folder names to the target paths
-     * @param string $stateDir Folder for temporary files, the manifest and the backups of the public folder
+     * @param string $stateDir Folder for temporary files, the manifest and the backups of the static folder
      * @return string[] Names of the folders, which were contained in the package
      * @throws PortalPhpException When the package is not a valid zip file or contains invalid entries
      */
@@ -76,8 +76,8 @@ class PortalImplementationExtractor
             foreach ($targets as $folder => $target) {
                 $source = $tmpDir . '/' . $folder;
 
-                if ($folder === self::FOLDER_PUBLIC) {
-                    $this->overlayPublic(is_dir($source) ? $source : null, $target, $stateDir);
+                if ($folder === self::FOLDER_STATIC) {
+                    $this->overlayStatic(is_dir($source) ? $source : null, $target, $stateDir);
                 } elseif (is_dir($source)) {
                     $this->files->ensureDirectoryExists($target);
                     $this->files->cleanDirectory($target);
@@ -172,16 +172,16 @@ class PortalImplementationExtractor
     }
 
     /**
-     * Copy the files of the package's public folder over the public folder of the portal.
+     * Copy the files of the package's static folder over the static folder of the portal.
      *
-     * @param string|null $source Public folder of the package, null when the package has none
-     * @param string $target Public folder of the portal
+     * @param string|null $source Static folder of the package, null when the package has none
+     * @param string $target Static folder of the portal (public/static)
      * @param string $stateDir Folder holding the manifest and the backups
      */
-    protected function overlayPublic(?string $source, string $target, string $stateDir): void
+    protected function overlayStatic(?string $source, string $target, string $stateDir): void
     {
-        $manifestFile = $stateDir . '/' . self::PUBLIC_MANIFEST;
-        $backupDir = $stateDir . '/' . self::PUBLIC_BACKUP;
+        $manifestFile = $stateDir . '/' . self::STATIC_MANIFEST;
+        $backupDir = $stateDir . '/' . self::STATIC_BACKUP;
         $previous = is_file($manifestFile) ? (json_decode($this->files->get($manifestFile), true) ?: []) : [];
         $current = [];
 

@@ -108,7 +108,7 @@ class PortalImplementationServiceTest extends TestCase
                 'views' => $this->baseDir . '/views',
                 'graphql' => $this->baseDir . '/graphql',
                 'lang' => $this->baseDir . '/lang',
-                'public' => $this->baseDir . '/public',
+                'static' => $this->baseDir . '/static',
             ],
             $this->baseDir . '/state'
         );
@@ -285,6 +285,21 @@ class PortalImplementationServiceTest extends TestCase
         $this->assertCount(1, $events);
         $this->assertEquals('* * * * *', $events[0]->expression);
         $this->assertTrue($events[0]->withoutOverlapping);
+    }
+
+    /**
+     * Test the target folders of the service bound by the service provider.
+     */
+    public function testDefaultTargets()
+    {
+        $this->app->forgetInstance(PortalImplementationService::class);
+
+        $this->assertEquals([
+            'views' => resource_path('views'),
+            'graphql' => resource_path('graphql'),
+            'lang' => lang_path(),
+            'static' => public_path('static'),
+        ], $this->app->make(PortalImplementationService::class)->getTargets());
     }
 
     /**

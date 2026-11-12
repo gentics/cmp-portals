@@ -26,7 +26,7 @@ class ServiceProvider extends ServiceProviderIlluminate
                     PortalImplementationExtractor::FOLDER_VIEWS => resource_path('views'),
                     PortalImplementationExtractor::FOLDER_GRAPHQL => resource_path('graphql'),
                     PortalImplementationExtractor::FOLDER_LANG => lang_path(),
-                    PortalImplementationExtractor::FOLDER_PUBLIC => public_path(),
+                    PortalImplementationExtractor::FOLDER_STATIC => public_path('static'),
                 ],
                 storage_path('app/portal-implementation')
             );

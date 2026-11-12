@@ -67,13 +67,15 @@ The package is a zip file with the following folders:
 | `views` | `resources/views` | Replaces the contents of the target folder
 | `graphql` | `resources/graphql` | Replaces the contents of the target folder
 | `lang` | `lang` | Replaces the contents of the target folder
-| `public` | `public` | Is copied into the target folder, see below
+| `static` | `public/static` | Is copied into the target folder, see below
 |===
 
-When the package does not contain one of the folders `views`, `graphql` or `lang`, its target folder is emptied. All other folders and files of the package are ignored (a warning is logged).
+When the package does not contain one of the folders `views`, `graphql` or `lang`, its target folder is emptied. All other folders and files of the package (including a folder `public`) are ignored (a warning is logged).
 
 === Static files
 
-The files of the folder `public` are copied into the public folder of the portal, so that the portal serves both the static files it already contains and the static files of the portal implementation. When both contain the same path, the file of the portal implementation is used.
+The files of the folder `static` are copied into the folder `public/static` of the portal, so that the portal serves both the static files it already contains and the static files of the portal implementation. When both contain the same path, the file of the portal implementation is used.
+
+For example, the entry `static/css/main.css` of the package is copied to `public/static/css/main.css` and served as `/static/css/main.css`.
 
 The portal keeps track of the files it copied (in `storage/app/portal-implementation`). When a later version of the portal implementation no longer contains a file, the file is removed, and the original file of the portal is restored, if the portal implementation had replaced one.

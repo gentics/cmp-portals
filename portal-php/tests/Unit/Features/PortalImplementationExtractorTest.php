@@ -43,7 +43,7 @@ class PortalImplementationExtractorTest extends TestCase
             'views' => $this->baseDir . '/my-views',
             'graphql' => $this->baseDir . '/my-graphql',
             'lang' => $this->baseDir . '/my-lang',
-            'public' => $this->baseDir . '/my-public',
+            'static' => $this->baseDir . '/my-static',
         ];
         $this->stateDir = $this->baseDir . '/state';
         $this->extractor = new PortalImplementationExtractor();
@@ -66,15 +66,15 @@ class PortalImplementationExtractorTest extends TestCase
             'views/partials/header.blade.php' => 'header',
             'graphql/loadByPath.graphql' => 'query',
             'lang/en/messages.php' => 'messages',
-            'public/css/main.css' => 'css',
+            'static/css/main.css' => 'css',
         ]), $this->targets, $this->stateDir);
 
-        $this->assertEquals(['views', 'graphql', 'lang', 'public'], $extracted);
+        $this->assertEquals(['views', 'graphql', 'lang', 'static'], $extracted);
         $this->assertContent('my-views/page.blade.php', 'page');
         $this->assertContent('my-views/partials/header.blade.php', 'header');
         $this->assertContent('my-graphql/loadByPath.graphql', 'query');
         $this->assertContent('my-lang/en/messages.php', 'messages');
-        $this->assertContent('my-public/css/main.css', 'css');
+        $this->assertContent('my-static/css/main.css', 'css');
         $this->assertSame([], glob($this->stateDir . '/tmp-*'), 'Temporary folder must be removed');
     }
 
@@ -100,8 +100,28 @@ class PortalImplementationExtractorTest extends TestCase
     }
 
     /**
+     * Test that a folder public in the package is ignored, static files must be in the folder static.
+     */
+    public function testPublicFolderIgnored()
+    {
+        Log::spy();
+        $this->write('my-static/site.css', 'instance site');
+
+        $extracted = $this->extractor->extract($this->zip([
+            'public/site.css' => 'implementation site',
+            'public/js/app.js' => 'app',
+        ]), $this->targets, $this->stateDir);
+
+        $this->assertEquals([], $extracted);
+        $this->assertContent('my-static/site.css', 'instance site');
+        $this->assertFileDoesNotExist($this->baseDir . '/my-static/js/app.js');
+        $this->assertFileDoesNotExist($this->baseDir . '/public');
+        Log::shouldHaveReceived('warning')->once();
+    }
+
+    /**
      * Test that the existing contents of a target folder are replaced, and that target folders missing in the zip
-     * are emptied (except the public folder), but not created.
+     * are emptied (except the static folder), but not created.
      */
     public function testExistingFilesReplaced()
     {
@@ -109,7 +129,7 @@ class PortalImplementationExtractorTest extends TestCase
         $this->write('my-views/old/removed.blade.php', 'removed');
         $this->write('my-graphql/local.graphql', 'local query');
         $this->write('my-graphql/fragments/fragment.graphql', 'fragment');
-        $this->write('my-public/index.php', 'index');
+        $this->write('my-static/index.php', 'index');
 
         $this->extractor->extract($this->zip(['views/page.blade.php' => 'new page']), $this->targets, $this->stateDir);
 
@@ -118,7 +138,7 @@ class PortalImplementationExtractorTest extends TestCase
         $this->assertDirectoryExists($this->baseDir . '/my-graphql', 'Folder missing in the package must still exist');
         $this->assertSame([], (new Filesystem())->allFiles($this->baseDir . '/my-graphql', true), 'Folder missing in the package must be empty');
         $this->assertFileDoesNotExist($this->baseDir . '/my-lang', 'Non-existing target folders must not be created');
-        $this->assertContent('my-public/index.php', 'index');
+        $this->assertContent('my-static/index.php', 'index');
     }
 
     /**
@@ -163,56 +183,56 @@ class PortalImplementationExtractorTest extends TestCase
     }
 
     /**
-     * Test that the public folder of the package is copied over the public folder of the portal: files of the
+     * Test that the static folder of the package is copied over the static folder of the portal: files of the
      * portal instance are kept, overwritten files are restored when the portal implementation no longer contains
      * them, and files of the portal implementation are removed when it no longer contains them.
      */
-    public function testPublicOverlay()
+    public function testStaticOverlay()
     {
-        $this->write('my-public/index.php', 'index');
-        $this->write('my-public/css/site.css', 'instance site');
+        $this->write('my-static/index.php', 'index');
+        $this->write('my-static/css/site.css', 'instance site');
 
         // The portal implementation overwrites site.css and adds app.js
         $this->extractor->extract($this->zip([
-            'public/css/site.css' => 'implementation site',
-            'public/js/app.js' => 'app 1',
+            'static/css/site.css' => 'implementation site',
+            'static/js/app.js' => 'app 1',
         ]), $this->targets, $this->stateDir);
 
-        $this->assertContent('my-public/index.php', 'index');
-        $this->assertContent('my-public/css/site.css', 'implementation site');
-        $this->assertContent('my-public/js/app.js', 'app 1');
+        $this->assertContent('my-static/index.php', 'index');
+        $this->assertContent('my-static/css/site.css', 'implementation site');
+        $this->assertContent('my-static/js/app.js', 'app 1');
 
         // The portal implementation no longer contains site.css, and changes app.js
-        $this->extractor->extract($this->zip(['public/js/app.js' => 'app 2']), $this->targets, $this->stateDir);
+        $this->extractor->extract($this->zip(['static/js/app.js' => 'app 2']), $this->targets, $this->stateDir);
 
-        $this->assertContent('my-public/index.php', 'index');
-        $this->assertContent('my-public/css/site.css', 'instance site');
-        $this->assertContent('my-public/js/app.js', 'app 2');
+        $this->assertContent('my-static/index.php', 'index');
+        $this->assertContent('my-static/css/site.css', 'instance site');
+        $this->assertContent('my-static/js/app.js', 'app 2');
 
-        // The portal implementation has no public folder at all
+        // The portal implementation has no static folder at all
         $this->extractor->extract($this->zip(['views/page.blade.php' => 'page']), $this->targets, $this->stateDir);
 
-        $this->assertContent('my-public/index.php', 'index');
-        $this->assertContent('my-public/css/site.css', 'instance site');
-        $this->assertFileDoesNotExist($this->baseDir . '/my-public/js/app.js');
+        $this->assertContent('my-static/index.php', 'index');
+        $this->assertContent('my-static/css/site.css', 'instance site');
+        $this->assertFileDoesNotExist($this->baseDir . '/my-static/js/app.js');
     }
 
     /**
      * Test that a file overwritten by several versions of the portal implementation is restored to the file of the
      * portal instance, not to an older version of the portal implementation.
      */
-    public function testPublicOverlayRestoresInstanceFile()
+    public function testStaticOverlayRestoresInstanceFile()
     {
-        $this->write('my-public/robots.txt', 'instance robots');
+        $this->write('my-static/robots.txt', 'instance robots');
 
-        $this->extractor->extract($this->zip(['public/robots.txt' => 'robots 1']), $this->targets, $this->stateDir);
-        $this->extractor->extract($this->zip(['public/robots.txt' => 'robots 2']), $this->targets, $this->stateDir);
+        $this->extractor->extract($this->zip(['static/robots.txt' => 'robots 1']), $this->targets, $this->stateDir);
+        $this->extractor->extract($this->zip(['static/robots.txt' => 'robots 2']), $this->targets, $this->stateDir);
 
-        $this->assertContent('my-public/robots.txt', 'robots 2');
+        $this->assertContent('my-static/robots.txt', 'robots 2');
 
-        $this->extractor->extract($this->zip(['public/other.txt' => 'other']), $this->targets, $this->stateDir);
+        $this->extractor->extract($this->zip(['static/other.txt' => 'other']), $this->targets, $this->stateDir);
 
-        $this->assertContent('my-public/robots.txt', 'instance robots');
+        $this->assertContent('my-static/robots.txt', 'instance robots');
     }
 
     /**
