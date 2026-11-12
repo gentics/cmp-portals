@@ -1,0 +1,79 @@
+---
+title: Portal implementation
+description: "Load the views, GraphQL queries, translations and static files of the portal from Mesh."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+Instead of deploying the views, GraphQL queries, translations and static files with the portal, {{%GPPHP%}} can load them from {{%Mesh%}}. They are stored as a zip file (the _package_) in a node of the {{%Mesh%}} project, and the portal updates its files whenever the package changes.
+
+== Setup in {{%Mesh%}}
+
+Create the schema `portalphp_implementation` with the following fields and assign it to the project:
+
+[options="header"]
+|===
+| Field | Type | Description
+| `keyword` | string | Keyword, which identifies the portal implementation
+| `name` | string | Name of the portal implementation
+| `description` | string | Description of the portal implementation
+| `package` | binary | Zip file containing the files of the portal implementation
+|===
+
+The portal implementation is a published node of this schema, which is a direct child of the root node of the project (`portal.projectName`) in the default branch.
+
+== Configuration
+
+Set the keyword of the portal implementation in `portal.portalImplementation` (environment variable `PORTAL_IMPLEMENTATION`). The name of the schema can be changed in `portal.schemas.implementation`.
+
+```php
+'portalImplementation' => env('PORTAL_IMPLEMENTATION'),
+
+'schemas' => [
+    // ...
+    'implementation' => 'portalphp_implementation',
+],
+```
+
+When no portal implementation is configured, only the local files are used.
+
+The portal uses the API key (`portal.apiKey`) to load the portal implementation, so it needs read permission on the node.
+
+== Loading the portal implementation
+
+The portal implementation is loaded by the command
+
+```bash
+php artisan portal:implementation:sync
+```
+
+Run this command when the portal is started (e.g. in the entrypoint of the container, before the web server is started).
+
+To detect modifications during runtime, the command is scheduled every minute, so the link:https://laravel.com/docs/12.x/scheduling#running-the-scheduler[Laravel scheduler] must run (`php artisan schedule:run` every minute, or `php artisan schedule:work`). The package is only downloaded again, when its checksum changed.
+
+When the portal implementation cannot be found or has no package, a warning is logged and the local files are used. When it cannot be loaded or extracted, the command fails and the local files are left unchanged.
+
+When the full response cache is enabled (`portal.cache.http.enabled`), it is cleared after each update. Views and GraphQL queries are recompiled automatically, because their files changed.
+
+== Package
+
+The package is a zip file with the following folders:
+
+[options="header"]
+|===
+| Folder | Target | Behaviour
+| `views` | `resources/views` | Replaces the contents of the target folder
+| `graphql` | `resources/graphql` | Replaces the contents of the target folder
+| `lang` | `lang` | Replaces the contents of the target folder
+| `public` | `public` | Is copied into the target folder, see below
+|===
+
+When the package does not contain one of the folders `views`, `graphql` or `lang`, its target folder is emptied. All other folders and files of the package are ignored (a warning is logged).
+
+=== Static files
+
+The files of the folder `public` are copied into the public folder of the portal, so that the portal serves both the static files it already contains and the static files of the portal implementation. When both contain the same path, the file of the portal implementation is used.
+
+The portal keeps track of the files it copied (in `storage/app/portal-implementation`). When a later version of the portal implementation no longer contains a file, the file is removed, and the original file of the portal is restored, if the portal implementation had replaced one.
