@@ -57,6 +57,30 @@ When the portal implementation cannot be found or has no package, a warning is l
 
 When the full response cache is enabled (`portal.cache.http.enabled`), it is cleared after each update. Views and GraphQL queries are recompiled automatically, because their files changed.
 
+=== Running in a container
+
+The command and the scheduler must run in the same container as the web server, because they update the files of this container. When the container runs as a non-root user, cron cannot be used, but the scheduler can be started with `php artisan schedule:work` in the entrypoint script of the container, before the web server is started:
+
+```bash
+#!/bin/bash
+cd /portal
+
+# Load the portal implementation before the web server is started, use the local files when this fails
+php artisan portal:implementation:sync || echo "Portal implementation could not be loaded, using local files"
+
+# Run the Laravel scheduler in the background (writing to the log of the container)
+php artisan schedule:work > /proc/1/fd/1 2> /proc/1/fd/2 &
+
+# Start the web server (e.g. apache2-foreground)
+exec "$@"
+```
+
+The scheduler is not restarted, when it terminates. If this is required, use a process manager (like `supervisord`) to run the web server and the scheduler.
+
+When the container runs several replicas, each replica loads the portal implementation itself.
+
+NOTE: Translations and compiled Blade views are PHP files. When OPcache is configured with `opcache.validate_timestamps=0`, changes of these files are only used after the web server was restarted, so `opcache.validate_timestamps` must be enabled (which is the default).
+
 == Package
 
 The package is a zip file with the following folders:
