@@ -214,8 +214,8 @@ public class PortalTestContext extends TestWatcher {
 			Completable uploadBinary;
 
 			// TODO Generalize binaries for project setups.
-			if (data == TestData.WN) {
-				URL res = getClass().getResource("/setup/WN/binaries/Svg_example4.svg");
+			if (data == TestData.REF) {
+				URL res = getClass().getResource("/setup/REF/binaries/Svg_example4.svg");
 				File binaryFile = new File(res.toURI());
 
 				uploadBinary = client.updateNodeBinaryField(projectName, "a22f189738be11e8904c005056bd2479",
@@ -395,9 +395,11 @@ public class PortalTestContext extends TestWatcher {
 
 				meshClient.setLogin("admin", "admin");
 
+				UserAPITokenCreateRequest req = new UserAPITokenCreateRequest();
+				req.setName("Example");
 				String apiKey = meshClient.login().ignoreElement()
 					.andThen(meshClient.me().toSingle())
-					.flatMap(user -> meshClient.issueAPIToken(user.getUuid()).toSingle())
+					.flatMap(user -> meshClient.issueAPIToken(user.getUuid(), req).toSingle())
 					.map(UserAPITokenResponse::getToken)
 					.blockingGet();
 
@@ -434,10 +436,9 @@ public class PortalTestContext extends TestWatcher {
 	 * @param testStartupMode Whether the portal starup checks should be performed and should succeed or are expected to
 	 * fail
 	 * @param startupCheckDelay How long to wait before performing the start-up checks
-	 * @param checkLicense 
 	 * @return A map from verticle class names to their actual server ports
 	 */
-	private Map<String, Integer> startPortal(PortalServerComponent portal, TestContextStartupCheckMode testStartupMode, int startupCheckDelay, boolean checkLicense) {
+	private Map<String, Integer> startPortal(PortalServerComponent portal, TestContextStartupCheckMode testStartupMode, int startupCheckDelay) {
 		System.out.println("Starting portal");
 		Subject<JsonObject> verticles = PublishSubject.create();
 
@@ -455,12 +456,7 @@ public class PortalTestContext extends TestWatcher {
 		StartupCheckMode startupCheckMode = portalConfig.getMonitoringOptions().getStartupCheckMode();
 
 		if (testStartupMode != TestContextStartupCheckMode.SKIP) {
-			List<PortalFunctionStartupChecker> startupChecks = checkLicense
-					? Arrays.asList(
-							new LicenseStatusChecker(portal),
-							new MeshStatusChecker(portal),
-							new QueryStoreChecker(portal))
-					: Arrays.asList(
+			List<PortalFunctionStartupChecker> startupChecks = Arrays.asList(
 							new QueryStoreChecker(portal),
 							new MeshStatusChecker(portal));
 
