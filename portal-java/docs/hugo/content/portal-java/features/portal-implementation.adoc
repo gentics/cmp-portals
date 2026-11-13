@@ -1,0 +1,105 @@
+---
+title: Portal implementation
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+Instead of deploying the templates, GraphQL queries, i18n files and static files with the portal, {{%GPJava%}} can load
+them from {{%Mesh%}}. They are stored as a zip file (the _package_) in a node of the {{%Mesh%}} project, and the portal
+updates its files whenever the package changes.
+
+== Setup in {{%Mesh%}}
+
+Create the schema `[schemaPrefix]_implementation`footnote:[With `schemaPrefix` being either the value of
+`meshSchemaPrefix`, or if that is not set the `meshProject`.] with the following fields and assign it to the project:
+
+[options="header"]
+|===
+| Field | Type | Description
+| `keyword` | string | Keyword, which identifies the portal implementation
+| `name` | string | Name of the portal implementation
+| `description` | string | Description of the portal implementation
+| `package` | binary | Zip file containing the files of the portal implementation
+|===
+
+The portal implementation is a published node of this schema, which is a direct child of the root node of the project
+(`meshProject`) in the default branch.
+
+The portal loads the portal implementation with the API key of the link:../development/configuration.html#_mesh[Mesh
+settings] (`mesh.apiKey`), so it needs read permission on the node.
+
+== Configuration
+
+Set the keyword of the portal implementation in the link:../development/configuration.html#_general[general setting]
+`portalImplementation` (environment variable `PORTAL_IMPLEMENTATION`).
+
+[source,yaml]
+----
+portalImplementation: "my-implementation"
+static:
+  implementationPath: "data/implementation/static" <1>
+----
+<1> Optional, folder for the static files of the portal implementation (environment variable
+`STATIC_IMPLEMENTATION_PATH`). This is the default value.
+
+When no portal implementation is configured, only the local files are used.
+
+== Loading the portal implementation
+
+The portal implementation is loaded when the portal is started, before the
+link:../development/configuration.html#_monitoring[start-up checks] are performed.
+
+During runtime, the portal listens to the {{%Mesh%}} events for publishing, unpublishing, moving and deleting nodes of
+the implementation schema in the project, and loads the portal implementation again for each of these events, and
+whenever the connection to the {{%Mesh%}} eventbus is (re-)established. The package is only downloaded again, when its
+checksum changed.
+
+When the portal implementation cannot be found or has no package, a warning is logged and the local files are used.
+When it cannot be loaded or extracted, an error is logged and the local files are left unchanged. In both cases the
+start of the portal continues, and the start-up checks are performed with the local files.
+
+After each update
+
+* the caches of the GraphQL queries, the templates, the i18n files, the cached content and the
+  link:../development/caching.html[caches] created by the `CacheProvider` are cleared,
+* the event `PortalEvents.PORTAL_IMPLEMENTATION_UPDATED` (address `mesh.portal.implementation.updated`) is published
+  on the Vert.x event bus, with the keyword of the portal implementation as message. Custom implementations can
+  listen to it to clear their own caches containing data loaded from templates, queries or i18n files.
+
+=== Start-up checks
+
+When the start-up check mode (`monitoring.startupCheckMode`) is `UNREADY`, the start-up checks are repeated after each
+update of the portal implementation. A failing check makes the portal not ready, and when the checks pass again
+(e.g. because a broken query was fixed in a later version of the portal implementation), the portal becomes ready
+again.
+
+With the mode `ABORT`, the checks are only performed on startup.
+
+== Package
+
+The package is a zip file with the following folders:
+
+[options="header"]
+|===
+| Folder | Target | Behaviour
+| `templates` | `templatesPath` | Replaces the contents of the target folder
+| `queries` | `queryPath` | Replaces the contents of the target folder
+| `i18n` | `i18nPath` | Replaces the contents of the target folder
+| `static` | `static.implementationPath` | Replaces the contents of the target folder, see below
+|===
+
+When the package does not contain one of these folders, its target folder is emptied, so that no outdated local files
+are used. All other folders and files of the package are ignored (a warning is logged).
+
+The package is completely unpacked before any target folder is changed, so an invalid package (e.g. a corrupt zip
+file, or an entry pointing outside of its folder) leaves all target folders unchanged.
+
+=== Static files
+
+The files of the folder `static` are extracted into the separate folder `static.implementationPath`, and not into
+`static.path`, so the static files of the portal itself are kept. The portal serves the static files of both folders
+under `/static/`. When both contain the same path, the file of the portal implementation is served.
+
+For example, the entry `static/css/style.css` of the package is served as `/static/css/style.css`.

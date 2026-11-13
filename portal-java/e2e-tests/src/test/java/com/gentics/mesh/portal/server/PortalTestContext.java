@@ -428,6 +428,9 @@ public class PortalTestContext extends TestWatcher {
 		System.out.println("Starting portal");
 		Subject<JsonObject> verticles = PublishSubject.create();
 
+		// Load the portal implementation before the start-up checks, like PortalStarter does.
+		portal.portalImplementation().start();
+
 		portal.vertx().eventBus().consumer(
 			PortalEvents.SERVER_VERTICLE_DEPLOYED.address(),
 			event -> {

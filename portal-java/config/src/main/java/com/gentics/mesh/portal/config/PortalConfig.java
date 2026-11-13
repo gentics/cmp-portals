@@ -37,6 +37,7 @@ public class PortalConfig implements Config {
 	public static final String MESH_PROJECT_ENV = "MESH_PROJECT";
 	public static final String MESH_SCHEMA_PREFIX_ENV = "MESH_SCHEMA_PREFIX";
 	public static final String IMPLEMENTATION_VERSION_ENV = "IMPLEMENTATION_VERSION";
+	public static final String PORTAL_IMPLEMENTATION_ENV = "PORTAL_IMPLEMENTATION";
 	public static final String PORTAL_API_KEY_ENV = "PORTAL_API_KEY";
 	public static final String SERVER_URL_ENV = "SERVER_URL";
 	public static final String SERVER_PORT_ENV = "SERVER_PORT";
@@ -48,6 +49,7 @@ public class PortalConfig implements Config {
 	public static final String POLL_RESULT_TEMPLATE_ENV = "POLL_RESULTS_TEMPLATE";
 	public static final String I18N_PATH_ENV = "I18N_PATH";
 	public static final String STATIC_PATH_ENV = "STATIC_PATH";
+	public static final String STATIC_IMPLEMENTATION_PATH_ENV = "STATIC_IMPLEMENTATION_PATH";
 	public static final String STATIC_CACHING_ENV = "STATIC_CACHING";
 	public static final String STATIC_MAX_AGE_ENV = "STATIC_MAX_AGE";
 	public static final String BREADCRUMBS_LEVEL_ENV = "BREADCRUMBS_LEVEL";
@@ -79,6 +81,11 @@ public class PortalConfig implements Config {
 	@JsonPropertyDescription("The implementation version of the branch to use. When this is null, branches are not restricted by implementation versions.")
 	@EnvironmentVariable(name = IMPLEMENTATION_VERSION_ENV, description = "Override the implementation version.")
 	private String implementationVersion;
+
+	@JsonProperty(defaultValue = "null")
+	@JsonPropertyDescription("Keyword of the portal implementation to load from Mesh. When this is set, the package of the portal implementation node (schema [prefix]_implementation, direct child of the project root node) is downloaded on startup and whenever it changes, and its folders templates, queries and i18n are extracted into the configured paths, replacing the existing files. The folder static is extracted into static.implementationPath, and its files are served in addition to the files in static.path, taking precedence over them. Configured paths whose folder is missing in the package are emptied. When this is null, only the local files are used.")
+	@EnvironmentVariable(name = PORTAL_IMPLEMENTATION_ENV, description = "Override the portal implementation keyword.")
+	private String portalImplementation;
 
 	@JsonProperty(required = true)
 	@JsonPropertyDescription("The URL used for link resolving.")
@@ -293,6 +300,15 @@ public class PortalConfig implements Config {
 		return this;
 	}
 
+	public String getPortalImplementation() {
+		return portalImplementation;
+	}
+
+	public PortalConfig setPortalImplementation(String portalImplementation) {
+		this.portalImplementation = portalImplementation;
+		return this;
+	}
+
 	/**
 	 * Get the effective schema prefix. This will either be the meshSchemaPrefix (if set) or the meshProject
 	 *
@@ -331,6 +347,16 @@ public class PortalConfig implements Config {
 	@JsonIgnore
 	public String getBinaryContentSchema() {
 		return String.format("%s_binary_content", getEffectiveSchemaPrefix());
+	}
+
+	/**
+	 * Get the name of the portal implementation schema
+	 *
+	 * @return name of portal implementation schema
+	 */
+	@JsonIgnore
+	public String getImplementationSchema() {
+		return String.format("%s_implementation", getEffectiveSchemaPrefix());
 	}
 
 	public URL getServerUrl() {

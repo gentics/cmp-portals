@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +48,23 @@ public class QueryStoreImpl implements QueryStore {
 	private final SimpleLRUCache<String, String> cache = new SimpleLRUCache<>();
 
 	private boolean isCacheEnabled = true;
+
+	/** Global cache generation, incremented by {@link #invalidateAllCaches()}. */
+	private static final AtomicLong CACHE_GENERATION = new AtomicLong();
+
+	/** The cache generation the {@link #cache} content belongs to. */
+	private long cacheGeneration = CACHE_GENERATION.get();
+
+	/**
+	 * Invalidate the query caches of all query store instances, e.g. because the query files changed.
+	 *
+	 * <p>
+	 *     Each instance clears its cache on the next query load.
+	 * </p>
+	 */
+	public static void invalidateAllCaches() {
+		CACHE_GENERATION.incrementAndGet();
+	}
 
 	/**
 	 * Default constructor.
@@ -187,6 +205,13 @@ public class QueryStoreImpl implements QueryStore {
 	 */
 	protected String loadQuery(QueryType type, String queryName, String projectName) {
 		String cacheKey = getCacheKey(type, queryName, projectName);
+		long currentGeneration = CACHE_GENERATION.get();
+
+		if (cacheGeneration != currentGeneration) {
+			cache.clear();
+			cacheGeneration = currentGeneration;
+		}
+
 		// Try to load the query from cache
 		String query = isCacheEnabled() ? cache.get(cacheKey) : null;
 

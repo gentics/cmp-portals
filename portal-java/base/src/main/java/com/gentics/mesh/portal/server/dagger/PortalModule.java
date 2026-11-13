@@ -10,6 +10,7 @@ import com.gentics.mesh.portal.branch.BranchProviderImpl;
 import com.gentics.mesh.portal.cache.CacheProviderImpl;
 import com.gentics.mesh.portal.client.MeshRestClientProvider;
 import com.gentics.mesh.portal.config.PortalConfig;
+import com.gentics.mesh.portal.config.option.StaticHandlerOptions;
 import com.gentics.mesh.portal.config.option.MeshOptions;
 import com.gentics.mesh.portal.config.option.VertxOptions;
 import com.gentics.mesh.portal.monitoring.OkHttpCallStateEventListener;
@@ -286,8 +287,18 @@ public class PortalModule {
 
 	@Provides
 	public static StaticHandler staticHandler(PortalConfig config) {
-		var staticHandlerOptions = config.getStaticHandlerOptions();
-		var handler = StaticHandler.create(staticHandlerOptions.getPath());
+		return createStaticHandler(config.getStaticHandlerOptions().getPath(), config.getStaticHandlerOptions());
+	}
+
+	/**
+	 * Create a static handler serving the files in the given path, using the caching settings of the options.
+	 *
+	 * @param path path to the static files
+	 * @param staticHandlerOptions options for caching
+	 * @return static handler
+	 */
+	public static StaticHandler createStaticHandler(String path, StaticHandlerOptions staticHandlerOptions) {
+		var handler = StaticHandler.create(path);
 
 		handler.setDirectoryListing(false)
 			.setCachingEnabled(staticHandlerOptions.isCaching())

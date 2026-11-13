@@ -8,6 +8,10 @@ public enum StartupCheckMode {
 	OFF,
 	/** A failing start-up check will abort the portal start. */
 	ABORT,
-	/** A failing start-up check will cause the /health/ready endpoint to report that the portal is not ready. */
+	/**
+	 * A failing start-up check will cause the /health/ready endpoint to report that the portal is not ready. The
+	 * start-up checks are repeated after each update of the portal implementation, a passing repetition makes the
+	 * portal ready again.
+	 */
 	UNREADY
 }

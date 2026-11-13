@@ -34,6 +34,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Portal implementation
+    |--------------------------------------------------------------------------
+    |
+    | Keyword of the portal implementation to load from Mesh. When this is set,
+    | the package of the portal implementation node (schema
+    | schemas.implementation, direct child of the root node of the project
+    | projectName) is loaded by the command
+    | "php artisan portal:implementation:sync", which must be run when the
+    | portal is started. The command is also scheduled every minute to check
+    | for modifications, which requires the Laravel scheduler to run
+    | ("php artisan schedule:run" every minute, or "php artisan schedule:work").
+    |
+    | The folders of the package (zip file) are used as follows:
+    | views:   Replaces resources/views
+    | graphql: Replaces resources/graphql
+    | lang:    Replaces the lang folder
+    | static:  Is copied into public/static. Existing files of the portal
+    |          are kept, files with the same path are replaced while they are
+    |          contained in the portal implementation.
+    | The folders views, graphql and lang are emptied, when the package does
+    | not contain them. All other entries of the package are ignored.
+    |
+    | When this is null, only the local files are used.
+    |
+    */
+    'portalImplementation' => env('PORTAL_IMPLEMENTATION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Global Router prefix
     |--------------------------------------------------------------------------
     |
@@ -163,6 +192,7 @@ return [
         'content'       => 'portalphp_content',
         'folder'        => 'portalphp_folder',
         'binarycontent' => 'portalphp_binary_content',
+        'implementation' => 'portalphp_implementation',
     ],
 
     /*
