@@ -1,0 +1,16 @@
+{
+	"uuid": "957e9232caf24f1cae5f014dd8f70233",
+	"language": "de",
+	"parentNode": {
+		"uuid": "2f65201b696c11e88438005056a9ea60"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"name": "Übersetzung",
+		"filename": "Translation.de.html"
+	}
+}

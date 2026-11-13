@@ -1,0 +1,16 @@
+{
+	"uuid": "117123857f014bc7a1cda4f25b6158e4",
+	"language": "de",
+	"parentNode": {
+		"uuid": "2f65201b696c11e88438005056a9ea60"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"name": "Fehler 404",
+		"filename": "Error_404.de.html"
+	}
+}

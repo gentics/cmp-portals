@@ -1,0 +1,16 @@
+{
+	"uuid": "6ebfe3e542a045dca1f03eec608d1710",
+	"language": "de",
+	"parentNode": {
+		"uuid": "2f65201b696c11e88438005056a9ea60"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"name": "Fehler 401",
+		"filename": "Error_401.de.html"
+	}
+}
