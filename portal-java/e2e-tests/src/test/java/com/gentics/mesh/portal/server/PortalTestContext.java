@@ -2,6 +2,7 @@ package com.gentics.mesh.portal.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,12 +16,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.gentics.mesh.core.rest.user.UserAPITokenCreateRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.HttpForward;
+import org.mockserver.model.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,13 +51,13 @@ import com.gentics.mesh.portal.config.StartupCheckMode;
 import com.gentics.mesh.portal.config.option.KeycloakOptions;
 import com.gentics.mesh.portal.config.option.MeshOptions;
 import com.gentics.mesh.portal.monitoring.MonitoringServiceVerticle;
+import com.gentics.mesh.portal.server.core.LicenseStatusChecker;
 import com.gentics.mesh.portal.server.core.MeshStatusChecker;
 import com.gentics.mesh.portal.server.core.PortalFunctionStartupChecker;
 import com.gentics.mesh.portal.server.core.PortalHttpVerticle;
 import com.gentics.mesh.portal.server.core.QueryStoreChecker;
 import com.gentics.mesh.portal.server.dagger.DaggerPortalServerComponent;
 import com.gentics.mesh.portal.server.dagger.PortalServerComponent;
-import com.gentics.mesh.portal.tests.AbstractEndToEndTest;
 import com.gentics.mesh.portal.util.RxUtils;
 import com.gentics.mesh.rest.client.MeshRestClient;
 import com.gentics.mesh.test.docker.MeshContainer;
@@ -81,6 +84,8 @@ public class PortalTestContext extends TestWatcher {
 
 	private static MeshContainer mesh;
 	private static KeycloakContainer keycloak;
+	private static ClientAndServer meshProxy;
+	private static MeshConnectionRouter meshConnectionRouter;
 
 	private BootstrapInitializer boot;
 	private HttpClient portalClient;
@@ -114,7 +119,7 @@ public class PortalTestContext extends TestWatcher {
 		portalServerComponent = configurePortal(settings);
 		portalConfig = portalServerComponent.portalConfig();
 
-		Map<String, Integer> verticlePorts = startPortal(portalServerComponent, settings.startupChecks(), settings.startupCheckDelay());
+		Map<String, Integer> verticlePorts = startPortal(portalServerComponent, settings.startupChecks(), settings.startupCheckDelay(), settings.checkLicense());
 
 		if (verticlePorts.containsKey(HTTP_VERTICLE)) {
 			portalPort = verticlePorts.get(HTTP_VERTICLE);
@@ -128,18 +133,6 @@ public class PortalTestContext extends TestWatcher {
 			System.out.println("Waiting for Mesh startup");
 			String imageName = settings.meshImage() + ":" + MeshRestClient.getPlainVersion();
 			mesh = new MeshContainer(imageName);
-			if (StringUtils.isNotBlank(settings.pluginsDir())) {
-				for (File file : new File(settings.pluginsDir()).listFiles()) {
-					String fileName = file.getName();
-					if (fileName.startsWith("mesh-") && fileName.endsWith("-plugin.jar")) {
-						mesh = mesh.withPlugin(file, fileName);
-					}
-				}
-			}
-			// TODO remove this when mesh and plugins do not need a LICENSEKEY
-			if (StringUtils.isNotBlank(System.getenv("LICENSEKEY"))) {
-				mesh = mesh.withEnv("LICENSEKEY", System.getenv("LICENSEKEY"));
-			}
 			mesh.waitForStartup().start();
 		}
 		if (StringUtils.isNotBlank(settings.keycloakConfig())) {
@@ -221,8 +214,9 @@ public class PortalTestContext extends TestWatcher {
 			Completable uploadBinary;
 
 			// TODO Generalize binaries for project setups.
-			if (data == TestData.REF) {
-				File binaryFile = new File(AbstractEndToEndTest.class.getResource("/setup/REF/binaries/Svg_example4.svg").toURI());
+			if (data == TestData.WN) {
+				URL res = getClass().getResource("/setup/WN/binaries/Svg_example4.svg");
+				File binaryFile = new File(res.toURI());
 
 				uploadBinary = client.updateNodeBinaryField(projectName, "a22f189738be11e8904c005056bd2479",
 					"en", "0.1", "binarycontent", Files.newInputStream(binaryFile.toPath()),
@@ -298,6 +292,18 @@ public class PortalTestContext extends TestWatcher {
 	}
 
 	private void tearDown() {
+		if (meshConnectionRouter != null) {
+			try {
+				meshConnectionRouter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			meshConnectionRouter = null;
+		}
+		if (meshProxy != null) {
+			meshProxy.stop();
+			meshProxy = null;
+		}
 		if (mesh != null && mesh.isRunning()) {
 			mesh.stop();
 		}
@@ -389,11 +395,9 @@ public class PortalTestContext extends TestWatcher {
 
 				meshClient.setLogin("admin", "admin");
 
-				UserAPITokenCreateRequest req = new UserAPITokenCreateRequest();
-				req.setName("Example");
 				String apiKey = meshClient.login().ignoreElement()
 					.andThen(meshClient.me().toSingle())
-					.flatMap(user -> meshClient.issueAPIToken(user.getUuid(), req).toSingle())
+					.flatMap(user -> meshClient.issueAPIToken(user.getUuid()).toSingle())
 					.map(UserAPITokenResponse::getToken)
 					.blockingGet();
 
@@ -402,6 +406,14 @@ public class PortalTestContext extends TestWatcher {
 				meshOptions.setApiKey(apiKey);
 				meshOptions.setHost(mesh.getHost());
 				meshOptions.setPort(mesh.getPort());
+
+				if (testSettings.meshProxy()) {
+					meshProxy = ClientAndServer.startClientAndServer();
+					forwardToMesh();
+					// Websocket connections bypass the proxy, so Mesh events still arrive while the proxy simulates an unavailable Mesh.
+					meshConnectionRouter = new MeshConnectionRouter(mesh.getHost(), mesh.getPort(), meshProxy.getLocalPort());
+					meshOptions.setPort(meshConnectionRouter.getPort());
+				}
 
 				System.out.printf(
 					"\n\n==========\n=== Mesh is running on %s:%d\n==========",
@@ -422,9 +434,10 @@ public class PortalTestContext extends TestWatcher {
 	 * @param testStartupMode Whether the portal starup checks should be performed and should succeed or are expected to
 	 * fail
 	 * @param startupCheckDelay How long to wait before performing the start-up checks
+	 * @param checkLicense 
 	 * @return A map from verticle class names to their actual server ports
 	 */
-	private Map<String, Integer> startPortal(PortalServerComponent portal, TestContextStartupCheckMode testStartupMode, int startupCheckDelay) {
+	private Map<String, Integer> startPortal(PortalServerComponent portal, TestContextStartupCheckMode testStartupMode, int startupCheckDelay, boolean checkLicense) {
 		System.out.println("Starting portal");
 		Subject<JsonObject> verticles = PublishSubject.create();
 
@@ -442,7 +455,12 @@ public class PortalTestContext extends TestWatcher {
 		StartupCheckMode startupCheckMode = portalConfig.getMonitoringOptions().getStartupCheckMode();
 
 		if (testStartupMode != TestContextStartupCheckMode.SKIP) {
-			List<PortalFunctionStartupChecker> startupChecks = Arrays.asList(
+			List<PortalFunctionStartupChecker> startupChecks = checkLicense
+					? Arrays.asList(
+							new LicenseStatusChecker(portal),
+							new MeshStatusChecker(portal),
+							new QueryStoreChecker(portal))
+					: Arrays.asList(
 							new QueryStoreChecker(portal),
 							new MeshStatusChecker(portal));
 
@@ -532,6 +550,25 @@ public class PortalTestContext extends TestWatcher {
 		System.out.println("Creating client for localhost:" + options.getDefaultPort() + ": " + verticle);
 
 		return new io.vertx.reactivex.core.Vertx(Vertx.vertx()).createHttpClient(options);
+	}
+
+	/**
+	 * Get the proxy between the portal and Mesh, when enabled via {@link PortalTestSetting#meshProxy()}.
+	 *
+	 * @return The proxy between the portal and Mesh, or {@code null} when it is not enabled
+	 */
+	public ClientAndServer meshProxy() {
+		return meshProxy;
+	}
+
+	/**
+	 * Reset the {@link #meshProxy() Mesh proxy} so that it forwards all requests to Mesh.
+	 */
+	public void forwardToMesh() {
+		meshProxy.reset();
+		meshProxy
+			.when(HttpRequest.request())
+			.forward(HttpForward.forward().withHost(mesh.getHost()).withPort(mesh.getPort()));
 	}
 
 	public MeshContainer meshServer() {

@@ -3,11 +3,15 @@ package com.gentics.mesh.portal.branch;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+
 import com.gentics.mesh.core.rest.branch.BranchListResponse;
 import com.gentics.mesh.core.rest.branch.BranchResponse;
 import com.gentics.mesh.portal.AbstractPortalTest;
 import com.gentics.mesh.portal.api.branch.BranchProvider;
 import com.gentics.mesh.rest.client.MeshRequest;
+import com.gentics.mesh.rest.client.MeshWebsocket;
+import io.reactivex.subjects.PublishSubject;
 import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -59,6 +63,36 @@ public class BranchProviderTest extends AbstractPortalTest {
 		BranchProvider branchProvider = mockBranchProvider(branch1, branch2, branch3);
 
 		branchProvider.findBranch(check -> false).test().assertComplete().assertNoValues();
+	}
+
+	/**
+	 * Test that branches can be loaded again after Mesh was temporarily unavailable while the branch info was
+	 * refreshed (SUP-20246).
+	 */
+	@Test
+	public void testGetBranchesAfterMeshUnavailable() {
+		BranchResponse branch1 = new BranchResponse().setName("branch1");
+		BranchListResponse response = new BranchListResponse();
+		response.add(branch1);
+
+		MeshRequest<BranchListResponse> successRequest = mockRequest(response);
+		MeshRequest<BranchListResponse> failedRequest = mockRequest(new IOException("I/O Error in GET /api/v1/project/branches : ConnectException"));
+
+		// Mesh is available on start-up, unavailable when the websocket reconnects, and available afterwards.
+		when(clientMock.findBranches(any(String.class))).thenReturn(successRequest, failedRequest, successRequest);
+
+		PublishSubject<Object> connections = PublishSubject.create();
+		MeshWebsocket eventbus = mockEventbus();
+		when(eventbus.connections()).thenReturn(connections);
+
+		BranchProvider branchProvider = new BranchProviderImpl(config, clientMock, eventbus);
+
+		branchProvider.getBranches().test().assertComplete().assertResult(branch1);
+
+		connections.onNext(new Object());
+
+		// Mesh is available again.
+		branchProvider.getBranches().test().assertComplete().assertResult(branch1);
 	}
 
 	/**
