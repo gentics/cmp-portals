@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.gentics.mesh.portal</groupId>
 		<artifactId>mesh-portal-framework</artifactId>
-		<version>9.0.0-SNAPSHOT</version>
+		<version>ci-devtest-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>mesh-portal-docs</artifactId>
