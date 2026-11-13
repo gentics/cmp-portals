@@ -119,7 +119,7 @@ public class PortalTestContext extends TestWatcher {
 		portalServerComponent = configurePortal(settings);
 		portalConfig = portalServerComponent.portalConfig();
 
-		Map<String, Integer> verticlePorts = startPortal(portalServerComponent, settings.startupChecks(), settings.startupCheckDelay(), settings.checkLicense());
+		Map<String, Integer> verticlePorts = startPortal(portalServerComponent, settings.startupChecks(), settings.startupCheckDelay());
 
 		if (verticlePorts.containsKey(HTTP_VERTICLE)) {
 			portalPort = verticlePorts.get(HTTP_VERTICLE);
@@ -133,6 +133,18 @@ public class PortalTestContext extends TestWatcher {
 			System.out.println("Waiting for Mesh startup");
 			String imageName = settings.meshImage() + ":" + MeshRestClient.getPlainVersion();
 			mesh = new MeshContainer(imageName);
+			if (StringUtils.isNotBlank(settings.pluginsDir())) {
+				for (File file : new File(settings.pluginsDir()).listFiles()) {
+					String fileName = file.getName();
+					if (fileName.startsWith("mesh-") && fileName.endsWith("-plugin.jar")) {
+						mesh = mesh.withPlugin(file, fileName);
+					}
+				}
+			}
+			// TODO remove this when mesh and plugins do not need a LICENSEKEY
+			if (StringUtils.isNotBlank(System.getenv("LICENSEKEY"))) {
+				mesh = mesh.withEnv("LICENSEKEY", System.getenv("LICENSEKEY"));
+			}
 			mesh.waitForStartup().start();
 		}
 		if (StringUtils.isNotBlank(settings.keycloakConfig())) {
