@@ -33,7 +33,7 @@ public @interface PortalTestSetting {
 
 	int keycloakInitRetryPeriodSeconds() default -1;
 
-	boolean checkLicense() default false;
+	String pluginsDir() default StringUtils.EMPTY;
 
 	/**
 	 * Whether the portal should connect to Mesh via a {@link com.gentics.mesh.portal.server.PortalTestContext#meshProxy() proxy},
