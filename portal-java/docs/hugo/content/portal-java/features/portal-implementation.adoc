@@ -77,6 +77,31 @@ again.
 
 With the mode `ABORT`, the checks are only performed on startup.
 
+=== Writable folders
+
+The user running the portal needs write permission on the following folders, because the portal implementation is
+extracted into them at runtime:
+
+* `templatesPath`
+* `queryPath`
+* `i18nPath`
+* `static.implementationPath` (default `data/implementation/static`)
+* the temporary folder of the JVM (`java.io.tmpdir`), where the package is unpacked first
+
+Folders which do not exist are created, which requires write permission on their parent folder. Otherwise, loading the
+portal implementation fails (an error is logged) and the local files are used.
+
+On OpenShift, containers run with an arbitrary user ID, which is a member of the group `root` (0). So the folders must
+be writable for this group, e.g. in the Dockerfile of the portal (with the default paths, relative to the working
+directory of the portal):
+
+[source,dockerfile]
+----
+RUN mkdir -p data/templates data/queries data/i18n data/implementation/static \
+    && chgrp -R 0 data \
+    && chmod -R g=u data
+----
+
 == Package
 
 The package is a zip file with the following folders:

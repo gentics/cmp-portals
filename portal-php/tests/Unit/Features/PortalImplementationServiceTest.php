@@ -13,6 +13,7 @@ use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\RequestInterface;
 use ZipArchive;
@@ -278,13 +279,42 @@ class PortalImplementationServiceTest extends TestCase
         $events = array_values(array_filter(
             $this->app->make(Schedule::class)->events(),
             function ($event) {
-                return str_contains($event->command, 'portal:implementation:sync');
+                return $event->description === 'portal:implementation:sync';
             }
         ));
 
         $this->assertCount(1, $events);
         $this->assertEquals('* * * * *', $events[0]->expression);
         $this->assertTrue($events[0]->withoutOverlapping);
+    }
+
+    /**
+     * Test that the scheduled synchronization extracts the package.
+     */
+    public function testScheduledSyncUpdates()
+    {
+        $this->setPackage('checksum1', ['views/page.blade.php' => 'page']);
+
+        $this->assertEquals(0, Artisan::call('schedule:run'));
+
+        $this->assertContent('views/page.blade.php', 'page');
+        $this->assertCount(1, $this->downloads);
+    }
+
+    /**
+     * Test that a failing scheduled synchronization logs the actual error (not only the exit code).
+     */
+    public function testScheduledSyncFailureLogsError()
+    {
+        $this->graphqlErrors = [['message' => 'Validation error']];
+        Log::spy();
+
+        Artisan::call('schedule:run');
+
+        Log::shouldHaveReceived('error')->withArgs(function ($message) {
+            return str_contains($message, 'Could not load portal implementation my-impl')
+                && str_contains($message, 'Validation error');
+        })->once();
     }
 
     /**

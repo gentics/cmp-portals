@@ -77,7 +77,30 @@ exec "$@"
 
 The scheduler is not restarted, when it terminates. If this is required, use a process manager (like `supervisord`) to run the web server and the scheduler.
 
+Errors of the scheduled synchronization are logged by the scheduler, so its output must be written to the log of the container (as in the example above).
+
 When the container runs several replicas, each replica loads the portal implementation itself.
+
+==== Writable folders
+
+The user running the container needs write permission on the following folders, because the portal implementation is extracted into them at runtime:
+
+* `storage/app/portal-implementation` (state, temporary files and backups)
+* `resources/views`
+* `resources/graphql`
+* `lang`
+* `public/static`
+
+Folders which do not exist are created, which requires write permission on their parent folder. Otherwise, the synchronization fails (e.g. with `mkdir(): Permission denied`) and the local files are used.
+
+On OpenShift, containers run with an arbitrary user ID, which is a member of the group `root` (0). So the folders must be writable for this group, e.g. in the Dockerfile of the portal (before switching to the user of the portal):
+
+```dockerfile
+RUN mkdir -p /portal/storage/app/portal-implementation \
+        /portal/resources/views /portal/resources/graphql /portal/lang /portal/public/static \
+    && chgrp -R 0 /portal/storage /portal/resources /portal/lang /portal/public/static \
+    && chmod -R g=u /portal/storage /portal/resources /portal/lang /portal/public/static
+```
 
 NOTE: Translations and compiled Blade views are PHP files. When OPcache is configured with `opcache.validate_timestamps=0`, changes of these files are only used after the web server was restarted, so `opcache.validate_timestamps` must be enabled (which is the default).
 
