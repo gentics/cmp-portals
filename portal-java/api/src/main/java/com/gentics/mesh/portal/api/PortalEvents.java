@@ -16,7 +16,17 @@ public enum PortalEvents {
 	 *     </ul>
 	 * </p>
 	 */
-	SERVER_VERTICLE_DEPLOYED("mesh.portal.server_verticle.deployed");
+	SERVER_VERTICLE_DEPLOYED("mesh.portal.server_verticle.deployed"),
+
+	/**
+	 * The files of the configured portal implementation have been updated from Mesh.
+	 *
+	 * <p>
+	 *     The event message is the keyword of the portal implementation. Receivers
+	 *     should clear caches containing data loaded from templates, queries or i18n files.
+	 * </p>
+	 */
+	PORTAL_IMPLEMENTATION_UPDATED("mesh.portal.implementation.updated");
 
 	private final String address;
 

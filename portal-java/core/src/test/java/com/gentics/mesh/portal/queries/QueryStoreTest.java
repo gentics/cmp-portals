@@ -96,4 +96,27 @@ public class QueryStoreTest extends AbstractPortalTest {
 	public void testMacos() throws IOException {
 		testFilesystem(Configuration.osX());
 	}
+
+	/**
+	 * Test that {@link QueryStoreImpl#invalidateAllCaches()} makes existing query store instances reload changed
+	 * query files.
+	 */
+	@Test
+	public void testInvalidateAllCaches() throws IOException {
+		Path rootQueryPath = mockFilesystem(Configuration.unix(), Map.of("changing.graphql", "{ old }"));
+		QueryStoreImpl first = new QueryStoreImpl(config, rootQueryPath.toAbsolutePath(), config.getMeshProject());
+		QueryStoreImpl second = new QueryStoreImpl(config, rootQueryPath.toAbsolutePath(), config.getMeshProject());
+
+		assertEquals("{ old }", first.loadQuery(QueryType.GraphQL, "changing").trim());
+		assertEquals("{ old }", second.loadQuery(QueryType.GraphQL, "changing").trim());
+
+		Files.write(rootQueryPath.resolve("changing.graphql"), "{ new }".getBytes(StandardCharsets.UTF_8));
+
+		assertEquals("Cached query expected before invalidation", "{ old }", first.loadQuery(QueryType.GraphQL, "changing").trim());
+
+		QueryStoreImpl.invalidateAllCaches();
+
+		assertEquals("{ new }", first.loadQuery(QueryType.GraphQL, "changing").trim());
+		assertEquals("{ new }", second.loadQuery(QueryType.GraphQL, "changing").trim());
+	}
 }

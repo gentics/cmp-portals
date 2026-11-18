@@ -15,11 +15,17 @@ import java.time.Duration;
  */
 public class StaticHandlerOptions implements OverridableOptions {
 	public final static String DEFAULT_PATH = "data/static";
+	public final static String DEFAULT_IMPLEMENTATION_PATH = "data/implementation/static";
 
 	@JsonProperty(defaultValue = DEFAULT_PATH)
 	@JsonPropertyDescription("Path to static files.")
 	@EnvironmentVariable(name = PortalConfig.STATIC_PATH_ENV, description = "Override the server static path.")
 	private String path = DEFAULT_PATH;
+
+	@JsonProperty(defaultValue = DEFAULT_IMPLEMENTATION_PATH)
+	@JsonPropertyDescription("Path to the static files of the portal implementation loaded from Mesh. The portal serves the static files from this path and from the path configured in path. If both contain a file with the same path, the file of the portal implementation is served. This path is only used when a portal implementation is configured.")
+	@EnvironmentVariable(name = PortalConfig.STATIC_IMPLEMENTATION_PATH_ENV, description = "Override the path to the static files of the portal implementation.")
+	private String implementationPath = DEFAULT_IMPLEMENTATION_PATH;
 
 	@JsonProperty(defaultValue = "false")
 	@JsonPropertyDescription("Flag to turn on caching of static files.")
@@ -50,6 +56,27 @@ public class StaticHandlerOptions implements OverridableOptions {
 	 */
 	public void setPath(String path) {
 		this.path = path;
+	}
+
+	/**
+	 * Path containing the static files of the portal implementation
+	 * @return path
+	 */
+	@Nonnull
+	public String getImplementationPath() {
+		if (StringUtils.isBlank(implementationPath)) {
+			implementationPath = DEFAULT_IMPLEMENTATION_PATH;
+		}
+
+		return implementationPath;
+	}
+
+	/**
+	 * Set the path for the static files of the portal implementation
+	 * @param implementationPath path
+	 */
+	public void setImplementationPath(String implementationPath) {
+		this.implementationPath = implementationPath;
 	}
 
 	/**

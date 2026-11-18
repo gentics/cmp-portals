@@ -1,12 +1,14 @@
 package com.gentics.mesh.portal.server.core;
 
 import com.gentics.mesh.portal.Portal;
+import com.gentics.mesh.portal.api.PortalEvents;
 import com.gentics.mesh.portal.api.PortalVersion;
 import com.gentics.mesh.portal.api.server.BootstrapInitializer;
 import com.gentics.mesh.portal.api.server.PortalInfo;
-import com.gentics.mesh.portal.api.server.PortalState;
 import com.gentics.mesh.portal.server.dagger.BaseComponent;
 import io.reactivex.Observable;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,10 @@ public class PortalStarter {
 		log.info("Starting Gentics Portal | java {}", PortalVersion.plainVersion());
 
 		BaseComponent context = Portal.create(contextProvider);
+
+		// Load the portal implementation before the start-up checks, which already need the queries.
+		context.portalImplementation().start();
+
 		boolean shouldStart = performStartupChecks(context, log);
 
 		if (shouldStart) {
@@ -53,9 +59,7 @@ public class PortalStarter {
 	 */
 	private static boolean performStartupChecks(BaseComponent context, Logger log) {
 		boolean shouldStart;
-		List<PortalFunctionStartupChecker> startupChecks = Arrays.asList(
-			new MeshStatusChecker(context),
-			new QueryStoreChecker(context));
+		List<PortalFunctionStartupChecker> startupChecks = createStartupChecks(context);
 
 		switch (context.portalConfig().getMonitoringOptions().getStartupCheckMode()) {
 		case OFF:
@@ -72,21 +76,47 @@ public class PortalStarter {
 			break;
 
 		case UNREADY:
-			// Set the ready state according to the result of the start-up checks ...
-			Observable.fromIterable(startupChecks)
-				.flatMapCompletable(PortalFunctionStartupChecker::checkAsync)
-				.subscribe(
-					() -> log.info("Delayed start-up checks passed"),
-					cause -> {
-						log.warn("Start-up check failed, portal is configured to start anyways: {}", cause.getMessage());
-						context.portalInfo().setState(PortalState.STARTUP_CHECK_ERROR);
-					});
+			// Set the ready state according to the result of the start-up checks, which are repeated
+			// after each update of the portal implementation ...
+			new UnreadyStartupChecks(
+				context.portalInfo(),
+				startupChecks,
+				() -> createStartupChecks(context),
+				implementationUpdates(context.vertx())).start();
 
 			// ... and let the portal start either way.
 			shouldStart = true;
 		}
 
 		return shouldStart;
+	}
+
+	/**
+	 * Create the start-up checks.
+	 *
+	 * @param context The booting context.
+	 * @return The start-up checks.
+	 */
+	private static List<PortalFunctionStartupChecker> createStartupChecks(BaseComponent context) {
+		return Arrays.asList(
+			new MeshStatusChecker(context),
+			new QueryStoreChecker(context));
+	}
+
+	/**
+	 * Create an observable emitting the keyword of the portal implementation for each
+	 * {@link PortalEvents#PORTAL_IMPLEMENTATION_UPDATED update}.
+	 *
+	 * @param vertx The Vert.x instance, whose event bus is used.
+	 * @return The observable of portal implementation updates.
+	 */
+	static Observable<Object> implementationUpdates(Vertx vertx) {
+		return Observable.create(emitter -> {
+			MessageConsumer<Object> consumer = vertx.eventBus()
+				.localConsumer(PortalEvents.PORTAL_IMPLEMENTATION_UPDATED.address(), message -> emitter.onNext(message.body()));
+
+			emitter.setCancellable(consumer::unregister);
+		});
 	}
 
 	/**
