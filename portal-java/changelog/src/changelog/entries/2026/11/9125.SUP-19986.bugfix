@@ -1,0 +1,1 @@
+Authentication: A Keycloak login whose access or ID token fails validation (e.g. the "aud" claim does not contain the configured client ID) is no longer treated as a successful login with incomplete user data. Such logins are now rejected with 401, and authentication cookies containing such tokens are ignored. The reason is logged as an error.
