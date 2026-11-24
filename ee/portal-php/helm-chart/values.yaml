@@ -133,6 +133,25 @@ affinity: {}
 ## It is possible to specify new variables on project level
 extraEnv: []
 
+## OpenTelemetry: switches on the zero-code instrumentation of the portal image and
+## sends traces to an OTLP endpoint. Requires the PHP extension "opentelemetry" and the
+## OpenTelemetry Composer packages in your portal image (see the Portal | php
+## documentation, "OpenTelemetry"). Any OTEL_* variable set in extraEnv wins.
+## Under the CMP umbrella, global.otel.* provides the defaults.
+otel:
+  ## null: follow global.otel.enabled (off when unset); true/false: override
+  enabled: null
+  ## OTLP endpoint; empty: global.otel.endpoint, then the umbrella's bundled
+  ## Collector http://<release>-opentelemetry-collector:4318
+  endpoint: ""
+  ## OTLP protocol; empty: global.otel.protocol, then http/protobuf
+  protocol: ""
+  ## Secret with key "headers", e.g. "Authorization=Bearer <token>", sent with every
+  ## export (only for endpoints that need authentication); empty: global.otel.headersSecret
+  headersSecret: ""
+  ## empty: "Gentics Portal PHP"
+  serviceName: ""
+
 ## Name of an EXISTING ConfigMap that is mounted as the complete /portal/config
 ## directory. WARNING: the mount replaces ALL config files shipped in the image —
 ## the ConfigMap must contain every config file the portal needs.

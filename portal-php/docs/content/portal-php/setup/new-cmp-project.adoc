@@ -15,7 +15,7 @@ The easiest way to create a new {{%GPPHP%}} Project, is by using our default tem
 To get started, simply check out the repository in the version of the portal you with to use. Example:
 
 ```bash
-git clone --b hotfix-3.5.x git@github.com:gentics/portal-php-reference.git myproject
+git clone -b hotfix-3.5.x git@github.com:gentics/portal-php-reference.git myproject
 ```
 
 This will create a setup for local development and building with docker in the directory `myproject`.

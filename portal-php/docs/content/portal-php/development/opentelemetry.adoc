@@ -1,0 +1,153 @@
+---
+title: OpenTelemetry
+description: "Trace requests to the portal and its calls to Gentics Mesh with OpenTelemetry, without code changes."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} can be traced with the https://opentelemetry.io/docs/zero-code/php/auto/[zero-code instrumentation of OpenTelemetry for PHP].
+No change to the portal code is needed. You add a PHP extension to the image, a few Composer packages to your
+project and configure the export with environment variables.
+
+== What gets traced
+
+[width="100%",options="header"]
+|==========================
+| Package | Spans
+| `open-telemetry/opentelemetry-auto-laravel` | Incoming HTTP requests, console commands and other Laravel internals
+| `open-telemetry/opentelemetry-auto-guzzle` | Every request to Gentics Mesh (REST and GraphQL), as child spans of the incoming request
+|==========================
+
+The Gentics Mesh client is based on Guzzle. The Guzzle instrumentation therefore also adds a `traceparent` header to every
+request to Gentics Mesh, so a tracing backend can connect the portal trace with the traces of Gentics Mesh.
+
+== Requirements
+
+* The PHP extension `opentelemetry`. Without it, no spans are created.
+* The PHP extension `protobuf`. It is optional, but the OpenTelemetry exporter recommends it for production, because the
+  PHP implementation of protobuf is much slower.
+* An OpenTelemetry collector or another backend that accepts OTLP.
+
+== Install the PHP extensions
+
+=== Using the reference Docker files
+
+The image of the https://github.com/gentics/portal-php-reference[reference project] contains both extensions. If your
+project is based on an older version, add the following to the runtime stage of your `Dockerfile`:
+
+```dockerfile
+# Install and enable the OpenTelemetry extensions.
+# Tracing stays off until OTEL_PHP_AUTOLOAD_ENABLED=true is set.
+RUN pecl install opentelemetry protobuf \
+	&& docker-php-ext-enable opentelemetry protobuf
+```
+
+The extensions must be loaded in every image that runs the portal, also when tracing is disabled. The Guzzle
+instrumentation emits a PHP warning on every request when its extension is missing.
+
+=== Without Docker / Custom webserver
+
+Install the extensions with `pecl install opentelemetry protobuf` and enable them in your `php.ini`:
+
+```ini
+extension=opentelemetry.so
+extension=protobuf.so
+```
+
+Check the installation with `php --ri opentelemetry`.
+
+== Add the Composer packages
+
+Add the packages to your project, not to {{%GPPHP%}} itself:
+
+```bash
+composer config allow-plugins.tbachert/spi true
+composer require \
+    open-telemetry/sdk \
+    open-telemetry/exporter-otlp \
+    open-telemetry/opentelemetry-auto-laravel \
+    open-telemetry/opentelemetry-auto-guzzle
+```
+
+`open-telemetry/opentelemetry-auto-guzzle` requires the extension `opentelemetry`. Run `composer` where the extension is
+loaded, for example in the build stage of your image, or add `--ignore-platform-req=ext-opentelemetry`.
+
+== Configuration
+
+Tracing is configured with the standard
+https://opentelemetry.io/docs/languages/sdk-configuration/[OpenTelemetry environment variables]:
+
+```bash
+OTEL_PHP_AUTOLOAD_ENABLED=true
+OTEL_SERVICE_NAME="Gentics Portal PHP"
+OTEL_TRACES_EXPORTER=otlp
+OTEL_METRICS_EXPORTER=none
+OTEL_LOGS_EXPORTER=none
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+OTEL_PROPAGATORS=tracecontext,baggage
+```
+
+Tracing is only active when `OTEL_PHP_AUTOLOAD_ENABLED` is `true`. Without it, the installed packages do nothing.
+
+The same settings can also be put into an ini file. In the reference image, place it in `/extra-php-conf`:
+
+```ini
+OTEL_PHP_AUTOLOAD_ENABLED="true"
+OTEL_SERVICE_NAME="Gentics Portal PHP"
+OTEL_TRACES_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+```
+
+WARNING: Do not put the `OTEL_*` settings into the Laravel `.env` file of the portal. OpenTelemetry reads its settings
+while the Composer autoloader starts, before Laravel loads the `.env` file. Settings from the `.env` file only work when
+the file is passed to the container as environment, for example with `env_file` in Docker Compose.
+
+NOTE: PHP-FPM removes the environment variables of its workers by default
+(https://www.php.net/manual/en/install.fpm.configuration.php[`clear_env = yes`]). When you run the portal with PHP-FPM, use the
+ini file or pass the variables with `env[OTEL_...]` in the FPM pool configuration.
+
+=== Kubernetes
+
+The Helm chart of {{%GPPHP%}} sets the variables when you switch on `otel`:
+
+```yaml
+otel:
+  enabled: true
+  endpoint: "http://otel-collector:4318"
+  # optional: protocol (default http/protobuf), headersSecret, serviceName (default "Gentics Portal PHP")
+```
+
+The chart then sets `OTEL_PHP_AUTOLOAD_ENABLED`, `OTEL_SERVICE_NAME`, the OTLP endpoint and protocol and the resource
+attributes `service.namespace`, `k8s.namespace.name` and `k8s.pod.name`. It sends traces only: `OTEL_METRICS_EXPORTER`
+and `OTEL_LOGS_EXPORTER` are set to `none`. A variable that you set yourself in `extraEnv` always wins.
+
+In the CMP umbrella chart, `global.otel.enabled=true` switches on telemetry for all components, including
+{{%GPPHP%}}, and installs a monitoring stack that receives the traces. Without your own `endpoint`, the portal sends to
+that stack. `portal-php.otel.*` overrides the global settings for the portal only.
+
+The liveness and readiness probes of the chart call `/api/health/live` and `/api/health/ready` regularly. Each call is
+traced. Filter these traces in your collector if they are not wanted.
+
+=== Disable single instrumentations
+
+`OTEL_PHP_DISABLED_INSTRUMENTATIONS` takes a comma-separated list, for example `laravel` or `guzzle`.
+
+=== Recording HTTP headers
+
+The Guzzle instrumentation can record request and response headers of the Gentics Mesh requests. This is disabled by default:
+
+```bash
+OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS=accept
+OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_RESPONSE_HEADERS=content-type
+```
+
+== Further links
+
+* https://opentelemetry.io/docs/zero-code/php/auto/
+* https://opentelemetry.io/docs/languages/php/
+* https://github.com/open-telemetry/opentelemetry-php-contrib/tree/main/src/Instrumentation/Laravel
+* https://github.com/open-telemetry/opentelemetry-php-contrib/tree/main/src/Instrumentation/Guzzle
