@@ -75,88 +75,14 @@ link:https://www.gentics.com/mesh/premium-features/favorite/[documentation].
 
 ### Forms plugin
 
-#### configuration
-
-When using poll forms add this configuration to the `server.yml`.
-
-```
-mesh:
-  proxyHeaderWhitelist:
-    - Referer
-```
-
-#### FormsHandler
-
-The `FormsHandler` will render the FormGen app which handles rendering forms and submitting data to the Mesh
-Forms Plugin.
+The `FormsHandler` will forward all requests necessary to render forms, or submit data to forms to the Mesh
+forms plugin. Endpoints for creating new forms are considered a backend functionality and will not be forwarded by the
+portal.
 
 The forms handler will also make sure, that the `forms-data` and `forms-voted` cookies are properly forwarded to
 the plugin.
 
-#### Rendering forms
-
-The handler will also make the `renderForm` handlebars helper available, which is used to include the FormGen React Native app which does the actual rendering.
-
-.Usage of `renderForm`
-----
-{{ renderForm form-uuid [language] [pluginName] [externalId] [templateContext] [showResults] }}
-----
-
-.Parameters for `renderForm`
-[%header]
-|===
-| Parameter | Type | Default value | Description
-
-| `form-uuid`
-| String
-| *Mandatory*
-| The Mesh UUID of the form to be rendered
-
-| `language`
-| String
-| (empty)
-| The desired language to render the given form
-
-| `pluginName`
-| String
-| (empty)
-| The Mesh plugin responsible for handling this form.
-
-| `externalId`
-| String
-| (empty)
-| ID for forms not handled by the Mesh Forms plugin.
-
-| `templateContext`
-| String
-| (empty)
-| An additional template context which is appended to the base template path by the plugin when searching templates for rendering
-
-| `showResults`
-| Boolean
-| `false`
-| Only used by poll forms. When set to `true` the results of the poll will be rendered no matter whether the user has already participated in the poll or not.
-|===
-
-#### Rendering `submitOnce` results
-
-Forms with the flag `submitOnce` set (which is for example used for poll forms, which a user can fill out once and then only sees the results of the poll) are rendered using a Handlebars template that is configurable under `pollResultsTemplate` (default is `poll-results`; note the missing extension). This Handlebars template is expected to be in the template path configured under `templatesPath` (default is `data/templates`). So with the default configuration, the Handlebars template is expected to have the path `data/templates/poll-results.hbs`. A simple example for such a template, can be found in the link:https://www.gentics.com/implementation/cmp8.5/forms/forms[Implementation guides].
-
-#### Rendering form previews in Gentics CMS
-
-For the FormGen app to be included correctly in pages rendered for preview in Gentics CMS, the handlebars template
-must include a `<base href="PORTAL_URL">` tag in the pages `<header>`, when the `renderMode` is `PREVIEW`. For this
-the `portalBaseUrl` helper is available to render the actual URL. For example:
-
-```
-{{#renderMode 'PREVIEW'}}
-<base href="{{{portalBaseUrl}}}">
-{{/renderMode}}
-```
-
-#### FormGen app
-
-The FormGen app itself which must be built separately (see link:https://www.gentics.com/Content.Node/cmp8/guides/formgen.html[FormGen Customizing] for details on the app) and the built app must be placed in the static data directory configured under `forms.formgenStaticFileDirectory` (which defaults to the path `/portal/data/static/cpa/`). The app is by default served by the portal under `/static/cpa`, if it is necessary to change this, the path is configurable in the portal configuration under `forms.formgenStaticServePath`.
+For more information, please check the link:./form-generator.html[dedicated Documentation Page].
 
 ### Like plugin
 
