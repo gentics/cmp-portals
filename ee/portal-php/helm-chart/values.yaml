@@ -151,6 +151,11 @@ otel:
   headersSecret: ""
   ## empty: "Gentics Portal PHP"
   serviceName: ""
+  ## true: also send metrics, with delta temporality (needs gentics-common 0.4.0).
+  ## Before a Prometheus exporter, the receiving Collector must give every PHP worker
+  ## its own series and convert the metrics to cumulative ones; the CMP umbrella's
+  ## bundled Collector does (see the Portal | PHP documentation, "OpenTelemetry").
+  metricsEnabled: false
 
 ## Name of an EXISTING ConfigMap that is mounted as the complete /portal/config
 ## directory. WARNING: the mount replaces ALL config files shipped in the image —
