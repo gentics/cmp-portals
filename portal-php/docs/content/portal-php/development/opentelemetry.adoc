@@ -18,10 +18,32 @@ project and configure the export with environment variables.
 | Package | Spans
 | `open-telemetry/opentelemetry-auto-laravel` | Incoming HTTP requests, console commands and other Laravel internals
 | `open-telemetry/opentelemetry-auto-guzzle` | Every request to Gentics Mesh (REST and GraphQL), as child spans of the incoming request
+| {{%GPPHP%}} itself | Controller, Gentics Mesh requests, caches and the rendering of views, see the next section
 |==========================
 
 The Gentics Mesh client is based on Guzzle. The Guzzle instrumentation therefore also adds a `traceparent` header to every
 request to Gentics Mesh, so a tracing backend can connect the portal trace with the traces of Gentics Mesh.
+
+== Spans of {{%GPPHP%}}
+
+{{%GPPHP%}} adds its own spans, so the time of a request is covered between the incoming request and the requests to
+Gentics Mesh. They need only the PHP extension `opentelemetry`; without it, {{%GPPHP%}} adds no spans.
+
+[width="100%",options="header"]
+|==========================
+| Span | Covers | Attributes
+| `<Controller>@<method>`, e.g. `ContentController@index` | The controller action of the route | `code.function.name`, `http.route`
+| `mesh <template>`, e.g. `mesh loadContent` | A GraphQL request to Gentics Mesh, including building the query and handling the response. The Guzzle span of the HTTP request is its child. | `portal.mesh.request.class`, `portal.mesh.template`, `portal.mesh.path` (requests by path), `portal.mesh.etag_cache.hit` (routed requests)
+| `mesh cache <template>`, e.g. `mesh cache loadNavigation` | A Gentics Mesh request that is cached in the Laravel cache, like the navigation and the current user. On a cache miss, the `mesh` span is its child. | `portal.mesh.request.class`, `portal.mesh.template`, `portal.mesh.cache.hit`
+| `render <view>`, e.g. `render contentpage` | Rendering a Blade view. Included views and layouts are child spans. | `portal.view.name`, `code.file.path`
+| `http cache` | The HTTP cache, when `portal.cache.http.enabled` is set. On a cache miss, the controller and the rendering are inside this span. | `portal.http_cache.status`, e.g. `fresh` or `miss, store`
+|==========================
+
+Laravel renders the view returned by a controller after the controller has returned. The `render` span of the page
+is therefore not a child of the controller span, but follows it.
+
+Every rendered view gets a span, also views that are included in a loop. Pages with many included views produce many
+spans. To switch the spans of {{%GPPHP%}} off, see "Disable single instrumentations" below.
 
 == Requirements
 
@@ -134,7 +156,8 @@ traced. Filter these traces in your collector if they are not wanted.
 
 === Disable single instrumentations
 
-`OTEL_PHP_DISABLED_INSTRUMENTATIONS` takes a comma-separated list, for example `laravel` or `guzzle`.
+`OTEL_PHP_DISABLED_INSTRUMENTATIONS` takes a comma-separated list, for example `laravel` or `guzzle`. Use `portal-php`
+for the spans of {{%GPPHP%}}.
 
 === Recording HTTP headers
 

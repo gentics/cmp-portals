@@ -61,6 +61,10 @@ RUN docker-php-ext-install \
 	sysvshm \
 	exif
 
+# Install the OpenTelemetry extension, needed by the tests of the OpenTelemetry instrumentation
+RUN pecl install opentelemetry-1.5.0 \
+ && docker-php-ext-enable opentelemetry
+
 # Install oc
 RUN wget -qO- https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable-4.11/openshift-client-linux.tar.gz \
      | tar xzv -C /usr/local/bin oc kubectl \
