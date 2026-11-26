@@ -3,6 +3,9 @@
 namespace Gentics\PortalPhp\Features\OpenTelemetry;
 
 use Gentics\PortalPhp\Features\HttpCache\AppCache;
+use Gentics\PortalPhp\Features\Keycloak\Contract\Authenticator;
+use Gentics\PortalPhp\Features\Keycloak\Http\Controllers\AuthController;
+use Gentics\PortalPhp\Features\Keycloak\Socialite\Provider as KeycloakProvider;
 use Gentics\PortalPhp\Features\Mesh\GraphqlRequest;
 use Gentics\PortalPhp\Features\Mesh\GraphqlRequests\LoadByPath;
 use Gentics\PortalPhp\Features\Mesh\Mesh;
@@ -11,13 +14,21 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\ControllerDispatcher;
 use Illuminate\Routing\Route;
 use Illuminate\View\View;
+use Laravel\Socialite\Contracts\User as SocialiteUser;
+use Lcobucci\JWT\Token\RegisteredClaims;
+use Lcobucci\JWT\UnencryptedToken;
+use Monolog\Logger;
+use Monolog\LogRecord;
 use OpenTelemetry\API\Instrumentation\CachedInstrumentation;
+use OpenTelemetry\API\Logs\LogRecordBuilderInterface;
 use OpenTelemetry\API\Metrics\MeterInterface;
 use OpenTelemetry\API\Trace\Span;
+use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\SpanKind;
 use OpenTelemetry\API\Trace\StatusCode;
 use OpenTelemetry\Context\Context;
 use OpenTelemetry\SDK\Sdk;
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 use WeakMap;
@@ -28,11 +39,25 @@ use function OpenTelemetry\Instrumentation\hook;
  * Adds spans for rendering, Mesh requests, controller dispatch and the HTTP cache,
  * and metrics for incoming requests, Mesh requests, the caches and rendering,
  * using the hooks of the PHP extension "opentelemetry".
+ *
+ * The server span of a request is created by the Laravel instrumentation, which stores it in the request attribute
+ * SpanInterface::class. This class adds to it: the route on requests handled by the HTTP cache, the ID of the
+ * logged in user and the redacted query of the Keycloak callback. It also adds the trace ID to the response
+ * (header X-Trace-Id) and to log records, both only when the request is sampled.
  */
 class Instrumentation
 {
     /** @var string Name to use in OTEL_PHP_DISABLED_INSTRUMENTATIONS */
     const NAME = 'portal-php';
+
+    /** @var string Response header containing the trace ID of a sampled request, as in Gentics CMS and Portal | java */
+    const TRACE_ID_HEADER = 'X-Trace-Id';
+
+    /** @var string Replacement for the values of redacted query parameters */
+    const REDACTED = 'REDACTED';
+
+    /** @var string[] Query parameters of the Keycloak callback, which must not be recorded */
+    const OAUTH_CALLBACK_PARAMETERS = ['code', 'session_state'];
 
     /** @var float[] Bucket boundaries in seconds, as advised for http.server.request.duration */
     const DURATION_BUCKETS = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10];
@@ -97,6 +122,16 @@ class Instrumentation
 
                 /** @var Request $request */
                 [$request] = $params;
+
+                // Set outside the HTTP cache, so a cached response never contains the trace ID of another request
+                $serverSpan = static::serverSpan($request);
+                if ($serverSpan && $returnValue instanceof Response) {
+                    $spanContext = $serverSpan->getContext();
+                    if ($spanContext->isValid() && $spanContext->isSampled()) {
+                        $returnValue->headers->set(static::TRACE_ID_HEADER, $spanContext->getTraceId());
+                    }
+                }
+
                 $method = strtoupper($request->getMethod());
                 $attributes = [
                     'http.request.method' => in_array($method, static::HTTP_METHODS, true) ? $method : '_OTHER',
@@ -241,9 +276,149 @@ class Instrumentation
                 $duration = static::end($cache, 'handle', $exception, ['portal.http_cache.status' => $status]);
                 if ($duration !== null) {
                     static::instruments()['httpCache']->add(1, ['portal.http_cache.status' => $status]);
+
+                    // Routing runs only for a copy of the request on a miss and not at all on a hit,
+                    // so the Laravel instrumentation does not find a route for the server span
+                    [$request] = $params;
+                    $serverSpan = static::serverSpan($request);
+                    if ($serverSpan && $serverSpan->isRecording() && $request instanceof Request) {
+                        static::setRoute($serverSpan, $request);
+                    }
                 }
             }
         );
+
+        hook(
+            Authenticator::class,
+            'authUser',
+            post: static function (Authenticator $authenticator, array $params, $returnValue, ?Throwable $exception) {
+                [$token] = $params;
+                if (!$exception && $token instanceof UnencryptedToken) {
+                    static::setUserId($token->claims()->get(RegisteredClaims::SUBJECT));
+                }
+            }
+        );
+
+        // The login in the Keycloak callback
+        hook(
+            KeycloakProvider::class,
+            'user',
+            post: static function (KeycloakProvider $provider, array $params, $returnValue) {
+                if ($returnValue instanceof SocialiteUser) {
+                    static::setUserId($returnValue->getId());
+                }
+            }
+        );
+
+        hook(
+            AuthController::class,
+            'callback',
+            pre: static function (AuthController $controller, array $params) {
+                [$request] = $params;
+                $serverSpan = static::serverSpan($request);
+                $query = $request instanceof Request ? $request->getQueryString() : null;
+                if (!$serverSpan || !$serverSpan->isRecording() || $query === null) {
+                    return;
+                }
+
+                $redacted = static::redactQuery($query, static::OAUTH_CALLBACK_PARAMETERS);
+                $serverSpan->setAttribute('url.query', $redacted);
+                $serverSpan->setAttribute('url.full', str_replace($query, $redacted, $request->fullUrl()));
+            }
+        );
+
+        hook(
+            Logger::class,
+            '__construct',
+            post: static function (Logger $logger) {
+                $logger->pushProcessor(static function (LogRecord $record) {
+                    $spanContext = Span::getCurrent()->getContext();
+                    if ($spanContext->isValid() && $spanContext->isSampled()) {
+                        $record->extra['trace_id'] = $spanContext->getTraceId();
+                        $record->extra['span_id'] = $spanContext->getSpanId();
+                    }
+
+                    return $record;
+                });
+            }
+        );
+
+        // Log records exported with OpenTelemetry, e.g. by the Laravel instrumentation, would otherwise
+        // carry the ID of a trace that is not exported
+        hook(
+            LogRecordBuilderInterface::class,
+            'emit',
+            pre: static function (LogRecordBuilderInterface $builder) {
+                $spanContext = Span::getCurrent()->getContext();
+                if ($spanContext->isValid() && !$spanContext->isSampled()) {
+                    $builder->setContext(false);
+                }
+            }
+        );
+    }
+
+    /**
+     * Get the server span of the request, created by the Laravel instrumentation
+     *
+     * @param mixed $request
+     * @return SpanInterface|null
+     */
+    protected static function serverSpan($request): ?SpanInterface
+    {
+        $span = $request instanceof SymfonyRequest ? $request->attributes->get(SpanInterface::class) : null;
+
+        return $span instanceof SpanInterface ? $span : null;
+    }
+
+    /**
+     * Set the route matching the request on the server span, in the same format as the Laravel instrumentation
+     *
+     * @param SpanInterface $serverSpan
+     * @param Request $request
+     * @return void
+     */
+    protected static function setRoute(SpanInterface $serverSpan, Request $request)
+    {
+        try {
+            $route = app('router')->getRoutes()->match($request);
+        } catch (Throwable $exception) {
+            return;
+        }
+
+        $serverSpan->updateName($request->method() . ' /' . ltrim($route->uri(), '/'));
+        $serverSpan->setAttribute('http.route', $route->uri());
+    }
+
+    /**
+     * Set the ID of the logged in user on the server span of the current request, if the span is recorded
+     *
+     * @param mixed $userId
+     * @return void
+     */
+    protected static function setUserId($userId)
+    {
+        $serverSpan = static::serverSpan(app('request'));
+        if ($serverSpan && $serverSpan->isRecording() && $userId !== null && $userId !== '') {
+            $serverSpan->setAttribute('user.id', (string) $userId);
+        }
+    }
+
+    /**
+     * Replace the values of the given parameters in the query string with REDACTED
+     *
+     * @param string $query Query string without the leading "?"
+     * @param string[] $names Names of the parameters to redact
+     * @return string
+     */
+    protected static function redactQuery(string $query, array $names): string
+    {
+        return implode('&', array_map(static function (string $parameter) use ($names) {
+            $index = strpos($parameter, '=');
+
+            return $index !== false && in_array(substr($parameter, 0, $index), $names, true)
+                ? substr($parameter, 0, $index + 1) . static::REDACTED
+                : $parameter;
+        }, explode('&', $query)));
     }
 
     /**

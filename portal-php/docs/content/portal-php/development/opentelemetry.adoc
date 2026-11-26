@@ -45,6 +45,25 @@ is therefore not a child of the controller span, but follows it.
 Every rendered view gets a span, also views that are included in a loop. Pages with many included views produce many
 spans. To switch the spans of {{%GPPHP%}} off, see "Disable single instrumentations" below.
 
+== Requests
+
+The server span of a request is created by `open-telemetry/opentelemetry-auto-laravel`. {{%GPPHP%}} adds the following
+to it, to the response and to the log records of the request. Like the spans, this needs only the PHP extension
+`opentelemetry` and is switched off together with them.
+
+[width="100%",options="header"]
+|==========================
+| What | Details
+| Response header `X-Trace-Id` | The trace ID (32 hex digits), only when the request is sampled. It is the same header as in {{%CMS%}} and Portal \| java: search for the ID in your tracing backend to find the trace of a request. The header is set outside the HTTP cache, so a response from the cache carries the trace ID of the current request.
+| `user.id` | The Keycloak subject (`sub`) of the logged in user, on the server span of authenticated requests and of the Keycloak callback, only when the span is recorded. Anonymous requests get no `user.id`. The user name is not recorded.
+| Route with the HTTP cache | When `portal.cache.http.enabled` is set, the Laravel instrumentation does not see the route: the route is matched for a copy of the request on a cache miss and not at all on a hit. {{%GPPHP%}} sets the span name (e.g. `GET /{path}`) and `http.route` on hits and misses.
+| Keycloak callback | The values of the query parameters `code` and `session_state` are replaced by `REDACTED` in the attributes `url.query` and `url.full` of `/auth/callback`.
+| Log records | While a sampled request is handled, Monolog log records get `trace_id` and `span_id` in `extra`. With the default line format of Laravel, they are written at the end of the line: `{"trace_id":"…","span_id":"…"}`. Log records exported with OpenTelemetry (`OTEL_LOGS_EXPORTER=otlp`, sent by the Laravel instrumentation) also carry the trace context only for sampled requests. Log records of requests that are not sampled get no trace ID, so they don't link to a trace that does not exist.
+|==========================
+
+NOTE: The web server writes its own access log. The access log of Apache (format `combined`) contains the full
+request line of the Keycloak callback, including `code` and `session_state`.
+
 == Metrics of {{%GPPHP%}}
 
 {{%GPPHP%}} also records metrics, when a metrics exporter is configured (see "Metrics" under "Configuration"). Like the
@@ -226,14 +245,40 @@ processors described in "Metrics" above. Without your own `endpoint`, the portal
 overrides the global settings for the portal only. When you send the metrics to a Collector of your own, configure it
 as described in "Metrics".
 
-The liveness and readiness probes of the chart call `/api/health/live` and `/api/health/ready` regularly. Each call is
-traced and counted in `http.server.request.duration`. Filter these traces in your collector if they are not wanted;
-in queries, filter the metric by `http_route`.
+=== Requests that are not traced
+
+The liveness and readiness probes of the chart call `/api/health/live` and `/api/health/ready` regularly, and the
+Blackbox exporter of a monitoring stack sends requests with a User-Agent starting with `Blackbox Exporter/`. Without
+further settings, each of these requests is traced. Exclude them with:
+
+```bash
+OTEL_PHP_EXCLUDED_URLS='^/api/health/'
+OTEL_PHP_EXCLUDED_REQUEST_HEADERS='User-Agent: Blackbox Exporter/*'
+```
+
+The OpenTelemetry SDK is then not started for these requests, so they produce no spans and no log records.
+`OTEL_PHP_EXCLUDED_URLS` is a regular expression for the request URI: adjust it when the portal runs with a router
+prefix. In Kubernetes, set both variables in `extraEnv`. Requests that are not excluded are counted in
+`http.server.request.duration`; in queries, filter the metric by `http_route`.
+
+=== Console commands
+
+The Laravel instrumentation also traces artisan commands, for example `DataProvider:prefetch` (span
+`Command DataProvider:prefetch`), even without `OTEL_PHP_TRACE_CLI_ENABLED`. These are not requests. Run console
+commands with the SDK disabled:
+
+```bash
+OTEL_SDK_DISABLED=true php artisan DataProvider:prefetch
+```
+
+`OTEL_PHP_EXCLUDED_URLS` and `OTEL_PHP_EXCLUDED_REQUEST_HEADERS` have no effect on the command line. The Helm chart
+sets `OTEL_PHP_AUTOLOAD_ENABLED=true` for the whole pod, so a command run with `kubectl exec` is traced unless it sets
+`OTEL_SDK_DISABLED=true`.
 
 === Disable single instrumentations
 
 `OTEL_PHP_DISABLED_INSTRUMENTATIONS` takes a comma-separated list, for example `laravel` or `guzzle`. Use `portal-php`
-for the spans and metrics of {{%GPPHP%}}.
+for the spans and metrics of {{%GPPHP%}} and the additions described in "Requests".
 
 === Recording HTTP headers
 
