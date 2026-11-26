@@ -1,0 +1,30 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.gentics.mesh.portal</groupId>
+		<artifactId>mesh-portal-framework</artifactId>
+		<version>9.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>mesh-portal-otel-extension</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Gentics Portal | java - OpenTelemetry Extension</name>
+	<description>Extension for the OpenTelemetry Java agent, which restricts the traces of the portal to the incoming requests</description>
+
+	<dependencies>
+		<!-- Provided by the OpenTelemetry Java agent -->
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-sdk</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-sdk-extension-autoconfigure-spi</artifactId>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

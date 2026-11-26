@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 import com.gentics.mesh.portal.api.RouteOrder;
 import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.server.core.HandlerProvider;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 
 import com.gentics.vertx.openapi.route.InternalEndpointBuilder;
 import org.slf4j.Logger;
@@ -60,6 +61,7 @@ public class LikesHandler {
 		InternalEndpointBuilder.wrap(router)
 			.withPathRegex("/api/like/(.*)")
 			.withOrder(RouteOrder.BEFORE_BODY_HANDLER.getOrder())
+			.withHandler(RequestTracing.route("/api/like/*"))
 			.withHandler(handlerProvider.pluginProxy("^/api/like/", "/api/v1/" + projectName + "/plugins/like/"))
 			.withExampleResponse(HttpResponseStatus.OK, "Plugin response")
 			.withDescription("A proxy to Gentics Mesh Like plugin")

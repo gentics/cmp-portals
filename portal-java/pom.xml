@@ -27,6 +27,9 @@
 		<jcs.version>2.2.1</jcs.version>
 		<assertj.version>3.27.7</assertj.version>
 		<junit.version>4.13.2</junit.version>
+		<otel.javaagent.version>2.27.0</otel.javaagent.version>
+		<!-- The OpenTelemetry API must not be newer than the API version the javaagent (otel.javaagent.version) is built for -->
+		<otel.api.version>1.61.0</otel.api.version>
 	</properties>
 
 	<artifactId>mesh-portal-framework</artifactId>
@@ -57,6 +60,7 @@
 		<module>e2e-tests</module>
 		<module>handler</module>
 		<module>helper</module>
+		<module>otel-extension</module>
 		<module>services</module>
 		<module>changelog</module>
 		<!-- Intended for development and testing. -->
@@ -204,6 +208,23 @@
 				<groupId>com.gentics.mesh.portal</groupId>
 				<artifactId>mesh-portal-branch</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.gentics.mesh.portal</groupId>
+				<artifactId>mesh-portal-otel-extension</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.opentelemetry</groupId>
+				<artifactId>opentelemetry-bom</artifactId>
+				<version>${otel.api.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>io.opentelemetry.instrumentation</groupId>
+				<artifactId>opentelemetry-instrumentation-api</artifactId>
+				<version>${otel.javaagent.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>

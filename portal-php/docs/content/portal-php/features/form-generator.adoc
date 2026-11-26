@@ -8,6 +8,7 @@ description: "Set up the Form Generator app to work with the Mesh Forms plugin."
 :toc:
 
 The Form Generator plugin is not included with {{%Mesh%}} by default. In this article, you will learn how to configure this functionality.
+For more information about Forms in the CMP, check the link:https://www.gentics.com/implementation/cmp8.5/forms/forms[CMP Implementation Guide].
 
 == Enable Forms plugin
 

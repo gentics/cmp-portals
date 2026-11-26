@@ -17,6 +17,7 @@ import com.gentics.mesh.portal.content.LanguageVariantLoader;
 import com.gentics.mesh.portal.context.PortalRoutingContext;
 import com.gentics.mesh.portal.context.RedirectMode;
 import com.gentics.mesh.portal.handler.AbstractBaseHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.mesh.portal.util.AuthUtils;
 import com.gentics.mesh.portal.util.HandlerUtils;
 import com.gentics.vertx.openapi.route.InternalEndpointBuilder;
@@ -224,6 +225,7 @@ public abstract class AuthenticationBaseHandler extends AbstractBaseHandler impl
 						}
 	
 						((UserContextInternal) rc.userContext()).setUser(user);
+						RequestTracing.setUserId(user);
 						rc.put("userInfo", user.userInfo());
 
 						if (user.authCookiesChanged()) {
@@ -289,6 +291,7 @@ public abstract class AuthenticationBaseHandler extends AbstractBaseHandler impl
 				.withRAMLPath(path + "/:redirectPath")
 				.withOrder(RouteOrder.AUTHENTICATION_ROUTES.getOrder())
 				.withUriParameter("redirectPath", "Path to redirect to after authentication is finished", "/en/welcome")
+				.withHandler(RequestTracing.route(path + "/:redirectPath"))
 				.withHandler(this::handleLogin)
 				.withFailureHandler(HandlerUtils.unrecoverableFailureHandler(getClass()))
 				.withExampleResponse(HttpResponseStatus.SEE_OTHER, "Re-routed to the redirect path")
@@ -398,6 +401,7 @@ public abstract class AuthenticationBaseHandler extends AbstractBaseHandler impl
 		if (user == null) {
 			log.warn("AuthenticationHandler implementation did not generate a valid PortalUser");
 		} else {
+			RequestTracing.setUserId(user);
 			addAuthCookies(rc, user.authCookies());
 		}
 

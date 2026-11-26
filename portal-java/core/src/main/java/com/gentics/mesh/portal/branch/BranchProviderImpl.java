@@ -5,12 +5,16 @@ import static com.gentics.mesh.core.rest.MeshEvent.BRANCH_DELETED;
 import static com.gentics.mesh.core.rest.MeshEvent.BRANCH_UPDATED;
 import static com.gentics.mesh.core.rest.MeshEvent.STARTUP;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.gentics.mesh.core.rest.MeshEvent;
 import com.gentics.mesh.core.rest.branch.BranchListResponse;
-
 import com.gentics.mesh.core.rest.branch.BranchResponse;
 import com.gentics.mesh.portal.api.branch.BranchProvider;
 import com.gentics.mesh.portal.config.PortalConfig;
@@ -21,8 +25,6 @@ import com.gentics.mesh.rest.client.MeshWebsocket;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link BranchProvider}.
@@ -36,7 +38,7 @@ public class BranchProviderImpl implements BranchProvider {
 	private final MeshWebsocket eventbus;
 
 	/** A map from project names to branch lists. */
-	private Observable<BranchResponse> branchList;
+	private Observable<BranchResponse> branchList = Observable.fromArray();
 
 	@Inject
 	public BranchProviderImpl(PortalConfig portalConfig, MeshRestClient meshClient, MeshWebsocket eventbus) {
@@ -64,24 +66,30 @@ public class BranchProviderImpl implements BranchProvider {
 
 	/**
 	 * Update the branch info.
+	 * @return 
 	 */
-	private void updateBranchInfo() {
+	private Observable<BranchResponse> updateBranchInfo() {
 		log.trace("Refreshing branch info");
 
 		branchList = meshClient.findBranches(project).toSingle()
 			.map(BranchListResponse::getData)
+			.onErrorReturnItem(List.of())
 			.flatMapObservable(Observable::fromIterable)
 			.cache();
 		branchList.subscribe();
+
+		return branchList;
 	}
 
 	@Override
 	public Maybe<BranchResponse> findBranch(Predicate<? super BranchResponse> filter) {
-		return branchList.filter(filter).firstElement();
+		return branchList.isEmpty()
+				.map(empty -> empty ? updateBranchInfo() : branchList)
+				.flatMapMaybe(branches -> branches.filter(filter).firstElement());
 	}
 
 	@Override
 	public Observable<BranchResponse> getBranches() {
-		return branchList;
+		return branchList.isEmpty().flatMapObservable(empty -> empty ? updateBranchInfo() : branchList);
 	}
 }

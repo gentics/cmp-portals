@@ -34,6 +34,7 @@ import com.gentics.mesh.portal.config.option.AuthenticationOptions;
 import com.gentics.mesh.portal.config.option.KeycloakOptions;
 import com.gentics.mesh.portal.content.LanguageVariantLoader;
 import com.gentics.mesh.portal.context.RedirectMode;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.mesh.portal.util.JsonUtils;
 import com.gentics.mesh.portal.util.MiscUtils;
 
@@ -93,6 +94,11 @@ public class KeycloakAuthenticationHandler extends AuthenticationBaseHandler {
 	public static final String FIELD_ID_TOKEN = "id_token";
 	public static final String FIELD_POST_LOGOUT_REDIRECT_URI = "post_logout_redirect_uri";
 
+	/** User attribute in which Vert.x stores the decoded access token, when it is valid. */
+	private static final String ATTR_ACCESS_TOKEN = "accessToken";
+	/** User attribute in which Vert.x stores the decoded ID token, when it is valid. */
+	private static final String ATTR_ID_TOKEN = "idToken";
+
 	private static final Logger log = LoggerFactory.getLogger(KeycloakAuthenticationHandler.class);
 
 	private final Lazy<BootstrapInitializer> lazyBoot;
@@ -143,6 +149,72 @@ public class KeycloakAuthenticationHandler extends AuthenticationBaseHandler {
 	@Override
 	protected PortalUser upgradeUser(User user) {
 		return new OAuth2PortalUser(user).dirtCookies();
+	}
+
+	/**
+	 * Reject the login when Vert.x could not validate the access or ID token.
+	 *
+	 * <p>
+	 *     Vert.x does not fail the authentication when a token fails JWT
+	 *     validation (e.g. the {@code aud} claim does not contain the client
+	 *     ID), it only omits the decoded token from the user attributes. Such a
+	 *     user must not be logged in.
+	 * </p>
+	 *
+	 * @param rc The current routing context
+	 */
+	@Override
+	protected void handlePostAuth(RoutingContext rc) {
+		User user = rc.user();
+		boolean idTokenInvalid = user.principal().containsKey(FIELD_ID_TOKEN)
+				&& !user.attributes().containsKey(ATTR_ID_TOKEN);
+
+		if (!hasValidatedAccessToken(user) || idTokenInvalid) {
+			log.error("Login rejected: {}", invalidTokenMessage(idTokenInvalid ? "ID token" : "Access token"));
+			rc.userContext().clear();
+			rc.fail(HttpResponseStatus.UNAUTHORIZED.code());
+
+			return;
+		}
+
+		super.handlePostAuth(rc);
+	}
+
+	/**
+	 * Check if Vert.x successfully validated the access token of the given user.
+	 *
+	 * @param user The user to check
+	 * @return Whether the decoded access token is present in the user attributes
+	 */
+	private boolean hasValidatedAccessToken(User user) {
+		return user.attributes().containsKey(ATTR_ACCESS_TOKEN);
+	}
+
+	/**
+	 * Fail when the access token of the given user could not be validated.
+	 *
+	 * @param user The user to check
+	 * @return A future with the given user, or a failed future when the access
+	 *         token could not be validated
+	 */
+	private Future<PortalUser> requireValidatedAccessToken(PortalUser user) {
+		if (hasValidatedAccessToken(user)) {
+			return Future.succeededFuture(user);
+		}
+
+		return Future.failedFuture(new NoStackTraceThrowable(invalidTokenMessage("Access token")));
+	}
+
+	/**
+	 * Create the log message for a token that could not be validated.
+	 *
+	 * @param tokenName The name of the token
+	 * @return The message
+	 */
+	private String invalidTokenMessage(String tokenName) {
+		return String.format("%s could not be validated (e.g. the 'aud' claim does not contain the client ID '%s', "
+				+ "wrong issuer or invalid signature). Set the log level of %s to TRACE for details.",
+				tokenName, keycloakOptions.getClientId(), OAuth2AuthProviderImpl.class.getName());
 	}
 
 	/**
@@ -262,6 +334,7 @@ public class KeycloakAuthenticationHandler extends AuthenticationBaseHandler {
 				.flatMap(user -> refreshTokensIfNecessary(user, getCookieValue(rc, COOKIE_AUTH_REFRESH),
 						keycloakOptions.isRpInitiatedLogout() ? getCookieValue(rc, COOKIE_AUTH_ID) : StringUtils.EMPTY,
 						allowExpired))
+				.flatMap(this::requireValidatedAccessToken)
 				.onComplete(callback::handle);
 	}
 
@@ -575,7 +648,10 @@ public class KeycloakAuthenticationHandler extends AuthenticationBaseHandler {
 			// beforehand.
 			Route callbackRoute = router.get(callbackPath);
 
-			callbackRoute.order(RouteOrder.AUTHENTICATION_ROUTES.getOrder()).handler(this::prepareAuthRedirect)
+			// The OAuth2 code and session state must not be recorded in the span of the request
+			callbackRoute.order(RouteOrder.AUTHENTICATION_ROUTES.getOrder())
+					.handler(RequestTracing.redactQueryParameters(RequestTracing.OAUTH_CALLBACK_PARAMETERS))
+					.handler(this::prepareAuthRedirect)
 					.handler(this::handlePreAuth);
 			// The route cannot be reused because of how Vert.x does
 			// the callback setup.

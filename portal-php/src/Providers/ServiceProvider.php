@@ -15,6 +15,7 @@ use Gentics\PortalPhp\Features\Helpers\ServiceProvider as HelperService;
 use Gentics\PortalPhp\Features\HttpCache\ServiceProvider as HttpCacheService;
 use Gentics\PortalPhp\Features\Mesh\ServiceProvider as MeshService;
 use Gentics\PortalPhp\Features\PortalImplementation\ServiceProvider as PortalImplementationService;
+use Gentics\PortalPhp\Features\OpenTelemetry\Instrumentation as OpenTelemetryInstrumentation;
 use Gentics\PortalPhp\Features\PortalVersion\ServiceProvider as PortalVersionService;
 use Gentics\PortalPhp\Features\Router\ServiceProvider as RouterServiceProvider;
 use Gentics\PortalPhp\Features\DataProvider\DataProvider;
@@ -126,6 +127,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->app->register(HelperService::class);
         $this->app->register(PortalVersionService::class);
         $this->app->register(PortalImplementationService::class);
+
+        OpenTelemetryInstrumentation::register();
     }
 
     /**

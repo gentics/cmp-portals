@@ -28,6 +28,7 @@ import com.gentics.mesh.portal.handler.PoweredByHandler;
 import com.gentics.mesh.portal.handler.SecurityHandler;
 import com.gentics.mesh.portal.search.SearchHandler;
 import com.gentics.mesh.portal.sitemap.SitemapHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.mesh.portal.util.HandlerUtils;
 import com.gentics.vertx.openapi.route.InternalEndpointBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -186,6 +187,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.handler(TimeoutHandler.create(config.getNetworkTimeout() * 1000L))
 			.handler(loggerHandler);
 		poweredByHandler.addRoutes(router);
+		router.route().handler(RequestTracing::addTraceIdHeader);
 		additionalHeaderHandler.addRoutes(router);
 		openApiHandler.addRoutes(router);
 		addBodyHandler(router);
@@ -224,6 +226,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withPathRegex(Constants.ROUTE_CATCH_ALL)
 			.withRAMLPath("/*")
 			.withOrder(RouteOrder.CONTENT_ROUTES.getOrder())
+			.withHandler(RequestTracing.route("/*"))
 			.withHandler(contentHandler)
 			.withExampleResponse(HttpResponseStatus.OK, "Requested content, either page, or binary data, or any other resource")
 			.build();
@@ -398,6 +401,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.consumes(APPLICATION_JSON)
 			.produces(DEFAULT_CONTENT_TYPE)
 			.withExampleRequest(exampleRequest)
+			.withHandler(RequestTracing.route("/api/preview/:contentPath"))
 			.withHandler(previewHandler)
 			.withExampleResponse(HttpResponseStatus.OK, "Requested resource for the preview")
 			.build();
@@ -465,6 +469,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withUriParameter("cropwidth", "Width for cropping", "200")
 			.withUriParameter("cropheight", "Height for cropping", "150")
 			.withUriParameter("path", "Actual path to the image", "/images/example.png")
+			.withHandler(RequestTracing.route("/GenticsImageStore/:width/:height/cropandresize/:mode/:startx/:starty/:cropwidth/:cropheight/:path"))
 			.withHandler(croppingGisHandler::reroute)
 			.withExampleResponse(HttpResponseStatus.OK, "Modified image")
 			.build();
@@ -479,6 +484,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withUriParameter("height", "Height for cropping", "600")
 			.withUriParameter("mode", "Resize mode", "smart")
 			.withUriParameter("path", "Actual path to the image", "/images/example.png")
+			.withHandler(RequestTracing.route("/GenticsImageStore/:width/:height/:mode/:path"))
 			.withHandler(gisHandler::reroute)
 			.withExampleResponse(HttpResponseStatus.OK, "Modified image")
 			.build();

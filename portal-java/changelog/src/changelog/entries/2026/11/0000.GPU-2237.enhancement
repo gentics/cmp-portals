@@ -1,0 +1,10 @@
+Portal | java: Incoming requests can now be traced with the OpenTelemetry Java agent.
+Every request becomes one trace, which contains the requests to Mesh, to Mesh plugins
+and to Keycloak, the page cache lookup and the template rendering. Background work,
+the monitoring endpoints, static files, FormGen app files and requests of the
+Blackbox exporter are not traced. This needs the new agent extension
+@com.gentics.mesh.portal:mesh-portal-otel-extension@ in the portal image and
+@OTEL_TRACES_SAMPLER=gentics_portal_java@. Traced responses contain the header
+@X-Trace-Id@, the request span contains the ID of the logged in user (@user.id@),
+and the default logging configuration prints the trace ID.
+See the "documentation":https://www.gentics.com/guides/latest/portal-java/features/tracing.html for details.

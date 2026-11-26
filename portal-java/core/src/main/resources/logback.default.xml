@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+	<!-- trace_id is set by the OpenTelemetry Java agent while a traced request is handled, and left out otherwise -->
 
 	<statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
 	<appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
 		<target>System.err</target>
 		<encoder>
-			<pattern> %d{HH:mm:ss.SSS} [mesh-portal] %-5level [%thread] - %msg%n</pattern>
+			<pattern> %d{HH:mm:ss.SSS} [mesh-portal] %-5level [%thread]%replace( trace_id=%X{trace_id}){' trace_id=$', ''} - %msg%n</pattern>
 		</encoder>
 		<filter class="ch.qos.logback.classic.filter.LevelFilter">
 			<level>ERROR</level>
@@ -17,7 +18,7 @@
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [mesh-portal] %-5level [%thread] - %msg%n</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [mesh-portal] %-5level [%thread]%replace( trace_id=%X{trace_id}){' trace_id=$', ''} - %msg%n</pattern>
 		</encoder>
 	</appender>
 

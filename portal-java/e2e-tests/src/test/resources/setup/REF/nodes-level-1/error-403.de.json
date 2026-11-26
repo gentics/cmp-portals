@@ -1,0 +1,16 @@
+{
+	"uuid": "2318be96702a4c6981759a16fc9a4acf",
+	"language": "de",
+	"parentNode": {
+		"uuid": "2f65201b696c11e88438005056a9ea60"
+	},
+	"schema": {
+		"name": "ref_content"
+	},
+	"fields": {
+		"contenttype": "text/html",
+		"templateName": "ref/contentpage",
+		"name": "Fehler 403",
+		"filename": "Error_403.de.html"
+	}
+}

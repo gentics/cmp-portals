@@ -1,0 +1,297 @@
+---
+title: OpenTelemetry
+description: "Trace requests to the portal and its calls to Gentics Mesh and collect metrics with OpenTelemetry, without code changes."
+---
+
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPPHP%}} can be traced and measured with the https://opentelemetry.io/docs/zero-code/php/auto/[zero-code instrumentation of OpenTelemetry for PHP].
+No change to the portal code is needed. You add a PHP extension to the image, a few Composer packages to your
+project and configure the export with environment variables.
+
+== What gets traced
+
+[width="100%",options="header"]
+|==========================
+| Package | Spans
+| `open-telemetry/opentelemetry-auto-laravel` | Incoming HTTP requests, console commands and other Laravel internals
+| `open-telemetry/opentelemetry-auto-guzzle` | Every request to Gentics Mesh (REST and GraphQL), as child spans of the incoming request
+| {{%GPPHP%}} itself | Controller, Gentics Mesh requests, caches and the rendering of views, see the next section
+|==========================
+
+The Gentics Mesh client is based on Guzzle. The Guzzle instrumentation therefore also adds a `traceparent` header to every
+request to Gentics Mesh, so a tracing backend can connect the portal trace with the traces of Gentics Mesh.
+
+== Spans of {{%GPPHP%}}
+
+{{%GPPHP%}} adds its own spans, so the time of a request is covered between the incoming request and the requests to
+Gentics Mesh. They need only the PHP extension `opentelemetry`; without it, {{%GPPHP%}} adds no spans.
+
+[width="100%",options="header"]
+|==========================
+| Span | Covers | Attributes
+| `<Controller>@<method>`, e.g. `ContentController@index` | The controller action of the route | `code.function.name`, `http.route`
+| `mesh <template>`, e.g. `mesh loadContent` | A GraphQL request to Gentics Mesh, including building the query and handling the response. The Guzzle span of the HTTP request is its child. | `portal.mesh.request.class`, `portal.mesh.template`, `portal.mesh.path` (requests by path), `portal.mesh.etag_cache.hit` (routed requests)
+| `mesh cache <template>`, e.g. `mesh cache loadNavigation` | A Gentics Mesh request that is cached in the Laravel cache, like the navigation and the current user. On a cache miss, the `mesh` span is its child. | `portal.mesh.request.class`, `portal.mesh.template`, `portal.mesh.cache.hit`
+| `render <view>`, e.g. `render contentpage` | Rendering a Blade view. Included views and layouts are child spans. | `portal.view.name`, `code.file.path`
+| `http cache` | The HTTP cache, when `portal.cache.http.enabled` is set. On a cache miss, the controller and the rendering are inside this span. | `portal.http_cache.status`, e.g. `fresh` or `miss, store`
+|==========================
+
+Laravel renders the view returned by a controller after the controller has returned. The `render` span of the page
+is therefore not a child of the controller span, but follows it.
+
+Every rendered view gets a span, also views that are included in a loop. Pages with many included views produce many
+spans. To switch the spans of {{%GPPHP%}} off, see "Disable single instrumentations" below.
+
+== Requests
+
+The server span of a request is created by `open-telemetry/opentelemetry-auto-laravel`. {{%GPPHP%}} adds the following
+to it, to the response and to the log records of the request. Like the spans, this needs only the PHP extension
+`opentelemetry` and is switched off together with them.
+
+[width="100%",options="header"]
+|==========================
+| What | Details
+| Response header `X-Trace-Id` | The trace ID (32 hex digits), only when the request is sampled. It is the same header as in {{%CMS%}} and Portal \| java: search for the ID in your tracing backend to find the trace of a request. The header is set outside the HTTP cache, so a response from the cache carries the trace ID of the current request.
+| `user.id` | The Keycloak subject (`sub`) of the logged in user, on the server span of authenticated requests and of the Keycloak callback, only when the span is recorded. Anonymous requests get no `user.id`. The user name is not recorded.
+| Route with the HTTP cache | When `portal.cache.http.enabled` is set, the Laravel instrumentation does not see the route: the route is matched for a copy of the request on a cache miss and not at all on a hit. {{%GPPHP%}} sets the span name (e.g. `GET /{path}`) and `http.route` on hits and misses.
+| Keycloak callback | The values of the query parameters `code` and `session_state` are replaced by `REDACTED` in the attributes `url.query` and `url.full` of `/auth/callback`.
+| Log records | While a sampled request is handled, Monolog log records get `trace_id` and `span_id` in `extra`. With the default line format of Laravel, they are written at the end of the line: `{"trace_id":"…","span_id":"…"}`. Log records exported with OpenTelemetry (`OTEL_LOGS_EXPORTER=otlp`, sent by the Laravel instrumentation) also carry the trace context only for sampled requests. Log records of requests that are not sampled get no trace ID, so they don't link to a trace that does not exist.
+|==========================
+
+NOTE: The web server writes its own access log. The access log of Apache (format `combined`) contains the full
+request line of the Keycloak callback, including `code` and `session_state`.
+
+== Metrics of {{%GPPHP%}}
+
+{{%GPPHP%}} also records metrics, when a metrics exporter is configured (see "Metrics" under "Configuration"). Like the
+spans, they need only the PHP extension `opentelemetry`. The Laravel and Guzzle instrumentations create no metrics
+(`opentelemetry-auto-laravel` 1.10.0, `opentelemetry-auto-guzzle` 1.5.0).
+
+[width="100%",options="header"]
+|==========================
+| Metric | Type, unit | Records | Attributes
+| `http.server.request.duration` | Histogram, `s` | Every request handled by Laravel, including requests answered by the HTTP cache | `http.request.method` (`_OTHER` for unknown methods), `url.scheme`, `http.route` (matched routes), `http.response.status_code`, `error.type` (exception class, or the status code for 5xx responses)
+| `portal.mesh.request.duration` | Histogram, `s` | A GraphQL request to Gentics Mesh, as the `mesh` span | `portal.mesh.template`, `error.type` (exception class)
+| `portal.mesh.cache.lookups` | Counter, `{lookup}` | A lookup of a Gentics Mesh request that is cached in the Laravel cache, as the `mesh cache` span | `portal.mesh.template`, `portal.mesh.cache.hit`
+| `portal.mesh.etag_cache.lookups` | Counter, `{lookup}` | A lookup of the ETag cache before a binary is loaded from Gentics Mesh by path (requests by path, image store) | `portal.mesh.etag_cache.hit`
+| `portal.http_cache.requests` | Counter, `{request}` | A request handled by the HTTP cache | `portal.http_cache.status`, e.g. `fresh` or `miss, store`
+| `portal.view.render.duration` | Histogram, `s` | Rendering a Blade view, including the views it includes | `portal.view.name`
+|==========================
+
+The histograms use the bucket boundaries 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5 and 10
+seconds. Paths and URLs are not recorded as attributes, so the number of time series does not grow with the content.
+
+In Prometheus, the names become e.g. `http_server_request_duration_seconds` and `portal_mesh_cache_lookups_total`.
+The hit ratio of the Gentics Mesh cache is for example:
+
+```
+sum(rate(portal_mesh_cache_lookups_total{portal_mesh_cache_hit="true"}[5m]))
+  / sum(rate(portal_mesh_cache_lookups_total[5m]))
+```
+
+== Requirements
+
+* The PHP extension `opentelemetry`. Without it, no spans and metrics are created.
+* The PHP extension `protobuf`. It is optional, but the OpenTelemetry exporter recommends it for production, because the
+  PHP implementation of protobuf is much slower.
+* An OpenTelemetry collector or another backend that accepts OTLP.
+
+== Install the PHP extensions
+
+=== Using the reference Docker files
+
+The image of the https://github.com/gentics/portal-php-reference[reference project] contains both extensions. If your
+project is based on an older version, add the following to the runtime stage of your `Dockerfile`:
+
+```dockerfile
+# Install and enable the OpenTelemetry extensions.
+# Tracing stays off until OTEL_PHP_AUTOLOAD_ENABLED=true is set.
+RUN pecl install opentelemetry protobuf \
+	&& docker-php-ext-enable opentelemetry protobuf
+```
+
+The extensions must be loaded in every image that runs the portal, also when tracing is disabled. The Guzzle
+instrumentation emits a PHP warning on every request when its extension is missing.
+
+=== Without Docker / Custom webserver
+
+Install the extensions with `pecl install opentelemetry protobuf` and enable them in your `php.ini`:
+
+```ini
+extension=opentelemetry.so
+extension=protobuf.so
+```
+
+Check the installation with `php --ri opentelemetry`.
+
+== Add the Composer packages
+
+Add the packages to your project, not to {{%GPPHP%}} itself:
+
+```bash
+composer config allow-plugins.tbachert/spi true
+composer require \
+    open-telemetry/sdk \
+    open-telemetry/exporter-otlp \
+    open-telemetry/opentelemetry-auto-laravel \
+    open-telemetry/opentelemetry-auto-guzzle
+```
+
+`open-telemetry/opentelemetry-auto-guzzle` requires the extension `opentelemetry`. Run `composer` where the extension is
+loaded, for example in the build stage of your image, or add `--ignore-platform-req=ext-opentelemetry`.
+
+== Configuration
+
+Tracing is configured with the standard
+https://opentelemetry.io/docs/languages/sdk-configuration/[OpenTelemetry environment variables]:
+
+```bash
+OTEL_PHP_AUTOLOAD_ENABLED=true
+OTEL_SERVICE_NAME="Gentics Portal PHP"
+OTEL_TRACES_EXPORTER=otlp
+OTEL_METRICS_EXPORTER=none
+OTEL_LOGS_EXPORTER=none
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+OTEL_PROPAGATORS=tracecontext,baggage
+```
+
+Tracing is only active when `OTEL_PHP_AUTOLOAD_ENABLED` is `true`. Without it, the installed packages do nothing.
+
+The same settings can also be put into an ini file. In the reference image, place it in `/extra-php-conf`:
+
+```ini
+OTEL_PHP_AUTOLOAD_ENABLED="true"
+OTEL_SERVICE_NAME="Gentics Portal PHP"
+OTEL_TRACES_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+```
+
+WARNING: Do not put the `OTEL_*` settings into the Laravel `.env` file of the portal. OpenTelemetry reads its settings
+while the Composer autoloader starts, before Laravel loads the `.env` file. Settings from the `.env` file only work when
+the file is passed to the container as environment, for example with `env_file` in Docker Compose.
+
+NOTE: PHP-FPM removes the environment variables of its workers by default
+(https://www.php.net/manual/en/install.fpm.configuration.php[`clear_env = yes`]). When you run the portal with PHP-FPM, use the
+ini file or pass the variables with `env[OTEL_...]` in the FPM pool configuration.
+
+=== Metrics
+
+Metrics are off with `OTEL_METRICS_EXPORTER=none`. To send them, set:
+
+```bash
+OTEL_METRICS_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta
+```
+
+PHP keeps nothing between requests: every PHP request sends the metrics it recorded in its own OTLP request when it
+ends. Use the delta temporality, so every export contains only the values of its request. With the default
+`cumulative`, every request sends a series of its own that starts at zero.
+
+The Prometheus exporter of the OpenTelemetry Collector does not add up these deltas: it only adds a delta that
+directly follows the previous one. Add up the deltas in the Collector with the `delta_to_cumulative` processor,
+separately for every PHP worker process: when several processes write the same time series, their exports arrive out
+of order and the processor drops them. Give every worker its own `service.instance.id`, for example from the host or
+pod name and the process ID, which the PHP SDK sends as resource attribute `process.pid`:
+
+```yaml
+processors:
+  transform/php_instance:
+    metric_statements:
+      - context: resource
+        conditions:
+          - attributes["telemetry.sdk.language"] == "php" and attributes["k8s.pod.name"] != nil and attributes["process.pid"] != nil
+        statements:
+          - set(attributes["service.instance.id"], Concat([attributes["k8s.pod.name"], attributes["process.pid"]], "/"))
+  delta_to_cumulative: {}
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [transform/php_instance, delta_to_cumulative, batch]
+      exporters: [prometheus]
+```
+
+Set `k8s.pod.name` (or use another attribute such as `host.name`) with `OTEL_RESOURCE_ATTRIBUTES`. Do not exclude the
+process detector with `OTEL_PHP_DETECTORS`, otherwise `process.pid` is missing. Every worker process becomes a time
+series of its own, so sum over `instance` in your queries. When a worker process ends, its series disappears after the
+`metric_expiration` of the Prometheus exporter (default 5 minutes).
+
+=== Kubernetes
+
+The Helm chart of {{%GPPHP%}} sets the variables when you switch on `otel`:
+
+```yaml
+otel:
+  enabled: true
+  endpoint: "http://otel-collector:4318"
+  # optional: protocol (default http/protobuf), headersSecret, serviceName (default "Gentics Portal PHP")
+  # metricsEnabled: true
+```
+
+The chart then sets `OTEL_PHP_AUTOLOAD_ENABLED`, `OTEL_SERVICE_NAME`, the OTLP endpoint and protocol and the resource
+attributes `service.namespace`, `k8s.namespace.name` and `k8s.pod.name`. `OTEL_LOGS_EXPORTER` is set to `none`.
+Metrics are off (`OTEL_METRICS_EXPORTER=none`) unless you set `metricsEnabled: true`: the chart then sets
+`OTEL_METRICS_EXPORTER=otlp` and `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE=delta`. This requires the chart
+library `gentics-common` 0.4.0. A variable that you set yourself in `extraEnv` always wins.
+
+In the CMP umbrella chart, `global.otel.enabled=true` switches on telemetry for all components, including
+{{%GPPHP%}}, and installs a monitoring stack that receives the traces and metrics. Its Collector contains the
+processors described in "Metrics" above. Without your own `endpoint`, the portal sends to that stack. `portal-php.otel.*`
+overrides the global settings for the portal only. When you send the metrics to a Collector of your own, configure it
+as described in "Metrics".
+
+=== Requests that are not traced
+
+The liveness and readiness probes of the chart call `/api/health/live` and `/api/health/ready` regularly, and the
+Blackbox exporter of a monitoring stack sends requests with a User-Agent starting with `Blackbox Exporter/`. Without
+further settings, each of these requests is traced. Exclude them with:
+
+```bash
+OTEL_PHP_EXCLUDED_URLS='^/api/health/'
+OTEL_PHP_EXCLUDED_REQUEST_HEADERS='User-Agent: Blackbox Exporter/*'
+```
+
+The OpenTelemetry SDK is then not started for these requests, so they produce no spans and no log records.
+`OTEL_PHP_EXCLUDED_URLS` is a regular expression for the request URI: adjust it when the portal runs with a router
+prefix. In Kubernetes, set both variables in `extraEnv`. Requests that are not excluded are counted in
+`http.server.request.duration`; in queries, filter the metric by `http_route`.
+
+=== Console commands
+
+The Laravel instrumentation also traces artisan commands, for example `DataProvider:prefetch` (span
+`Command DataProvider:prefetch`), even without `OTEL_PHP_TRACE_CLI_ENABLED`. These are not requests. Run console
+commands with the SDK disabled:
+
+```bash
+OTEL_SDK_DISABLED=true php artisan DataProvider:prefetch
+```
+
+`OTEL_PHP_EXCLUDED_URLS` and `OTEL_PHP_EXCLUDED_REQUEST_HEADERS` have no effect on the command line. The Helm chart
+sets `OTEL_PHP_AUTOLOAD_ENABLED=true` for the whole pod, so a command run with `kubectl exec` is traced unless it sets
+`OTEL_SDK_DISABLED=true`.
+
+=== Disable single instrumentations
+
+`OTEL_PHP_DISABLED_INSTRUMENTATIONS` takes a comma-separated list, for example `laravel` or `guzzle`. Use `portal-php`
+for the spans and metrics of {{%GPPHP%}} and the additions described in "Requests".
+
+=== Recording HTTP headers
+
+The Guzzle instrumentation can record request and response headers of the Gentics Mesh requests. This is disabled by default:
+
+```bash
+OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_REQUEST_HEADERS=accept
+OTEL_INSTRUMENTATION_HTTP_CLIENT_CAPTURE_RESPONSE_HEADERS=content-type
+```
+
+== Further links
+
+* https://opentelemetry.io/docs/zero-code/php/auto/
+* https://opentelemetry.io/docs/languages/php/
+* https://github.com/open-telemetry/opentelemetry-php-contrib/tree/main/src/Instrumentation/Laravel
+* https://github.com/open-telemetry/opentelemetry-php-contrib/tree/main/src/Instrumentation/Guzzle

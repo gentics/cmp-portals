@@ -1,0 +1,171 @@
+---
+title: Request tracing
+---
+:icons: font
+:source-highlighter: prettify
+:toc:
+
+{{%GPJava%}} can be traced with the https://opentelemetry.io/docs/zero-code/java/agent/[OpenTelemetry Java agent, window=_blank].
+Every incoming request to the portal becomes one trace, which contains all the work done for the request: the requests to Mesh
+(GraphQL, REST, binaries), the requests forwarded to Mesh plugins by the plugin proxy, other outgoing HTTP requests (e.g. done by
+template helpers), the requests to Keycloak, the lookup in the page cache and the rendering of the template.
+
+Work which is not done for a request (e.g. the periodic refresh of the link:data-provider.html[data provider], the Mesh event
+websocket, the startup checks) is not exported.
+
+== Setup
+
+Tracing needs two jar files in the image of the portal project:
+
+* the OpenTelemetry Java agent `io.opentelemetry.javaagent:opentelemetry-javaagent` (version 2.27.0 is tested with this portal version),
+* the agent extension of the portal `com.gentics.mesh.portal:mesh-portal-otel-extension` (same version as the portal framework). It contains
+  the sampler `gentics_portal_java`, which selects the traces (see <<_what_is_traced>>).
+
+They can be copied with the `maven-dependency-plugin` of the portal project:
+
+.pom.xml
+[source,xml]
+----
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-dependency-plugin</artifactId>
+    <executions>
+        <execution>
+            <id>copy-opentelemetry</id>
+            <phase>package</phase>
+            <goals>
+                <goal>copy</goal>
+            </goals>
+            <configuration>
+                <artifactItems>
+                    <artifactItem>
+                        <groupId>io.opentelemetry.javaagent</groupId>
+                        <artifactId>opentelemetry-javaagent</artifactId>
+                        <version>2.27.0</version>
+                        <outputDirectory>${project.build.directory}</outputDirectory>
+                        <destFileName>opentelemetry-javaagent.jar</destFileName>
+                    </artifactItem>
+                    <artifactItem>
+                        <groupId>com.gentics.mesh.portal</groupId>
+                        <artifactId>mesh-portal-otel-extension</artifactId>
+                        <version>${mesh.portal.version}</version>
+                        <outputDirectory>${project.build.directory}</outputDirectory>
+                        <destFileName>opentelemetry-portal-extension.jar</destFileName>
+                    </artifactItem>
+                </artifactItems>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+----
+
+The `Dockerfile` of the project adds both files and selects the extension and the sampler:
+
+.Dockerfile
+[source,dockerfile]
+----
+ADD ./target/opentelemetry-javaagent.jar /portal/opentelemetry-javaagent.jar
+ADD ./target/opentelemetry-portal-extension.jar /portal/opentelemetry-portal-extension.jar
+
+ENV OTEL_JAVAAGENT_EXTENSIONS="/portal/opentelemetry-portal-extension.jar" \
+    OTEL_TRACES_SAMPLER="gentics_portal_java"
+----
+
+The agent itself is only loaded when telemetry is switched on. With the Helm chart of {{%GPJava%}}, set `otel.enabled: true` and
+`otel.agentPath` to the path of the agent in the image (here `/portal/opentelemetry-javaagent.jar`). The chart then loads the agent with
+`JDK_JAVA_OPTIONS` and configures the OTLP endpoint. Without the agent, the portal behaves as before.
+
+NOTE: When `OTEL_TRACES_SAMPLER=gentics_portal_java` is set, but the extension is missing, the agent logs
+"OpenTelemetry Javaagent failed to start" (`Unrecognized value for otel.traces.sampler`). The portal starts anyway, but nothing is traced.
+
+== What is traced
+
+The sampler `gentics_portal_java` starts a trace only for the server span of an incoming request. All spans created while the request is
+handled belong to its trace. Spans without a request (background work) are dropped.
+
+These requests are not traced:
+
+.Table Requests, which are not traced
+|===
+| Requests | Reason
+
+| `/health/live`, `/health/ready`, `/metrics` (link:monitoring.html[monitoring endpoints])
+| Probes and metrics scraping
+
+| Paths starting with `/static/` or `/formgen/`
+| Static files and the files of the FormGen app
+
+| Requests with a `User-Agent` starting with `Blackbox Exporter/`
+| Availability checks of the Prometheus Blackbox exporter
+|===
+
+If the FormGen app is served from another path (`forms.formgenStaticServePath`), the excluded path prefixes can be replaced with the
+environment variable `OTEL_GENTICS_PORTAL_EXCLUDED_PATH_PREFIXES` (comma separated list, replaces the default `/static/,/formgen/`):
+
+[source,bash]
+----
+OTEL_GENTICS_PORTAL_EXCLUDED_PATH_PREFIXES=/static/,/static/cpa/
+----
+
+A request, which already carries a trace context (`traceparent` header), follows the sampling decision of the caller: when the caller
+did not sample its trace, the request is not traced either.
+
+The selection can be switched off with any other sampler of the agent, e.g. `OTEL_TRACES_SAMPLER=parentbased_always_on` (traces
+everything, including the background work).
+
+== Spans and attributes
+
+The server span of a request is named by the HTTP method and the route, e.g. `GET /*` for content, or
+`GET /GenticsImageStore/:width/:height/:mode/:path`. The route is also stored in the attribute `http.route`.
+
+Custom handlers can name routes, which are registered with a regular expression, with `RequestTracing.route()` as first handler:
+
+[source,java]
+----
+router.routeWithRegex("/api/products/([^/]*)")
+    .handler(RequestTracing.route("/api/products/:id"))
+    .handler(productHandler);
+----
+
+The portal adds these spans and attributes:
+
+.Table Spans and attributes
+|===
+| Span | Attribute | Description
+
+| Request (server span)
+| `user.id`
+| ID (Keycloak subject) of the logged in user. Not set for anonymous requests.
+
+| Request (server span) of the authentication callback
+| `url.query`
+| The values of the query parameters `code` and `session_state` are replaced with `REDACTED`.
+
+| `Page cache lookup`
+| `portal.cache.hit`
+| Whether the page was found in the link:../development/caching.html#_implicit_caching[page cache].
+
+| `Render template`
+| `portal.template.name`
+| Name of the rendered template.
+|===
+
+The requests to Mesh, Mesh plugins and Keycloak are client spans created by the agent. They send the trace context to Mesh, so
+the spans of a Mesh with the OpenTelemetry Java agent can be part of the same trace.
+
+== Trace ID of a response
+
+The response to a traced request contains the header `X-Trace-Id` with the ID of the trace, e.g. to find the trace of a slow
+request in Grafana. Responses to requests, which are not traced, do not contain the header.
+
+== Trace ID in logs
+
+The agent exports the log events of the portal with the trace context of the request (when logs are exported with OTLP, which is
+the default of the agent). Additionally it puts the trace ID into the MDC as `trace_id`. The default logging configuration of the
+portal (`logback.default.xml`) prints it after the thread name, while a traced request is handled:
+
+----
+10:15:42.123 [mesh-portal] WARN  [vert.x-eventloop-thread-0] trace_id=4bf92f3577b34da6a3ce929d0e0e4736 - Forbidden request to /api/clearCache
+----
+
+A custom `logback.xml` can print it with `%X{trace_id}`.
