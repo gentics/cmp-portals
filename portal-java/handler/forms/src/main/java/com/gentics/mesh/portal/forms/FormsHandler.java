@@ -6,6 +6,7 @@ import com.gentics.mesh.portal.api.server.CookieProvider;
 import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.context.PortalRoutingContext;
 import com.gentics.mesh.portal.server.core.HandlerProvider;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -102,16 +103,19 @@ public class FormsHandler implements PortalHandler {
 		router.routeWithRegex("/api/forms/form/([^/]*)/(load|validate|save|submit|cancel)")
 			.order(order)
 			.method(POST)
+			.handler(RequestTracing.route("/api/forms/form/:form/:action"))
 			.handler(proxy);
 
 		router.routeWithRegex("/api/forms/form/([^/]*)/binary/([^/]*)")
 			.order(order)
 			.method(GET)
+			.handler(RequestTracing.route("/api/forms/form/:form/binary/:binary"))
 			.handler(proxy);
 
 		router.routeWithRegex("/api/forms/translations/([^/]*)/([A-Za-z]*)")
 			.order(order)
 			.method(GET)
+			.handler(RequestTracing.route("/api/forms/translations/:form/:language"))
 			.handler(proxy);
 	}
 

@@ -24,8 +24,12 @@ import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.config.option.CachingOptions;
 import com.gentics.mesh.portal.context.PortalRoutingContext;
 import com.gentics.mesh.portal.handler.AbstractBaseHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
@@ -42,6 +46,11 @@ import io.vertx.ext.web.handler.TemplateHandler;
 public class CachingHandler extends AbstractBaseHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(CachingHandler.class);
+
+	/**
+	 * Span attribute telling whether the page cache contained the requested page
+	 */
+	public static final AttributeKey<Boolean> CACHE_HIT = AttributeKey.booleanKey("portal.cache.hit");
 
 	private final Vertx vertx;
 	private final PortalCache<CacheEntry> cache;
@@ -122,19 +131,28 @@ public class CachingHandler extends AbstractBaseHandler {
 			return;
 		}
 
+		Span span = RequestTracing.tracer().spanBuilder("Page cache lookup").startSpan();
+
 		if (cache.isBlockingCache()) {
 			vertx.<CacheEntry>executeBlocking(() -> cache.getIfPresent(rc), false)
 			.andThen((AsyncResult<CacheEntry> rh) -> {
 				if (rh.failed()) {
+					span.recordException(rh.cause());
+					span.setStatus(StatusCode.ERROR);
+					span.end();
 					rc.fail(rh.cause());
 				} else {
 					CacheEntry hit = rh.result();
+					span.setAttribute(CACHE_HIT, hit != null);
+					span.end();
 					handleCacheResult(rc, hit);
 				}
 
 			});
 		} else {
 			CacheEntry hit = cache.getIfPresent(rc);
+			span.setAttribute(CACHE_HIT, hit != null);
+			span.end();
 			handleCacheResult(rc, hit);
 		}
 	}

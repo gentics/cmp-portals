@@ -16,6 +16,7 @@ import com.gentics.mesh.portal.api.RouteOrder;
 import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.formgenerator.helper.FormHelper;
 import com.gentics.mesh.portal.server.core.HandlerProvider;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 
 import io.reactivex.Single;
 import io.vertx.core.buffer.Buffer;
@@ -94,29 +95,29 @@ public class FormGeneratorHandler {
 		});
 
 		// add handler to post data for an existing form
-		router.routeWithRegex("/api/fg/forms/([^/]*)/data").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/data").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(RequestTracing.route("/api/fg/forms/:form/data")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 
-		router.routeWithRegex("/api/fg/forms/([^/]*)/jsondata").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/jsondata").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(RequestTracing.route("/api/fg/forms/:form/jsondata")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 
 		// add handler to update posted data for an existing form
-		router.routeWithRegex("/api/fg/forms/([^/]*)/data/([^/]*)").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/data/([^/]*)").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(RequestTracing.route("/api/fg/forms/:form/data/:data")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 
-		router.routeWithRegex("/api/fg/forms/([^/]*)/jsondata/([^/]*)").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/jsondata/([^/]*)").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(POST).handler(RequestTracing.route("/api/fg/forms/:form/jsondata/:data")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 
 		// add handler to get form elements
-		router.routeWithRegex("/api/fg/forms/([^/]*)/elements").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(HttpMethod.GET).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/elements").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(HttpMethod.GET).handler(RequestTracing.route("/api/fg/forms/:form/elements")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 
-		router.routeWithRegex("/api/fg/forms/([^/]*)/data/([^/]*)/binary/[^/]*").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(HttpMethod.GET).handler(
+		router.routeWithRegex("/api/fg/forms/([^/]*)/data/([^/]*)/binary/[^/]*").order(RouteOrder.BEFORE_BODY_HANDLER.getOrder()).method(HttpMethod.GET).handler(RequestTracing.route("/api/fg/forms/:form/data/:data/binary/:binary")).handler(
 			handlerProvider.pluginProxy("^/api/fg/", "/api/v1/" + projectName + "/plugins/fg/")
 		);
 	}

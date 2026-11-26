@@ -34,6 +34,7 @@ import com.gentics.mesh.portal.config.option.AuthenticationOptions;
 import com.gentics.mesh.portal.config.option.KeycloakOptions;
 import com.gentics.mesh.portal.content.LanguageVariantLoader;
 import com.gentics.mesh.portal.context.RedirectMode;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.mesh.portal.util.JsonUtils;
 import com.gentics.mesh.portal.util.MiscUtils;
 
@@ -647,7 +648,10 @@ public class KeycloakAuthenticationHandler extends AuthenticationBaseHandler {
 			// beforehand.
 			Route callbackRoute = router.get(callbackPath);
 
-			callbackRoute.order(RouteOrder.AUTHENTICATION_ROUTES.getOrder()).handler(this::prepareAuthRedirect)
+			// The OAuth2 code and session state must not be recorded in the span of the request
+			callbackRoute.order(RouteOrder.AUTHENTICATION_ROUTES.getOrder())
+					.handler(RequestTracing.redactQueryParameters(RequestTracing.OAUTH_CALLBACK_PARAMETERS))
+					.handler(this::prepareAuthRedirect)
 					.handler(this::handlePreAuth);
 			// The route cannot be reused because of how Vert.x does
 			// the callback setup.

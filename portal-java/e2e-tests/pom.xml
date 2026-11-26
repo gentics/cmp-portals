@@ -14,6 +14,8 @@
 		<mesh.forms-plugin.version>nightly-3.4.x-SNAPSHOT</mesh.forms-plugin.version>
 		<openapi-generator-maven-plugin.version>7.19.0</openapi-generator-maven-plugin.version>
 		<openapi.spec.dir>${basedir}/../docs/target/output/examples/api</openapi.spec.dir>
+		<!-- Port of the OTLP receiver of the tracing tests -->
+		<tracing.otlp.port>24318</tracing.otlp.port>
 	</properties>
 
 	<dependencies>
@@ -56,6 +58,48 @@
 			<artifactId>mesh-portal-plugins</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.gentics.mesh.portal</groupId>
+			<artifactId>mesh-portal-otel-extension</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Conversion of the OTLP requests received by the tracing tests -->
+		<dependency>
+			<groupId>io.opentelemetry.javaagent</groupId>
+			<artifactId>opentelemetry-testing-common</artifactId>
+			<version>${otel.javaagent.version}-alpha</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.jupiter</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.mockito</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.bytebuddy</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.awaitility</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.assertj</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.github.crawler-commons</groupId>
@@ -136,7 +180,44 @@
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
 					<argLine>-Xms64m -Xmx128m --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+					<!-- The tracing tests need the OpenTelemetry Java agent, they are run by the execution "tracing-tests" -->
+					<excludes>
+						<exclude>**/tracing/**</exclude>
+					</excludes>
 				</configuration>
+				<executions>
+					<execution>
+						<id>tracing-tests</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<includes>
+								<include>**/tracing/*Test.java</include>
+							</includes>
+							<excludes combine.self="override" />
+							<argLine>-Xms64m -Xmx256m --add-opens java.base/java.util=ALL-UNNAMED -javaagent:${project.build.directory}/otel/opentelemetry-javaagent.jar</argLine>
+							<systemPropertyVariables>
+								<tracing.otlp.port>${tracing.otlp.port}</tracing.otlp.port>
+							</systemPropertyVariables>
+							<environmentVariables>
+								<!-- Configured like in a portal image (see the documentation of the tracing) -->
+								<OTEL_JAVAAGENT_EXTENSIONS>${project.build.directory}/otel/opentelemetry-portal-extension.jar</OTEL_JAVAAGENT_EXTENSIONS>
+								<OTEL_TRACES_SAMPLER>gentics_portal_java</OTEL_TRACES_SAMPLER>
+								<OTEL_GENTICS_PORTAL_EXCLUDED_PATH_PREFIXES>/static/,/formgen/,/excluded-by-env/</OTEL_GENTICS_PORTAL_EXCLUDED_PATH_PREFIXES>
+								<!-- Export to the OTLP receiver of the tests (ExportedSpans) -->
+								<OTEL_SERVICE_NAME>Gentics Portal Java</OTEL_SERVICE_NAME>
+								<OTEL_EXPORTER_OTLP_PROTOCOL>http/protobuf</OTEL_EXPORTER_OTLP_PROTOCOL>
+								<OTEL_EXPORTER_OTLP_ENDPOINT>http://localhost:${tracing.otlp.port}</OTEL_EXPORTER_OTLP_ENDPOINT>
+								<OTEL_METRICS_EXPORTER>none</OTEL_METRICS_EXPORTER>
+								<OTEL_BSP_SCHEDULE_DELAY>100</OTEL_BSP_SCHEDULE_DELAY>
+								<OTEL_BLRP_SCHEDULE_DELAY>100</OTEL_BLRP_SCHEDULE_DELAY>
+								<!-- The OTLP receiver of the tests must not be traced -->
+								<OTEL_INSTRUMENTATION_JAVA_HTTP_SERVER_ENABLED>false</OTEL_INSTRUMENTATION_JAVA_HTTP_SERVER_ENABLED>
+							</environmentVariables>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -160,6 +241,24 @@
 									<overWrite>true</overWrite>
 									<outputDirectory>${project.build.directory}/plugins</outputDirectory>
 									<destFileName>mesh-forms-plugin.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>io.opentelemetry.javaagent</groupId>
+									<artifactId>opentelemetry-javaagent</artifactId>
+									<version>${otel.javaagent.version}</version>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/otel</outputDirectory>
+									<destFileName>opentelemetry-javaagent.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>com.gentics.mesh.portal</groupId>
+									<artifactId>mesh-portal-otel-extension</artifactId>
+									<version>${project.version}</version>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}/otel</outputDirectory>
+									<destFileName>opentelemetry-portal-extension.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 						</configuration>

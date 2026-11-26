@@ -49,6 +49,12 @@
 			<artifactId>logback-classic</artifactId>
 		</dependency>
 
+		<!-- Tracing (bridged to the OpenTelemetry Java agent, no-op without the agent) -->
+		<dependency>
+			<groupId>io.opentelemetry.instrumentation</groupId>
+			<artifactId>opentelemetry-instrumentation-api</artifactId>
+		</dependency>
+
 		<!-- Vert.x -->
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -107,6 +113,11 @@
 			<groupId>com.google.jimfs</groupId>
 			<artifactId>jimfs</artifactId>
 			<version>1.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-sdk-testing</artifactId>
 			<scope>test</scope>
 		</dependency>
 
