@@ -7,7 +7,7 @@
 		<vertx-openapi.version>1.0.0</vertx-openapi.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<vertx.version>5.1.5</vertx.version>
-		<mesh.version>3.3.2</mesh.version>
+		<mesh.version>ci-devtest-SNAPSHOT</mesh.version>
 		<netty.version>4.2.17.Final</netty.version>
 		<spring.security.version>6.3.9</spring.security.version>
 		<dagger.version>2.56.2</dagger.version>
