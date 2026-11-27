@@ -186,7 +186,8 @@ class Instrumentation
                     'http.route' => $route->uri(),
                 ]);
             },
-            post: static function (ControllerDispatcher $dispatcher, array $params, $returnValue, ?Throwable $exception) {
+            post: static function (ControllerDispatcher $dispatcher,
+                    array $params, $returnValue, ?Throwable $exception) {
                 static::end($dispatcher, 'dispatch', $exception);
             }
         );
