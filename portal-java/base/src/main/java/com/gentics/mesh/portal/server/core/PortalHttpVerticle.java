@@ -2,6 +2,7 @@ package com.gentics.mesh.portal.server.core;
 
 import com.gentics.mesh.portal.DataProviderVerticle;
 import com.gentics.mesh.portal.api.Constants;
+import com.gentics.mesh.portal.api.PortalEvents;
 import com.gentics.mesh.portal.api.PortalVersion;
 import com.gentics.mesh.portal.api.RouteOrder;
 import com.gentics.mesh.portal.api.cache.CacheProvider;
@@ -27,6 +28,7 @@ import com.gentics.mesh.portal.handler.PoweredByHandler;
 import com.gentics.mesh.portal.handler.SecurityHandler;
 import com.gentics.mesh.portal.search.SearchHandler;
 import com.gentics.mesh.portal.sitemap.SitemapHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.mesh.portal.util.HandlerUtils;
 import com.gentics.vertx.openapi.route.InternalEndpointBuilder;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -37,6 +39,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +92,9 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 	private final SitemapHandler sitemapHandler;
 	private final Provider<StaticHandler> staticHandler;
 	private final FormGenStaticHandler formgenStaticHandler;
+
+	/** Handler for the static files of the portal implementation, null when no portal implementation is configured. */
+	private PortalImplementationStaticHandler implementationStaticHandler;
 	private final TemplateHandler templateHandler;
 	private final AdditionalHeaderHandler additionalHeaderHandler;
 	private final CookieProvider cookieProvider;
@@ -136,6 +142,15 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 		router.route().failureHandler(redirectHandler);
 		addRoutes(router);
 
+		vertx.eventBus().localConsumer(PortalEvents.PORTAL_IMPLEMENTATION_UPDATED.address(), message -> {
+			clearCaches();
+			ResourceBundle.clearCache();
+			if (implementationStaticHandler != null) {
+				implementationStaticHandler.rebuild();
+			}
+			log.info("Caches cleared after update of portal implementation {}", message.body());
+		});
+
 		int serverPort = config.getServerPort();
 		String serverHost = config.getServerHost();
 		HttpServerOptions httpServerOptions = new HttpServerOptions()
@@ -172,6 +187,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.handler(TimeoutHandler.create(config.getNetworkTimeout() * 1000L))
 			.handler(loggerHandler);
 		poweredByHandler.addRoutes(router);
+		router.route().handler(RequestTracing::addTraceIdHeader);
 		additionalHeaderHandler.addRoutes(router);
 		openApiHandler.addRoutes(router);
 		addBodyHandler(router);
@@ -210,6 +226,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withPathRegex(Constants.ROUTE_CATCH_ALL)
 			.withRAMLPath("/*")
 			.withOrder(RouteOrder.CONTENT_ROUTES.getOrder())
+			.withHandler(RequestTracing.route("/*"))
 			.withHandler(contentHandler)
 			.withExampleResponse(HttpResponseStatus.OK, "Requested content, either page, or binary data, or any other resource")
 			.build();
@@ -305,10 +322,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withHandler(securityHandler)
 			.withHandler(rc -> {
 				try {
-					cachingHandler.clear();
-					cacheProvider.clearAll();
-					contentHandler.clearCache();
-					engine.clearCache();
+					clearCaches();
 					// Not exactly caches, but this seems a good place to force a refresh.
 					dataProvider.refreshNow();
 					redirectHandler.refreshNow(rc);
@@ -321,6 +335,17 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 				}
 			})
 			.build();
+	}
+
+	/**
+	 * Clear the cached values of the caching handler, all caches created by the {@link CacheProvider}, the content
+	 * handler and the templates.
+	 */
+	private void clearCaches() {
+		cachingHandler.clear();
+		cacheProvider.clearAll();
+		contentHandler.clearCache();
+		engine.clearCache();
 	}
 
 	/**
@@ -376,6 +401,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.consumes(APPLICATION_JSON)
 			.produces(DEFAULT_CONTENT_TYPE)
 			.withExampleRequest(exampleRequest)
+			.withHandler(RequestTracing.route("/api/preview/:contentPath"))
 			.withHandler(previewHandler)
 			.withExampleResponse(HttpResponseStatus.OK, "Requested resource for the preview")
 			.build();
@@ -443,6 +469,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withUriParameter("cropwidth", "Width for cropping", "200")
 			.withUriParameter("cropheight", "Height for cropping", "150")
 			.withUriParameter("path", "Actual path to the image", "/images/example.png")
+			.withHandler(RequestTracing.route("/GenticsImageStore/:width/:height/cropandresize/:mode/:startx/:starty/:cropwidth/:cropheight/:path"))
 			.withHandler(croppingGisHandler::reroute)
 			.withExampleResponse(HttpResponseStatus.OK, "Modified image")
 			.build();
@@ -457,6 +484,7 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 			.withUriParameter("height", "Height for cropping", "600")
 			.withUriParameter("mode", "Resize mode", "smart")
 			.withUriParameter("path", "Actual path to the image", "/images/example.png")
+			.withHandler(RequestTracing.route("/GenticsImageStore/:width/:height/:mode/:path"))
 			.withHandler(gisHandler::reroute)
 			.withExampleResponse(HttpResponseStatus.OK, "Modified image")
 			.build();
@@ -475,14 +503,22 @@ public class PortalHttpVerticle extends PortalServerVerticle {
 	 * @param router The router to add the static routes to
 	 */
 	private void addStaticHandlers(Router router) {
-		InternalEndpointBuilder.wrap(router)
+		var staticFiles = InternalEndpointBuilder.wrap(router)
 			.withDisplayName("Static files")
 			.withDescription("Serves static files from the portals \"static\" directory")
 			.withPath("/static/*")
 			.withRAMLPath("/static/:path")
 			.withUriParameter("path", "Path to the static file", "/css/style.css")
 			.withOrder(RouteOrder.BEFORE_CONTENT_ROUTES.getOrder())
-			.withMethod(GET)
+			.withMethod(GET);
+
+		if (StringUtils.isNotBlank(config.getPortalImplementation())) {
+			// Serves the files of the portal implementation, and passes on requests for other files
+			implementationStaticHandler = new PortalImplementationStaticHandler(config);
+			staticFiles.withHandler(implementationStaticHandler);
+		}
+
+		staticFiles
 			.withHandler(staticHandler.get())
 			.withExampleResponse(HttpResponseStatus.OK, "Requested static resource")
 			.build();

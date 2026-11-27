@@ -1,0 +1,2 @@
+outer
+@include('opentelemetry.inner')

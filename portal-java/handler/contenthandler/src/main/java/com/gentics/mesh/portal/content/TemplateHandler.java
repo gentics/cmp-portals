@@ -15,7 +15,12 @@ import com.gentics.mesh.portal.api.monitoring.PortalTimer;
 import com.gentics.mesh.portal.cache.CachingHandler;
 import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.handler.AbstractBaseHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 import io.vertx.core.Completable;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -31,6 +36,11 @@ import io.vertx.reactivex.core.Vertx;
  */
 @Singleton
 public class TemplateHandler extends AbstractBaseHandler {
+
+	/**
+	 * Span attribute containing the name of the rendered template
+	 */
+	public static final AttributeKey<String> TEMPLATE_NAME = AttributeKey.stringKey("portal.template.name");
 
 	private final HandlebarsTemplateEngine engine;
 	private final CachingHandler cachingHandler;
@@ -59,7 +69,14 @@ public class TemplateHandler extends AbstractBaseHandler {
 			rc.next();
 		} else {
 			PortalTimer timer = metricsService.wrapTimer(PortalMetric.RENDER_TEMPLATE).start();
-			renderHandler(rc, file).andThen(completed(rc, timer, file));
+			Span span = RequestTracing.tracer().spanBuilder("Render template")
+				.setAttribute(TEMPLATE_NAME, file)
+				.startSpan();
+
+			// requests done while rendering (e.g. by helpers) are children of the rendering span
+			try (Scope scope = span.makeCurrent()) {
+				renderHandler(rc, file).andThen(completed(rc, timer, span, file));
+			}
 		}
 	}
 
@@ -84,20 +101,25 @@ public class TemplateHandler extends AbstractBaseHandler {
 	 *
 	 * @param rc The current routing context
 	 * @param timer A rendering timer
+	 * @param span The span of the rendering, which will be ended
 	 * @param file The template file to be rendered
 	 * @return A handler for the rendered content, or an exception.
 	 */
-	private Completable<Buffer> completed(RoutingContext rc, PortalTimer timer, String file) {
+	private Completable<Buffer> completed(RoutingContext rc, PortalTimer timer, Span span, String file) {
 		return new Completable<Buffer>() {
 
 			@Override
 			public void complete(Buffer buf, Throwable failure) {
 				if (failure != null) {
 					timer.stop(String.format("Rendering \"%s\" took {}ns and failed", file));
+					span.recordException(failure);
+					span.setStatus(StatusCode.ERROR);
+					span.end();
 
 					rc.fail(failure);
 				} else if (buf != null) {
 					timer.stop(String.format("Rendering \"%s\" took {}ns and succeeded", file));
+					span.end();
 
 					String content = buf.toString();
 					cachingHandler.cache(rc, content);
@@ -106,6 +128,8 @@ public class TemplateHandler extends AbstractBaseHandler {
 						.end(content);
 				} else {
 					// Should not happen, but we have to drop the request anyway
+					span.setStatus(StatusCode.ERROR);
+					span.end();
 					rc.fail(new IllegalStateException("Template rendered to null"));
 				}
 			}

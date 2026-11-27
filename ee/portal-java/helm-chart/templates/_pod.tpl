@@ -212,6 +212,9 @@ do NOT pipe it through nindent.
             value: "{{ .Values.auth.logoutRedirect }}"
           - name: AUTH_REDIRECT_COOKIE_MAX_AGE
             value: "{{ .Values.auth.redirectCookieMaxAge }}"
+          {{- with include "gentics-common.otelEnv" (dict "root" . "local" .Values.otel "extraEnv" .Values.extraEnv "defaultServiceName" "Gentics Portal Java" "defaultAgentPath" "") }}
+          {{- . | nindent 10 }}
+          {{- end }}
 
 {{ toYaml .Values.extraEnv | indent 10 }}
           {{- /*

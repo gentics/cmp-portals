@@ -93,6 +93,7 @@ public class PortalTestContext extends TestWatcher {
 	private HttpClient keycloakClient;
 	private PortalConfig portalConfig;
 	private int portalPort;
+	private int monitoringPort;
 	private PortalServerComponent portalServerComponent;
 	private CountDownLatch startupChecksLatch = new CountDownLatch(1);
 
@@ -123,8 +124,9 @@ public class PortalTestContext extends TestWatcher {
 
 		if (verticlePorts.containsKey(HTTP_VERTICLE)) {
 			portalPort = verticlePorts.get(HTTP_VERTICLE);
+			monitoringPort = verticlePorts.get(MONITORING_VERTICLE);
 			portalClient = createHttpClient(portalPort, HTTP_VERTICLE);
-			monitoringClient = createHttpClient(verticlePorts.get(MONITORING_VERTICLE), MONITORING_VERTICLE);
+			monitoringClient = createHttpClient(monitoringPort, MONITORING_VERTICLE);
 		}
 	}
 
@@ -454,6 +456,9 @@ public class PortalTestContext extends TestWatcher {
 		System.out.println("Starting portal");
 		Subject<JsonObject> verticles = PublishSubject.create();
 
+		// Load the portal implementation before the start-up checks, like PortalStarter does.
+		portal.portalImplementation().start();
+
 		portal.vertx().eventBus().consumer(
 			PortalEvents.SERVER_VERTICLE_DEPLOYED.address(),
 			event -> {
@@ -597,6 +602,10 @@ public class PortalTestContext extends TestWatcher {
 
 	public int portalPort() {
 		return portalPort;
+	}
+
+	public int monitoringPort() {
+		return monitoringPort;
 	}
 
 	public CountDownLatch startupChecksLatch() {

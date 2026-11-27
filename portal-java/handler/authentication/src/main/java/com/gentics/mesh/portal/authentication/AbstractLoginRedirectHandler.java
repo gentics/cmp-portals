@@ -6,6 +6,7 @@ import com.gentics.mesh.portal.api.server.CookieProvider;
 import com.gentics.mesh.portal.config.PortalConfig;
 import com.gentics.mesh.portal.config.option.LoginRedirectOptions;
 import com.gentics.mesh.portal.handler.AbstractBaseHandler;
+import com.gentics.mesh.portal.tracing.RequestTracing;
 import com.gentics.vertx.openapi.route.InternalEndpointBuilder;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -70,6 +71,7 @@ public abstract class AbstractLoginRedirectHandler extends AbstractBaseHandler i
 			.withUriParameter(AuthenticationBaseHandler.PATH_PARAM_LOGIN_REDIRECT, "Redirection path", "/authenticated")
 			.withMethod(HttpMethod.GET)
 			.withOrder(RouteOrder.BEFORE_API_ROUTES.getOrder())
+			.withHandler(RequestTracing.route(String.format("%s/:%s", handlerPath, AuthenticationBaseHandler.PATH_PARAM_LOGIN_REDIRECT)))
 			.withHandler(this::prepareRedirect)
 			.withHandler(this)
 			.hidden(true)

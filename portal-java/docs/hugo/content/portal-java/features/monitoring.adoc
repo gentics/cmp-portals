@@ -110,3 +110,7 @@ metrics:
 * Number of outgoing requests in queue
 * Number of outgoing requests per call state
 * bytes sent and received for outgoing requests
+
+== Tracing
+
+Requests to the portal can be traced with the OpenTelemetry Java agent, see link:tracing.html[Request tracing].

@@ -71,6 +71,9 @@ do NOT pipe it through nindent.
             value: {{ include "gentics-portal-php.meshUrl" . | quote }}
           - name: AUTOGENERATE_MESH_API_KEY
             value: {{ .Values.mesh.autogenerate_apikey | default "false" | quote }}
+          {{- with include "gentics-common.otelEnvPhp" (dict "root" . "local" .Values.otel "extraEnv" .Values.extraEnv "defaultServiceName" "Gentics Portal PHP") }}
+          {{- . | nindent 10 }}
+          {{- end }}
 
 {{- if .Values.extraEnv }}
 {{ toYaml .Values.extraEnv | indent 10 }}
